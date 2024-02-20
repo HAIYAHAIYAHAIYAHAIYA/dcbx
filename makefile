@@ -38,10 +38,11 @@ cleanall:clean
 	del $(OUTPUT_DIR)\main.exe
 
 clean:
-	del $(OUTPUT_DIR)\$(SOURCE_DIR)\MCTP\*.o \
-		$(OUTPUT_DIR)\$(SOURCE_DIR)\DCBX\*.o \
-		$(OUTPUT_DIR)\$(SOURCE_DIR)\APP\*.o  \
-		$(OUTPUT_DIR)\$(SOURCE_DIR)\HSM\*.o
+	rm $(OUTPUT_DIR)/$(SOURCE_DIR)/MCTP/*.o \
+		$(OUTPUT_DIR)/$(SOURCE_DIR)/DCBX/*.o \
+		$(OUTPUT_DIR)/$(SOURCE_DIR)/APP/*.o  \
+		$(OUTPUT_DIR)/$(SOURCE_DIR)/HSM/*.o  \
+		$(OUTPUT_DIR)/$(SOURCE_DIR)/SHA256/*.o
 
 excute:
 	$(OUTPUT_DIR)/main
