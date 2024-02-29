@@ -1,4 +1,3 @@
-
 #ifndef __SHA256_H__
 #define __SHA256_H__
  

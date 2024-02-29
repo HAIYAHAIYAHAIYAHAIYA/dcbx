@@ -1,0 +1,6 @@
+CJSON_DIR = $(SOURCE_DIR)/CJSON
+INCLUDES += -I $(CJSON_DIR)
+
+CJSON_C_SRCS = $(wildcard $(CJSON_DIR)/*.c)
+
+C_SRCS += $(CJSON_C_SRCS)

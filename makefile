@@ -1,22 +1,12 @@
 OUTPUT_DIR = build
 SOURCE_DIR = source
 INCLUDE_DIR = include
+CFLAGS = -c -g
 MKDIR = mkdir -p
 NUL = dev/null
 
-CC_FLAGS = -I $(INCLUDE_DIR)/APP
-CC_FLAGS += -I $(INCLUDE_DIR)/DCBX
-CC_FLAGS += -I $(INCLUDE_DIR)/MCTP
-CC_FLAGS += -I $(INCLUDE_DIR)/COMMON
-CC_FLAGS += -I $(INCLUDE_DIR)/HSM
-CC_FLAGS += -I $(INCLUDE_DIR)/SHA256
-
-C_SRCS = $(wildcard $(SOURCE_DIR)/APP/*.c)
-C_SRCS += $(wildcard $(SOURCE_DIR)/MCTP/*.c)
-C_SRCS += $(wildcard $(SOURCE_DIR)/DCBX/*.c)
-C_SRCS += $(wildcard $(SOURCE_DIR)/HSM/*.c)
-C_SRCS += $(wildcard $(SOURCE_DIR)/SHA256/*.c)
-
+include $(INCLUDE_DIR)/subdir.mk
+include $(SOURCE_DIR)/subdir.mk
 
 OBJS = $(C_SRCS:%.c=$(OUTPUT_DIR)/%.o)
 
@@ -30,7 +20,8 @@ $(TARGET) : $(OBJS)
 	$(CC) $(OBJS) $' -o $@
  
 $(OBJS):$(OUTPUT_DIR)/%.o:%.c
-	$(CC) -c -g $(CC_FLAGS) $< -o $@
+# @echo $(dir $<)
+	$(CC) $(CFLAGS) $(INCLUDES) $< -o $@
 
 .PHONY : ALL
 
@@ -38,11 +29,13 @@ cleanall:clean
 	del $(OUTPUT_DIR)\main.exe
 
 clean:
-	rm $(OUTPUT_DIR)/$(SOURCE_DIR)/MCTP/*.o \
-		$(OUTPUT_DIR)/$(SOURCE_DIR)/DCBX/*.o \
-		$(OUTPUT_DIR)/$(SOURCE_DIR)/APP/*.o  \
-		$(OUTPUT_DIR)/$(SOURCE_DIR)/HSM/*.o  \
-		$(OUTPUT_DIR)/$(SOURCE_DIR)/SHA256/*.o
+	del $(OUTPUT_DIR)\$(SOURCE_DIR)\MCTP\*.o \
+		$(OUTPUT_DIR)\$(SOURCE_DIR)\DCBX\*.o \
+		$(OUTPUT_DIR)\$(SOURCE_DIR)\APP\*.o  \
+		$(OUTPUT_DIR)\$(SOURCE_DIR)\HSM\*.o  \
+		$(OUTPUT_DIR)\$(SOURCE_DIR)\SHA256\*.o \
+		$(OUTPUT_DIR)\$(SOURCE_DIR)\CJSON\*.o \
+		$(OUTPUT_DIR)\$(SOURCE_DIR)\PLDM_BEJ\*.o
 
 excute:
 	$(OUTPUT_DIR)/main

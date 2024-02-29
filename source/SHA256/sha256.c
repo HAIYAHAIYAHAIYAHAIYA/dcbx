@@ -1,8 +1,6 @@
-
-// sha256.c
-
 #include "sha256.h"
 #include "main.h"
+
  
 #define rightrotate(w, n) ((w >> n) | (w) << (32-(n)))
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
