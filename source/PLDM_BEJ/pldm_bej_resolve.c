@@ -285,32 +285,60 @@ static void pldm_bej_val_search1(pldm_bej_sflv_t *sflv, cJSON *ptr)
     printf("\n");
 }
 
-void pldm_bej_dict_search(pldm_bej_sflv_t *sflv, u8 *dict, pldm_redfish_dictionary_entry_t *entry, u8 entry_cnt)
+static void pldm_bej_val_search2(u8 *dictionary, pldm_bej_sflv_t *sflv, pldm_cjson_t *ptr)
 {
-    pldm_redfish_dictionary_entry_t *tmp = entry;
+    u8 fmt = sflv->fmt >> 4;
+    pldm_bej_sflv_dat_t tmp;
+    tmp.seq = sflv->seq;
+    tmp.fmt = sflv->fmt;
+    tmp.len = sflv->len;
+    switch (fmt) {
+        case BEJ_INT:
+        pldm_cjson_add_item_to_obj(ptr, &tmp, key.val, sflv->val, sflv->len);
+        break;
+        case BEJ_ENUM:
+        // printf("%s\n", enum_key.val);
+        pldm_cjson_add_enum_to_obj(ptr, dictionary, &tmp, key.val, enum_key.val);
+        break;
+        case BEJ_BOOLEAN:
+        if (sflv->val[0] == 0) {
+            pldm_cjson_add_item_to_obj(ptr, &tmp, key.val, "f", tmp.len);
+        } else {
+            pldm_cjson_add_item_to_obj(ptr, &tmp, key.val, "t", tmp.len);
+        }
+        break;
+        default :
+        // for (u8 i = 0; i < sflv->len; i++) {
+        //     printf("0x%02x ", sflv->val[i]);
+        // }
+        // printf("\n");
+        // printf("%d, %s\n", strlen(sflv->val), sflv->val);
+        pldm_cjson_add_item_to_obj(ptr, &tmp, key.val, sflv->val, sflv->len);
+        break;
+    }
+}
+
+void pldm_bej_annotation_dict_search(pldm_bej_sflv_t *sflv, u8 *anno_dict)
+{
     u8 is_find = 0;
     key.len = 0;
     key.val = NULL;
-    enum_key.len = 0;
-    enum_key.val = NULL;
-    // printf("need 0x%x, 0x%x, 0x%02x\n", sflv->fmt >> 4, sflv->seq >> 1, sflv->len);
 
-    for (u8 k = 0; k < entry_cnt; k++) {
+    pldm_redfish_dictionary_format_t *dict = (pldm_redfish_dictionary_format_t *)anno_dict;
+    pldm_redfish_dictionary_entry_t *tmp = (pldm_redfish_dictionary_entry_t *)&(dict->entry[0]);
+    // dict->entry[1].sequence_num = 1;
+    // printf("entry cnt : %d\n", entry_cnt);
+    // printf("need 0x%x, 0x%x, %s\n", sflv->fmt >> 4, sflv->seq >> 1, sflv->val);
+
+    for (u16 k = 0; k < dict->entry_cnt; k++) {
         u8 dict_fmt = tmp->format >> 4;
         // printf("0x%x, 0x%x\n", dict_fmt, tmp->sequence_num);
-        if (dict_fmt == sflv->fmt >> 4 && tmp->sequence_num == sflv->seq >> 1) {
-            key.val = &dict[tmp->name_off];
+        if (dict_fmt == sflv->fmt >> 4 && tmp->sequence_num == (sflv->seq >> 1)) {
+            // printf("tmp->name_off : %d\n", tmp->name_off);
+            key.val = &anno_dict[tmp->name_off];
             key.len = tmp->name_len;
-            // printf("%s: ", key.val);
+            // printf("key.val %s: ", key.val);
             is_find = 1;
-
-            if (dict_fmt == BEJ_ENUM) {
-                pldm_redfish_dictionary_entry_t *enum_ptr = (pldm_redfish_dictionary_entry_t *)&dict[tmp->childpoint_off];
-                enum_ptr += sflv->val[1];
-                enum_key.len = enum_ptr->name_len;
-                enum_key.val = &dict[enum_ptr->name_off];
-                // printf("%s ", enum_key.val);
-            }
             break;
         }
         tmp += 1;
@@ -320,6 +348,47 @@ void pldm_bej_dict_search(pldm_bej_sflv_t *sflv, u8 *dict, pldm_redfish_dictiona
         key.len = strlen(fmt_err);
         key.val = fmt_err;
     }
+}
+
+pldm_redfish_dictionary_entry_t *pldm_bej_dict_search(pldm_bej_sflv_t *sflv, u8 *dict, pldm_redfish_dictionary_entry_t *entry, u8 entry_cnt)
+{
+    if (!dict || !sflv || !entry) return NULL;
+    pldm_redfish_dictionary_entry_t *tmp = entry;
+    u8 is_find = 0;
+    key.len = 0;
+    key.val = NULL;
+    enum_key.len = 0;
+    enum_key.val = NULL;
+    // printf("entry cnt : %d\n", entry_cnt);
+    // printf("need 0x%x, 0x%x, %s\n", sflv->fmt >> 4, sflv->seq >> 1, sflv->val);
+
+    for (u8 k = 0; k < entry_cnt; k++) {
+        u8 dict_fmt = tmp->format >> 4;
+        // printf("0x%x, 0x%x\n", dict_fmt, tmp->sequence_num);
+        if (dict_fmt == sflv->fmt >> 4 && tmp->sequence_num == sflv->seq >> 1) {
+            // printf("tmp->name_off : %d\n", tmp->name_off);
+            key.val = &dict[tmp->name_off];
+            key.len = tmp->name_len;
+            // printf("key.val %s: ", key.val);
+            is_find = 1;
+
+            if (dict_fmt == BEJ_ENUM) {
+                pldm_redfish_dictionary_entry_t *enum_ptr = (pldm_redfish_dictionary_entry_t *)&dict[tmp->childpoint_off];
+                enum_ptr += sflv->val[1];
+                enum_key.len = enum_ptr->name_len;
+                enum_key.val = &dict[enum_ptr->name_off];
+                // printf("%s ", enum_key.val);
+            }
+            return tmp;
+        }
+        tmp += 1;
+    }
+    if (!is_find) {
+        // printf("fmt err: ");
+        key.len = strlen(fmt_err);
+        key.val = fmt_err;
+    }
+    return entry;
 }
 
 void pldm_bej_dict_search1(pldm_bej_sflv_t *sflv, u8 *dict)
@@ -367,14 +436,73 @@ u8 *pldm_bej_encode(pldm_cjson_t *root, u8 *bej_buf)
     pldm_cjson_t *tmp = root;
     u8 *buf = bej_buf;
     while (tmp) {
+        u8 fmt = tmp->sflv.fmt >> 4;
         buf = pldm_bej_sfl_to_bej(buf, tmp);
-        buf = pldm_bej_encode(tmp->child, buf);
-        if (!tmp->child) {
+        if (fmt != BEJ_ENUM) buf = pldm_bej_encode(tmp->child, buf);
+        if (!tmp->child || fmt == BEJ_ENUM) {
             buf = pldm_bej_jsonval_to_bej(buf, tmp);
         }
         tmp = tmp->next;
     }
     return buf;
+}
+
+u16 pldm_bej_decode_op(u8 *buf, u8 *anno_dict, u8 *dict, pldm_redfish_dictionary_entry_t *entry, u8 entry_cnt, pldm_cjson_t *root)
+{
+    if (!buf || !entry) return 0;
+    // printf("entry cnt : %d\n", entry_cnt);
+    pldm_bej_sflv_t sflv = {0, 0, 0, 0, NULL};
+    pldm_redfish_dictionary_entry_t *new_entry;
+    u8 cnt = 0;
+    pldm_cjson_t *ptr = root;
+    pldm_cjson_t *add_ptr = NULL;
+    pldm_bej_get_sflv(buf, &sflv);
+    if (sflv.seq & 1)
+        pldm_bej_annotation_dict_search(&sflv, anno_dict);
+    else
+        new_entry = pldm_bej_dict_search(&sflv, dict, entry, entry_cnt);
+    u8 child_cnt = 0;
+    u8 fmt = sflv.fmt >> 4;
+    if (fmt == BEJ_SET || fmt == BEJ_ARRAY) {
+        cnt = sflv.val[1];
+        sflv.val = &(sflv.val[2]);
+        // printf("seq : %d, fmt : %d\n", sflv.seq >> 1, fmt);
+        // printf("%d, %s\n", entry->child_cnt, &dict[entry->name_off]);
+
+        child_cnt = new_entry->child_cnt;
+        entry = (pldm_redfish_dictionary_entry_t *)&dict[new_entry->childpoint_off];
+
+        pldm_bej_sflv_dat_t tmp;
+        tmp.seq = sflv.seq;
+        tmp.fmt = sflv.fmt;
+        tmp.len = sflv.len;
+        add_ptr = pldm_cjson_add_item_to_obj(ptr, &tmp, key.val, "", 0);
+    }
+    // printf("seq : 0x%x, fmt : 0x%x, len : 0x%x, val : %x\n", sflv.seq, fmt, sflv.len, sflv.val[0]);
+    for (u8 i = 0; i < cnt; i++) {
+        u16 len = pldm_bej_decode_op(sflv.val, anno_dict, dict, entry, child_cnt, add_ptr);
+        sflv.val += len;
+    }
+    if (!cnt && fmt != BEJ_SET && fmt != BEJ_ARRAY) {
+        pldm_bej_val_search2(dict, &sflv, ptr);
+    }
+    return sflv.sflv_len;
+}
+
+pldm_cjson_t *pldm_bej_decode1(u8 *buf, u8 *anno_dict, u8 *dict, pldm_cjson_t *root)
+{
+    if (!buf || !dict || !anno_dict) return NULL;
+    root = pldm_cjson_create_obj();
+    if (!root) return NULL;
+    pldm_redfish_dictionary_format_t *dictionary = (pldm_redfish_dictionary_format_t *)dict;
+    printf("total len : %d\n", pldm_bej_decode_op(buf, anno_dict, dict, &(dictionary->entry[0]), dictionary->entry_cnt, root));
+    pldm_cjson_t *new_root = NULL;
+    new_root = root->child;
+    root->child = NULL;
+    pldm_cjson_delete_node(root);
+    root = NULL;
+    pldm_cjson_cal_len_to_root1(new_root, 0xFF);
+    return new_root;
 }
 
 u16 pldm_bej_decode(u8 *buf, u8 *dict, pldm_redfish_dictionary_entry_t *entry, u8 entry_cnt, cJSON *root)

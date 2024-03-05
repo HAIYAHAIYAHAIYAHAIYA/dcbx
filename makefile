@@ -26,16 +26,16 @@ $(OBJS):$(OUTPUT_DIR)/%.o:%.c
 .PHONY : ALL
 
 cleanall:clean
-	del $(OUTPUT_DIR)\main.exe
+	rm $(OUTPUT_DIR)/*.exe
 
 clean:
-	del $(OUTPUT_DIR)\$(SOURCE_DIR)\MCTP\*.o \
-		$(OUTPUT_DIR)\$(SOURCE_DIR)\DCBX\*.o \
-		$(OUTPUT_DIR)\$(SOURCE_DIR)\APP\*.o  \
-		$(OUTPUT_DIR)\$(SOURCE_DIR)\HSM\*.o  \
-		$(OUTPUT_DIR)\$(SOURCE_DIR)\SHA256\*.o \
-		$(OUTPUT_DIR)\$(SOURCE_DIR)\CJSON\*.o \
-		$(OUTPUT_DIR)\$(SOURCE_DIR)\PLDM_BEJ\*.o
+	rm $(OUTPUT_DIR)/$(SOURCE_DIR)/MCTP/*.o \
+		$(OUTPUT_DIR)/$(SOURCE_DIR)/DCBX/*.o \
+		$(OUTPUT_DIR)/$(SOURCE_DIR)/APP/*.o  \
+		$(OUTPUT_DIR)/$(SOURCE_DIR)/HSM/*.o  \
+		$(OUTPUT_DIR)/$(SOURCE_DIR)/SHA256/*.o \
+		$(OUTPUT_DIR)/$(SOURCE_DIR)/CJSON/*.o \
+		$(OUTPUT_DIR)/$(SOURCE_DIR)/PLDM_BEJ/*.o
 
 excute:
 	$(OUTPUT_DIR)/main
