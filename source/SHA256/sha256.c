@@ -94,6 +94,24 @@ u32 crc32(u8* addr, int num) {
     return crc;                                 //返回最终校验值
 }
 
+u16 crc16_xmodem(const unsigned char *buf, int sz)
+{
+    unsigned short crc = 0;
+    while (--sz >= 0) {
+        int i;
+        crc ^= (unsigned short) *buf++ << 8;
+        for (i = 0; i < 8; i++)
+            if (crc & 0x8000)
+                crc = crc << 1 ^ 0x1021;
+            else
+                crc <<= 1;
+    }
+    unsigned short crc_h = crc & 0xFF;
+    unsigned short crc_l = crc & 0xFF00;
+    crc = (crc_h << 8 | crc_l >> 8);
+    return crc;
+}
+
 u8 crc16_i2c_smbus(u8 crc, u8 *p, u16 count)
 {
     u16 data = 0;

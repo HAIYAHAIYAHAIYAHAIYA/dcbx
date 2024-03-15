@@ -122,6 +122,93 @@ u8 dict1[] = {
 //         }                                                             \
 //     }";
 
+u8 json_test[] = \
+    "{\
+    \"@Redfish.Copyright\": \"Copyright 2014-2023 DMTF. For the full DMTF copyright policy, see http://www.dmtf.org/about/policies/copyright.\",\
+    \"@odata.type\": \"#NetworkAdapter.v1_9_0.NetworkAdapter\",\
+    \"Id\": \"9fa725a1\",\
+    \"Name\": \"Network Adapter View\",\
+    \"Manufacturer\": \"Contoso\",\
+    \"Model\": \"599TPS-T\",\
+    \"SKU\": \"Contoso TPS-Net 2-Port Base-T\",\
+    \"SerialNumber\": \"003BFLRT00023234\",\
+    \"PartNumber\": \"975421-B20\",\
+    \"Ports\": {\
+        \"@odata.id\": \"/redfish/v1/Chassis/1/NetworkAdapters/9fd725a1/Ports\"\
+    },\
+    \"NetworkDeviceFunctions\": {\
+        \"@odata.id\": \"/redfish/v1/Chassis/1/NetworkAdapters/9fd725a1/NetworkDeviceFunctions\"\
+    },\
+    \"Controllers\": [\
+        {\
+            \"FirmwarePackageVersion\": \"7.4.10\",\
+            \"Links\": {\
+                \"PCIeDevices\": [\
+                    {\
+                        \"@odata.id\": \"/redfish/v1/Systems/1/PCIeDevices/NIC\"\
+                    }\
+                ],\
+                \"Ports\": [\
+                    {\
+                        \"@odata.id\": \"/redfish/v1/Chassis/1/NetworkAdapters/9fd725a1/Ports/1\"\
+                    }\
+                ],\
+                \"NetworkDeviceFunctions\": [\
+                    {\
+                        \"@odata.id\": \"/redfish/v1/Chassis/1/NetworkAdapters/9fd725a1/NetworkDeviceFunctions/111111111100\"\
+                    }\
+                ]\
+            },\
+            \"ControllerCapabilities\": {\
+                \"NetworkPortCount\": 2,\
+                \"NetworkDeviceFunctionCount\": 8,\
+                \"DataCenterBridging\": {\
+                    \"Capable\": true\
+                },\
+                \"VirtualizationOffload\": {\
+                    \"VirtualFunction\": {\
+                        \"DeviceMaxCount\": 256,\
+                        \"NetworkPortMaxCount\": 128,\
+                        \"MinAssignmentGroupSize\": 4\
+                    },\
+                    \"SRIOV\": {\
+                        \"SRIOVVEPACapable\": true\
+                    }\
+                },\
+                \"NPIV\": {\
+                    \"MaxDeviceLogins\": 4,\
+                    \"MaxPortLogins\": 2\
+                },\
+                \"NPAR\": {\
+                    \"NparCapable\": true,\
+                    \"NparEnabled\": false\
+                }\
+            },\
+            \"PCIeInterface\": {\
+                \"PCIeType\": \"Gen2\",\
+                \"MaxPCIeType\": \"Gen3\",\
+                \"LanesInUse\": 1,\
+                \"MaxLanes\": 4\
+            },\
+            \"Location\": {\
+                \"PartLocation\": {\
+                    \"ServiceLabel\": \"Slot 1\",\
+                    \"LocationType\": \"Slot\",\
+                    \"LocationOrdinalValue\": 0,\
+                    \"Reference\": \"Rear\",\
+                    \"Orientation\": \"LeftToRight\"\
+                }\
+            }\
+        }\
+    ],\
+    \"Actions\": {\
+        \"#NetworkAdapter.ResetSettingsToDefault\": {\
+            \"target\": \"/redfish/v1/Chassis/1/NetworkAdapters/9fd725a1/Actions/NetworkAdapter.ResetSettingsToDefault\"\
+        }\
+    },\
+    \"@odata.id\": \"/redfish/v1/Chassis/1/NetworkAdapters/9fd725a1\"\
+}";
+
 u8 *json_buf = "{\"DummySimple\":{\"@odata.id\":\"/redfish/v1/systems/1/DummySimples/1\",\"ChildArrayProperty\":[{\"AnotherBoolean\":true,\"LinkStatus\":\"NoLink\"},{\"LinkStatus\":\"LinkDown\"}],\"Id\":\"DummyID\",\"SampleIntegerProperty\":12}}";
 
 static u16 pldm_bej_get_len(u8 *buf)
@@ -301,6 +388,7 @@ static void pldm_bej_val_search2(u8 *dictionary, pldm_bej_sflv_t *sflv, pldm_cjs
         pldm_cjson_add_enum_to_obj(ptr, dictionary, &tmp, key.val, enum_key.val);
         break;
         case BEJ_BOOLEAN:
+        // printf("seq : %d\n", tmp.seq);
         if (sflv->val[0] == 0) {
             pldm_cjson_add_item_to_obj(ptr, &tmp, key.val, "f", tmp.len);
         } else {
@@ -327,17 +415,27 @@ void pldm_bej_annotation_dict_search(pldm_bej_sflv_t *sflv, u8 *anno_dict)
     pldm_redfish_dictionary_format_t *dict = (pldm_redfish_dictionary_format_t *)anno_dict;
     pldm_redfish_dictionary_entry_t *tmp = (pldm_redfish_dictionary_entry_t *)&(dict->entry[0]);
     // dict->entry[1].sequence_num = 1;
-    // printf("entry cnt : %d\n", entry_cnt);
+    // printf("entry cnt : %d\n", dict->entry_cnt);
     // printf("need 0x%x, 0x%x, %s\n", sflv->fmt >> 4, sflv->seq >> 1, sflv->val);
+    // dict->entry_cnt = 30;
+    /* context 24 */
+    /* cnt 24 */
+    /* etag 24 */
+    /* id 24 */
+    // dict->entry[24].sequence_num = 9;
+    // dict->entry[25].sequence_num = 24;
+    // dict->entry[26].sequence_num = 8;
+    // dict->entry[27].sequence_num = 6;
 
     for (u16 k = 0; k < dict->entry_cnt; k++) {
         u8 dict_fmt = tmp->format >> 4;
-        // printf("0x%x, 0x%x\n", dict_fmt, tmp->sequence_num);
+        // printf("0x%x, 0x%x, %d\n", dict_fmt, tmp->sequence_num, tmp->name_off);
         if (dict_fmt == sflv->fmt >> 4 && tmp->sequence_num == (sflv->seq >> 1)) {
             // printf("tmp->name_off : %d\n", tmp->name_off);
             key.val = &anno_dict[tmp->name_off];
             key.len = tmp->name_len;
             // printf("key.val %s: ", key.val);
+            // printf("key.val %d: ", strlen(key.val));
             is_find = 1;
             break;
         }

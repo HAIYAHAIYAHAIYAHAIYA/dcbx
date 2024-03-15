@@ -26,10 +26,10 @@ $(OBJS):$(OUTPUT_DIR)/%.o:%.c
 .PHONY : ALL
 
 cleanall:clean
-	rm $(OUTPUT_DIR)/*.exe
+	rm -rf $(OUTPUT_DIR)/*.exe
 
 clean:
-	rm $(OUTPUT_DIR)/$(SOURCE_DIR)/MCTP/*.o \
+	rm -rf $(OUTPUT_DIR)/$(SOURCE_DIR)/MCTP/*.o \
 		$(OUTPUT_DIR)/$(SOURCE_DIR)/DCBX/*.o \
 		$(OUTPUT_DIR)/$(SOURCE_DIR)/APP/*.o  \
 		$(OUTPUT_DIR)/$(SOURCE_DIR)/HSM/*.o  \

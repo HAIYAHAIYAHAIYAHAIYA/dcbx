@@ -6,6 +6,7 @@
 #include "cJSON.h"
 #include "pldm_cjson.h"
 #include "pldm_bej_resolve.h"
+#include "pldm_fw_update.h"
 #include "main.h"
 
 
@@ -208,8 +209,37 @@ extern u8 dict0[];
 extern u8 dict1[];
 extern u8 dict_test[];
 extern u8 *json_buf;
+extern u8 json_test[];
 // extern cJSON *cjson_test;
 
+void printf_cjson(cJSON *node)
+{
+    if (!node) return;
+    printf("name : %s\n", node->string);
+    printf_cjson(node->child);
+    printf_cjson(node->next);
+}
+
+#pragma pack(1)
+
+typedef struct {
+    u16 len;
+    u32 dict_sign;
+    u8 data[0];
+} pldm_redfish_dict_fmt_t;
+typedef struct {
+    u32 resource_id;
+    u16 schema_class;
+    u16 offset;
+} dict_off_id_t;
+
+typedef struct {
+    u16 total_len;
+    u16 num_of_dict;
+    dict_off_id_t dict[0];
+} dict_hdr_t;
+
+#pragma pack()
 int main(int argc, char * argv [])
 {
     // DCBX_ANALYZE(g_dcbx_sample_capture_2_pcap_buf);
@@ -255,12 +285,15 @@ int main(int argc, char * argv [])
     // };
     // mctp_hdr_t *mctp_hdr = (mctp_hdr_t *)&notify_buf[5];
     // printf("src_eid : 0x%02x\n", mctp_hdr->dest_eid);
-    // pldm_redfish_dictionary_format_t *dict_ptr = (pldm_redfish_dictionary_format_t *)dictionary;
+    // pldm_redfish_dictionary_format_t *dict_ptr = (pldm_redfish_dictionary_format_t *)dict0;
+    // for (u8 i = 0; i < dict_ptr->entry_cnt; i++) {
+    //     printf("fmt : 0x%02x\n", dict_ptr->entry[i].format);
+    // }
     // cJSON *fmt_err = NULL;
     // cJSON *dummy = NULL;
     // pldm_bej_init();
     // pldm_cjson_test();
-    // printf("total len : %d\n", pldm_bej_decode(bej_buf, dictionary, &(dict_ptr->entry[0]), dict_ptr->entry_cnt, cjson_test));
+    // printf("total len : %d\n", pldm_bej_decode(bej_buf, dict0, &(dict_ptr->entry[0]), dict_ptr->entry_cnt, cjson_test));
     // char *str = cJSON_Print(cjson_test);
     // printf("%s\n", str);
     // dummy = cJSON_GetObjectItem(cjson_test, "DummySimple");
@@ -268,7 +301,48 @@ int main(int argc, char * argv [])
     // printf("%s\n", fmt_err->valuestring);
     // cJSON_Delete(cjson_test);
     // pldm_bej_encode(json_buf, dict);
-    pldm_cjson_test();
+    // pldm_cjson_test();
+
+    // cJSON *tmp = cJSON_Parse(json_buf);
+    // char *str = cJSON_Print(tmp);
+    // printf("%s\n", str);
+    // printf_cjson(tmp);
+    // cJSON_Delete(tmp);
+
+    // cJSON *ptr = cJSON_Parse((char *)json_test);
+    // char *str = cJSON_Print(ptr);
+    // printf("%s\n", str);
+    // FILE *pd = NULL;
+    // u8 b[9000];
+    // 读取二进制文件
+    // 文件名："test.bin",  访问方式："rb"
+    // pd = fopen("dict_data.bin", "rb");
+    // 数据块首地址: "&b", 元素大小: "sizeof(unsigned __int8)",  元素个数: "10",  文件指针："pd"
+    // fread(&b, sizeof(u8), 1024, pd);
+    // fclose(pd);
+    // pldm_redfish_dictionary_format_t *dict = (pldm_redfish_dictionary_format_t *)b;
+    // u16 len = dict->dictionary_size;
+    // printf("%d\n", len);
+    // pd = fopen("./dict/PCIeDevice_v1.bin", "rb");
+    // // 数据块首地址: "&b", 元素大小: "sizeof(unsigned __int8)",  元素个数: "10",  文件指针："pd"
+    // fread(&b, sizeof(u8), len, pd);
+    // fclose(pd);
+    // dict_hdr_t *dicts = (dict_hdr_t *)b;
+    // printf("total : %d\n", dicts->total_len);
+    // printf("num : %d\n", dicts->num_of_dict);
+    // pldm_redfish_dict_fmt_t *dict_fmt = (pldm_redfish_dict_fmt_t *)&b[dicts->dict[0].offset];
+    // printf("%#x\n", dict_fmt->dict_sign);
+    // printf("%d\n", dict_fmt->len);
+    // for (u8 i = 0; i < dicts->num_of_dict; i++) {
+    //     printf("id : %d\n", dicts->dict[i].resource_id);
+    //     printf("off : %d\n", dicts->dict[i].offset);
+    // }
+    // printf("%08x\n", ~crc32_pldm(b, len));
+    // printf("%08x\n", ~0xa4fc415f);
+    // for (u8 i = 0; i < 8; i++) {
+    //     printf("%02x \n", b[i]);
+    // }
+    pldm_fwup_verify_pkt_data_test();
 	return 0;
 }
 
