@@ -1,4 +1,6 @@
 *.o
 *.txt
+*.bin
+*.img
 .vscode/
 build/
