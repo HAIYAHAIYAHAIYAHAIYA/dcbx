@@ -131,4 +131,9 @@ void pldm_monitor_test(void)
         pldm_pde_get_used();
     }
     pldm_monitor_printf_repo(&(g_pldm_monitor_info.pldm_repo));
+    for (u8 i = 0; i < MAX_LAN_NUM; i++) {
+        pldm_link_handle(i, 0);
+        pldm_pde_get_used();
+    }
+    pldm_monitor_printf_repo(&(g_pldm_monitor_info.pldm_repo));
 }

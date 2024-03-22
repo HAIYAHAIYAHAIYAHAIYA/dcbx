@@ -18,11 +18,13 @@ ALL = cleanall excute clean
 
 #-lwsock32 	$(shell @$(MKDIR) $(dir $@) 2> dev/null || @echo off) -lmingw32 -lgdi32	@echo $(dir $@) @$(MKDIR) $(dir $@) 2> $(NUL)
 $(TARGET) : $(OBJS)
+	@echo -e '\033[36mGen file: all file -> $@ \033[0m'
 	$(CC) $(OBJS) $' -o $@
 
 -include $(OBJS_D)
 $(OBJS):$(OUTPUT_DIR)/%.o:%.c
-	$(MKDIR) $(dir $@)
+	$(shell $(MKDIR) $(dir $@) 2> /dev/null)
+	@echo -e '\033[32mCompile C file: $< -> $@ \033[0m'
 	$(CC) $(CFLAGS) $(INCLUDES) $< -MMD -o $@
 
 .PHONY : ALL

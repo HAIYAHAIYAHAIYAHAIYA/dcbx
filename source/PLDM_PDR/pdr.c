@@ -1259,7 +1259,7 @@ void pldm_redfish_pdr_init(void)
 
 void pldm_terminus_locator_pdr_init(void)
 {
-    pldm_pdr_record_t *is_exist = pldm_pdr_find(&(g_pldm_monitor_info.pldm_repo), PLDM_TERMINUS_HANDLE);
+    pldm_pdr_record_t *is_exist = pldm_pdr_find(&(g_pldm_monitor_info.pldm_repo), PLDM_TERMINUS_LOCATOR_PDR_HANDLE);
     if (is_exist) return;
 
 	pldm_terminus_locator_pdr_t *terminus_locator_pdr = (pldm_terminus_locator_pdr_t *)pdr_malloc(sizeof(pldm_terminus_locator_pdr_t));
