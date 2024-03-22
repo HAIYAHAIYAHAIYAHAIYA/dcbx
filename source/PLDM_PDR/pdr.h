@@ -4,7 +4,7 @@
 #include "type.h"
 
 #define PDR_MIN_SIZE                    (1)
-#define PDR_POOL_SIZE                   (4 * 1024)          /* all size 2825 bytes , only static size 968 bytes, except redfish pdr. */
+#define PDR_POOL_SIZE                   (9 * 512)          /* all size 2825 bytes , only static size 968 bytes, except redfish pdr. */
 #define NOT_FIELD                       (0xFF)
 
 typedef float real32_t;
