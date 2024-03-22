@@ -6,7 +6,9 @@
 #include "cJSON.h"
 #include "pldm_cjson.h"
 #include "pldm_bej_resolve.h"
+#include "pldm_redfish.h"
 #include "pldm_fw_update.h"
+#include "pldm_monitor.h"
 #include "main.h"
 
 
@@ -100,110 +102,6 @@ u8 gs_sumbus_pkt0[] = {                         /* Clear Initial State 0x00 */
     0x40                                        /* pec */
 };
 
-#pragma pack(1)
-
-typedef struct {
-	u16 entity_type;
-	u16 entity_instance_num;
-	u16 entity_container_id;
-} pldm_entity;
-
-typedef struct {
-	u32 record_handle;
-	u8 version;
-	u8 type;
-	u16 record_change_num;
-	u16 length;
-}pldm_pdr_hdr;
-
-typedef struct {
-    pldm_pdr_hdr hdr;
-    u16 terminus_handle;
-    u16 sensor_id;
-    pldm_entity container;
-    u8 sensor_init;
-    bool sensor_auxiliary_names_pdr;
-    u8 base_unit;
-    s8 unit_modifier;
-    u8 rate_unit;
-    u8 base_oem_unit_handle;
-    u8 aux_unit;
-    u8 aux_unit_modifier;
-    u8 aux_rate_unit;
-    u8 rel;
-    u8 aux_oem_unit_handle;
-    bool is_linear;
-    u8 sensor_data_size;
-    u32 resolution;
-    u32 offset;
-    u16 accuracy;
-    u8 plus_tolerace;
-    u8 minus_tolerance;
-    u8 hysteresis;
-    u8 supported_thresholds;
-    u8 threshold_and_hysteresis_volatility;
-    u32 state_transition_interval;
-    u32 update_interval;
-    u8 max_readable;
-    u8 min_readable;
-    u8 range_field_format;
-    u8 range_field_support;
-    u16 nominal_value;
-	u16 normal_max;
-	u16 normal_min;
-	u16 warning_high;
-	u16 warning_low;
-	u16 critical_high;
-	u16 critical_low;
-	u16 fatal_high;
-	u16 fatal_low;
-} pldm_thermal_sensor_pdr;
-
-typedef struct {
-    pldm_pdr_hdr hdr;
-    u16 terminus_handle;
-    u8 validity;
-    u8 tid;
-    u16 container_id;
-    u8 terminus_locator_type;
-	u8 terminus_locator_value_size;
-    u8 eid;
-} pldm_terminus_locator_pdr;
-
-typedef struct {
-    u8 sensor_type;
-    u8 composite_state;
-} pldm_composite_sensor_attr;
-
-typedef struct {
-    pldm_entity container;
-    u16 terminus_handle;
-    u16 sensor_id;
-    u8 composite_sensor_cnt;
-    pldm_composite_sensor_attr sensors[3];
-} pldm_somposite_state_sensor_pdr;
-
-typedef struct {
-	u16 container_id;
-	u8 association_type;
-	pldm_entity container;
-	u8 num_children;
-	pldm_entity children[3];
-} pldm_pdr_entity_association;
-
-typedef struct {
-    u8 tid;
-    u16 event_id;
-    u32 next_data_transfer_handle;
-    u8 transfer_flag;
-    u8 event_class;
-    u32 event_datasize;                     /* Size in byes of eventData */
-    u8 *event_data;
-    u32 event_data_integrity_checksum;
-} pldm_poll_for_platform_event_msg_rsp_dat_t;
-
-#pragma pack()
-
 extern u8 bej_buf[];
 extern u8 dict0[];
 extern u8 dict1[];
@@ -220,26 +118,6 @@ void printf_cjson(cJSON *node)
     printf_cjson(node->next);
 }
 
-#pragma pack(1)
-
-typedef struct {
-    u16 len;
-    u32 dict_sign;
-    u8 data[0];
-} pldm_redfish_dict_fmt_t;
-typedef struct {
-    u32 resource_id;
-    u16 schema_class;
-    u16 offset;
-} dict_off_id_t;
-
-typedef struct {
-    u16 total_len;
-    u16 num_of_dict;
-    dict_off_id_t dict[0];
-} dict_hdr_t;
-
-#pragma pack()
 int main(int argc, char * argv [])
 {
     // DCBX_ANALYZE(g_dcbx_sample_capture_2_pcap_buf);
@@ -312,37 +190,15 @@ int main(int argc, char * argv [])
     // cJSON *ptr = cJSON_Parse((char *)json_test);
     // char *str = cJSON_Print(ptr);
     // printf("%s\n", str);
-    // FILE *pd = NULL;
-    // u8 b[9000];
-    // 读取二进制文件
-    // 文件名："test.bin",  访问方式："rb"
-    // pd = fopen("dict_data.bin", "rb");
-    // 数据块首地址: "&b", 元素大小: "sizeof(unsigned __int8)",  元素个数: "10",  文件指针："pd"
-    // fread(&b, sizeof(u8), 1024, pd);
-    // fclose(pd);
-    // pldm_redfish_dictionary_format_t *dict = (pldm_redfish_dictionary_format_t *)b;
-    // u16 len = dict->dictionary_size;
-    // printf("%d\n", len);
-    // pd = fopen("./dict/PCIeDevice_v1.bin", "rb");
-    // // 数据块首地址: "&b", 元素大小: "sizeof(unsigned __int8)",  元素个数: "10",  文件指针："pd"
-    // fread(&b, sizeof(u8), len, pd);
-    // fclose(pd);
-    // dict_hdr_t *dicts = (dict_hdr_t *)b;
-    // printf("total : %d\n", dicts->total_len);
-    // printf("num : %d\n", dicts->num_of_dict);
-    // pldm_redfish_dict_fmt_t *dict_fmt = (pldm_redfish_dict_fmt_t *)&b[dicts->dict[0].offset];
-    // printf("%#x\n", dict_fmt->dict_sign);
-    // printf("%d\n", dict_fmt->len);
-    // for (u8 i = 0; i < dicts->num_of_dict; i++) {
-    //     printf("id : %d\n", dicts->dict[i].resource_id);
-    //     printf("off : %d\n", dicts->dict[i].offset);
-    // }
+
     // printf("%08x\n", ~crc32_pldm(b, len));
     // printf("%08x\n", ~0xa4fc415f);
     // for (u8 i = 0; i < 8; i++) {
     //     printf("%02x \n", b[i]);
     // }
-    pldm_fwup_verify_pkt_data_test();
+    // pldm_redfish_dict_test();
+    // pldm_fwup_verify_pkt_data_test();
+    pldm_monitor_test();
 	return 0;
 }
 

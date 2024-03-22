@@ -14,7 +14,7 @@
 #define cm_strlen           strlen
 #define cm_strcmp           strcmp
 
-#define MAX_LAN_NUM          2
+#define MAX_LAN_NUM         2
 
 /* resource id */
 #define PLDM_BASE_NETWORK_ADAPTER_RESOURCE_ID         (1)

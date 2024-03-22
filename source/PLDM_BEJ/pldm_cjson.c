@@ -1700,6 +1700,7 @@ void pldm_cjson_test(void)
         root = g_schemas[i](dict, anno_dict);
         u8 *end_ptr = pldm_bej_encode(root, bej_data);
         printf("len : %d\n", end_ptr - bej_data);
+        printf("\nused space : %d, max_space : %d\n", pldm_cjson_get_used_space(), MY_CJSON_POLL_SIZE);
         pldm_cjson_pool_init();
     }
     // printf("\nused space : %d, max_space : %d\n", pldm_cjson_get_used_space(), MY_CJSON_POLL_SIZE);

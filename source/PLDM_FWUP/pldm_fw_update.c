@@ -2,11 +2,31 @@
 #include "sha256.h"
 #include "main.h"
 
-void pldm_fwup_verify_pkt_data_test(void)
+u8 str_to_acsll(u8 *s_inchar, u8 s_len, u8 *a_outtxt)
+{
+
+    u8 size1 = 0, i = 0;
+    for (size1 = 0; size1 < s_len; size1++) {
+        if (s_inchar[size1] >= '0' && s_inchar[size1] <= '9') {
+            a_outtxt[size1] = s_inchar[size1] - 0x30;
+        } else if (s_inchar[size1] >= 'A' && s_inchar[size1] <= 'F') {
+            a_outtxt[size1] = s_inchar[size1] - 'A' + 10;
+        } else if (s_inchar[size1] >= 'a' && s_inchar[size1] <= 'f') {
+            a_outtxt[size1] = s_inchar[size1] - 'a' + 10;
+        }
+    }
+    for (size1 = 0, i = 0; size1 <= s_len; size1++, i++) {
+        a_outtxt[i] = (a_outtxt[size1] << 4) | a_outtxt[++size1];
+    }
+    a_outtxt[i] = '\0';
+    return i;
+}
+
+void pldm_fwup_analyze_pkg(void)
 {
     FILE *pd = NULL;
     u8 b[9000];
-    pd = fopen("fwup.img", "rb");
+    pd = fopen("upgrade_pldm_fwup_slot.img", "rb");
     fread(&b, sizeof(u8), 1024, pd);
     fclose(pd);
     pldm_fwup_pkt_hdr_t *pkt_hdr = (pldm_fwup_pkt_hdr_t *)b;
@@ -84,5 +104,21 @@ void pldm_fwup_verify_pkt_data_test(void)
     u32 cal_crc32 = crc32_pldm(b, pkt_hdr->pkt_hdr_size - sizeof(u32));
     printf("pkt_hdr_crc32 : %#x\n", crc32->pkt_hdr_crc32);
     printf("check result : %s\n", cal_crc32 == crc32->pkt_hdr_crc32 ? "success" : "false");
-    printf("%s\n", (u8 *)comp_first_part + sizeof(u32));
+    // printf("%s\n", (u8 *)comp_first_part + sizeof(u32));
+}
+
+void pldm_fwup_verify_pkt_data_test(void)
+{
+    // u8 *str = "amber_vxx.xx.xx.xx";
+    // u8 ascii[256];
+    // printf("str_to_acsll : %s\n", str);
+    // for (u8 i = 0; i < strlen(str); i++) {
+    //     printf("%02x ", str[i]);
+    // }
+    // printf("\n");
+    // u8 len = str_to_acsll(str, strlen(str), ascii);
+    // for (u8 i = 0; i < len; i++) {
+    //     printf("%02x ", ascii[i]);
+    // }
+    pldm_fwup_analyze_pkg();
 }

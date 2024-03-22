@@ -20,7 +20,6 @@ $(TARGET) : $(OBJS)
 	$(CC) $(OBJS) $' -o $@
  
 $(OBJS):$(OUTPUT_DIR)/%.o:%.c
-# @echo $(dir $<)
 	$(CC) $(CFLAGS) $(INCLUDES) $< -o $@
 
 .PHONY : ALL
