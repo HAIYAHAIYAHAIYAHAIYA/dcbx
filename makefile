@@ -11,7 +11,7 @@ include $(SOURCE_DIR)/subdir.mk
 OBJS = $(C_SRCS:%.c=$(OUTPUT_DIR)/%.o)
 OBJS_D := $(patsubst %.c,$(OUTPUT_DIR)/%.d,$(C_SRCS))		# add .d 自动生成依赖
 
-TARGET = $(OUTPUT_DIR)\main.exe
+TARGET = $(OUTPUT_DIR)/main.exe
 
 CC = gcc
 ALL = cleanall excute clean
@@ -22,23 +22,16 @@ $(TARGET) : $(OBJS)
 
 -include $(OBJS_D)
 $(OBJS):$(OUTPUT_DIR)/%.o:%.c
-# $(CC) $(CFLAGS) -MMD $(INCLUDES) $< -o $@
-	gcc $(INCLUDES) $< -c -MMD -o $@
+	$(MKDIR) $(dir $@)
+	$(CC) $(CFLAGS) $(INCLUDES) $< -MMD -o $@
 
 .PHONY : ALL
 
 cleanall:clean
-	rm -rf $(OUTPUT_DIR)/*.exe
+	rm -rf $(TARGET)
 
 clean:
-	rm -rf $(OUTPUT_DIR)/$(SOURCE_DIR)/MCTP/*.o *.d \
-		$(OUTPUT_DIR)/$(SOURCE_DIR)/DCBX/*.o *.d \
-		$(OUTPUT_DIR)/$(SOURCE_DIR)/APP/*.o *.d  \
-		$(OUTPUT_DIR)/$(SOURCE_DIR)/HSM/*.o *.d  \
-		$(OUTPUT_DIR)/$(SOURCE_DIR)/SHA256/*.o *.d \
-		$(OUTPUT_DIR)/$(SOURCE_DIR)/CJSON/*.o *.d \
-		$(OUTPUT_DIR)/$(SOURCE_DIR)/PLDM_BEJ/*.o *.d \
-		$(OUTPUT_DIR)/$(SOURCE_DIR)/PLDM_PDR/*.o *.d
+	rm -rf $(OUTPUT_DIR)/
 
 excute:
 	$(OUTPUT_DIR)/main
