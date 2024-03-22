@@ -303,9 +303,9 @@ void printf_mctp_merge_pkt(void)
         PCIE_EXTCM_MSG *buf = mctp_merge_pkt((PCIE_EXTCM_MSG *)g_mctp_pkt_s1e1_s0e1_suc[i], gs_mctp_recv_buf);
         if (buf != NULL) {
             for (int i = 0; i < get_mctp_buflen(); i++) {
-                printf("%d ", gs_mctp_recv_buf[i]);
+                LOG("%d ", gs_mctp_recv_buf[i]);
             }
-            printf("%d %d\n", get_mctp_buflen(), get_mctp_error());
+            LOG("%d %d\n", get_mctp_buflen(), get_mctp_error());
             clear_mctp_gobal_param();
         }
     }

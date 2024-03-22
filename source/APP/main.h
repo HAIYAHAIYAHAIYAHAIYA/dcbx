@@ -8,4 +8,9 @@
 #include <stdbool.h>
 #include <stdarg.h>
 
+#if 1
+    #define LOG(...)               printf(__VA_ARGS__)
+#else 
+    #define LOG(...)
+#endif
 #endif

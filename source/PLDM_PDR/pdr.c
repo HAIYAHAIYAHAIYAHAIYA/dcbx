@@ -102,7 +102,7 @@ void pdrs_pool_init(u32 *addr)
     pdrs_pool = addr;
     pdrs_pool_wt = 0;
 
-    printf("%s addr 0x%X, total size 0x%X\n",
+    LOG("%s addr 0x%X, total size 0x%X\n",
         __FUNCTION__, addr, PDR_POOL_SIZE);
 }
 
@@ -110,7 +110,7 @@ void *pdr_malloc(int size)
 {
     size = ALIGN(size, PDR_MIN_SIZE);
     if (pdrs_pool_wt + size >= PDR_POOL_SIZE) {
-        printf( "pool size : %d, pdr_malloc failed\n", PDR_POOL_SIZE);
+        LOG( "pool size : %d, pdr_malloc failed\n", PDR_POOL_SIZE);
         return NULL;
     }
 
@@ -123,7 +123,7 @@ void *pdr_malloc(int size)
 
 void pldm_pde_get_used(void)
 {
-    printf("used space : %d\n", pdrs_pool_wt);
+    LOG("used space : %d\n", pdrs_pool_wt);
 }
 
 void pldm_pdr_init(pldm_pdr_t *repo)
@@ -168,7 +168,7 @@ static void pldm_pdr_insert(pldm_pdr_t *repo, pldm_pdr_record_t *insert_pdr)
         repo->last = insert_pdr;
         insert_pdr->next = NULL;
     }
-    // printf("insert_pos : %04d, insert_pdr : %04d, last_pdr : %04d,\n", insert_pos->record_handle, insert_pdr->record_handle, repo->last->record_handle);
+    // LOG("insert_pos : %04d, insert_pdr : %04d, last_pdr : %04d,\n", insert_pos->record_handle, insert_pdr->record_handle, repo->last->record_handle);
 
     repo->size += insert_pdr->size;
     ++repo->record_count;
@@ -503,7 +503,7 @@ static pldm_pdr_entity_assoc_t *assoc_pdr_create_container(pldm_entity_t *contai
     expected_contained_num * sizeof(pldm_entity_t));
 
     if (!assoc_container) {
-        printf("no more space for malloc!, %s\n", __FUNCTION__);
+        LOG("no more space for malloc!, %s\n", __FUNCTION__);
         return NULL;
     }
 
@@ -546,7 +546,7 @@ static pldm_composite_state_sensor_pdr_t *composite_state_pdr_create_sensor(pldm
     expected_sensor_count * sizeof(pldm_composite_sensor_attr_t));
 
     if (!composite_state_pdr) {
-        printf("no more space for malloc!, %s\n", __FUNCTION__);
+        LOG("no more space for malloc!, %s\n", __FUNCTION__);
         return NULL;
     }
 
@@ -656,7 +656,7 @@ static void pldm_add_numeric_sensor_pdr(u8 data_size, pldm_data_struct_t *sensor
 
         void *buf = pdr_malloc(data_size);
         if (!buf) {
-            printf("no more space for malloc!, %s\n", __FUNCTION__);
+            LOG("no more space for malloc!, %s\n", __FUNCTION__);
             return;
         }
 
@@ -686,7 +686,7 @@ static void pldm_delete_numeric_sensor_pdr(pldm_data_struct_t *sensor_datastruct
 
         int ret = pldm_pdr_delete(&(g_pldm_monitor_info.pldm_repo), record_handle);
         if (ret != 0) {
-            printf("ERR SENSOR ID : %d", sensor_id);
+            LOG("ERR SENSOR ID : %d", sensor_id);
             return;
         }
 
@@ -1276,7 +1276,7 @@ void pldm_terminus_locator_pdr_init(void)
 
 	pldm_terminus_locator_pdr_t *terminus_locator_pdr = (pldm_terminus_locator_pdr_t *)pdr_malloc(sizeof(pldm_terminus_locator_pdr_t));
     if (!terminus_locator_pdr) {
-        printf("no more space for malloc!, %s\n", __FUNCTION__);
+        LOG("no more space for malloc!, %s\n", __FUNCTION__);
         return;
     }
 
@@ -1441,7 +1441,7 @@ static void pldm_add_pluggable_module_assoc_pdr(u8 port)
     container_assoc_pdr = (pldm_pdr_entity_assoc_t *)pldm_pdr_find(&(g_pldm_monitor_info.pldm_repo), PLDM_BASE_CONNECTOR_ASSOC_PDR_HANDLE + port);
 
     if (!container_assoc_pdr) {
-        printf("Not find assoc pdr. record handle : %d", PLDM_BASE_CONNECTOR_ASSOC_PDR_HANDLE + port);
+        LOG("Not find assoc pdr. record handle : %d", PLDM_BASE_CONNECTOR_ASSOC_PDR_HANDLE + port);
         return;
     }
 
@@ -1460,7 +1460,7 @@ static void pldm_add_comm_chan_assoc_pdr(u8 port)
     container_assoc_pdr = (pldm_pdr_entity_assoc_t *)pldm_pdr_find(&(g_pldm_monitor_info.pldm_repo), PLDM_BASE_PLUG_ASSOC_PDR_HANDLE + port);
 
     if (!container_assoc_pdr) {
-        printf("Not find assoc pdr. record handle : %d", PLDM_BASE_PLUG_ASSOC_PDR_HANDLE + port);
+        LOG("Not find assoc pdr. record handle : %d", PLDM_BASE_PLUG_ASSOC_PDR_HANDLE + port);
         return;
     }
 
@@ -1531,7 +1531,7 @@ void pldm_link_handle(u8 port, u8 link_state)
     for (int i = 0; i < (sizeof(pldm_link_func[link_state]) / sizeof(pldm_link_func[link_state][0])); i++) {
         if (pldm_link_func[link_state][i] != NULL) {
             pldm_link_func[link_state][i](port);
-            // printf("hhh");
+            // LOG("hhh");
         }
     }
     // pldm_redfish_msg_event_generate(g_pldm_monitor_info.pldm_event_rbuf, link_state);

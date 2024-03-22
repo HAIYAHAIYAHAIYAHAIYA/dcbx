@@ -89,23 +89,23 @@ static void pldm_monitor_base_info_init(pldm_monitor_base_info_t *pldm_monitor_b
 
 void pldm_monitor_printf_repo(pldm_pdr_t *repo)
 {
-    printf("record_count : %d\n", repo->record_count);
-    printf("size : %d\n", repo->size);
-    printf("update_time : %d\n", repo->update_time);
-    printf("repo_signature : %d\n", repo->repo_signature);
+    LOG("record_count : %d\n", repo->record_count);
+    LOG("size : %d\n", repo->size);
+    LOG("update_time : %d\n", repo->update_time);
+    LOG("repo_signature : %d\n", repo->repo_signature);
     u16 sum_size = 0;
     u8 cnt = 0;
     pldm_pdr_record_t *pdr = repo->first;
     while (pdr) {
         cnt++;
-        printf("pdr size : %d, record handle : %d\n", pdr->size, pdr->record_handle);
+        LOG("pdr size : %d, record handle : %d\n", pdr->size, pdr->record_handle);
         sum_size += pdr->size;
         pdr = pdr->next;
     }
-    printf("sum size : %d, cnt : %d\n", sum_size, cnt);
+    LOG("sum size : %d, cnt : %d\n", sum_size, cnt);
     pldm_pdr_record_t *delete_pdr = repo->is_deleted;
     while (delete_pdr) {
-        printf("deleted pdr size : %d, record handle : %d\n", delete_pdr->size, delete_pdr->record_handle);
+        LOG("deleted pdr size : %d, record handle : %d\n", delete_pdr->size, delete_pdr->record_handle);
         delete_pdr = delete_pdr->next;
     }
 }
@@ -115,41 +115,41 @@ void pldm_monitor_printf_repo(pldm_pdr_t *repo)
 
 void pldm_monitor_printf_sensor_detail(u8 *ev_data)
 {
-    printf("start %s\n", __FUNCTION__);
-    printf("sensor class : %s\n", TO_STR(PLDM_SENSOR_OP_STATE));
+    LOG("start %s\n", __FUNCTION__);
+    LOG("sensor class : %s\n", TO_STR(PLDM_SENSOR_OP_STATE));
     pldm_field_per_sensor_op_state_format_t *sensor_dat = (pldm_field_per_sensor_op_state_format_t *)ev_data;
-    printf("present_op_state : %d\n", sensor_dat->present_op_state);
-    printf("previous_op_state : %d\n", sensor_dat->previous_op_state);
-    printf("end %s\n", __FUNCTION__);
+    LOG("present_op_state : %d\n", sensor_dat->present_op_state);
+    LOG("previous_op_state : %d\n", sensor_dat->previous_op_state);
+    LOG("end %s\n", __FUNCTION__);
 }
 
 void pldm_monitor_printf_state_sensor_detail(u8 *ev_data)
 {
-    printf("start %s\n", __FUNCTION__);
-    printf("sensor class : %s\n", TO_STR(PLDM_STATE_SENSOR_STATE));
+    LOG("start %s\n", __FUNCTION__);
+    LOG("sensor class : %s\n", TO_STR(PLDM_STATE_SENSOR_STATE));
     pldm_field_per_state_sensor_state_format_t *sensor_dat = (pldm_field_per_state_sensor_state_format_t *)ev_data;
-    printf("event_state : %d\n", sensor_dat->event_state);
-    printf("previous_event_state : %d\n", sensor_dat->previous_event_state);
-    printf("sensor_offset : %d\n", sensor_dat->sensor_offset);
-    printf("end %s\n", __FUNCTION__);
+    LOG("event_state : %d\n", sensor_dat->event_state);
+    LOG("previous_event_state : %d\n", sensor_dat->previous_event_state);
+    LOG("sensor_offset : %d\n", sensor_dat->sensor_offset);
+    LOG("end %s\n", __FUNCTION__);
 }
 
 void pldm_monitor_printf_numeric_sensor_detail(u8 *ev_data)
 {
-    printf("start %s\n", __FUNCTION__);
-    printf("sensor class : %s\n", TO_STR(PLDM_NUMERIC_SENSOR_STATE));
+    LOG("start %s\n", __FUNCTION__);
+    LOG("sensor class : %s\n", TO_STR(PLDM_NUMERIC_SENSOR_STATE));
     pldm_field_per_numeric_sensor_state_format_t *sensor_dat = (pldm_field_per_numeric_sensor_state_format_t *)ev_data;
-    printf("event_state : %d\n", sensor_dat->event_state);
-    printf("previous_event_state : %d\n", sensor_dat->previous_event_state);
-    printf("present_reading : %d\n", sensor_dat->present_reading);
-    printf("sensor_datasize : %d\n", sensor_dat->sensor_datasize);
-    printf("end %s\n", __FUNCTION__);
+    LOG("event_state : %d\n", sensor_dat->event_state);
+    LOG("previous_event_state : %d\n", sensor_dat->previous_event_state);
+    LOG("present_reading : %d\n", sensor_dat->present_reading);
+    LOG("sensor_datasize : %d\n", sensor_dat->sensor_datasize);
+    LOG("end %s\n", __FUNCTION__);
 }
 
 void pldm_monitor_printf_sensor_event(u8 *data)
 {
     pldm_sensor_event_class_event_data_format_t *sensor_event = (pldm_sensor_event_class_event_data_format_t *)data;
-    printf("\nsensor id : %d\n", sensor_event->sensor_id);
+    LOG("\nsensor id : %d\n", sensor_event->sensor_id);
     switch (sensor_event->sensor_event_class) {
         case PLDM_SENSOR_OP_STATE:
             pldm_monitor_printf_sensor_detail(sensor_event->field_per_event_class);
@@ -161,23 +161,23 @@ void pldm_monitor_printf_sensor_event(u8 *data)
             pldm_monitor_printf_numeric_sensor_detail(sensor_event->field_per_event_class);
             break;
         default :
-            printf("err sensor_event_class!\n");
+            LOG("err sensor_event_class!\n");
             break;
     }
 }
 
 void pldm_monitor_printf_repo_chg_event(u8 *data)
 {
-    printf("\nstart %s\n", __FUNCTION__);
+    LOG("\nstart %s\n", __FUNCTION__);
     pldm_pdr_repo_chg_event_data_format_t *pdr_chg_dat = (pldm_pdr_repo_chg_event_data_format_t *)data;
-    printf("event_data_format %d\n", pdr_chg_dat->event_data_format);
-    printf("num_of_chg_records %d\n", pdr_chg_dat->num_of_chg_records);
+    LOG("event_data_format %d\n", pdr_chg_dat->event_data_format);
+    LOG("num_of_chg_records %d\n", pdr_chg_dat->num_of_chg_records);
     for (u8 i = 0; i < pdr_chg_dat->num_of_chg_records; i++) {
-        printf("chg_entry %d\n", pdr_chg_dat->chg_record[i].chg_entry[0]);
-        printf("event_data_op %d\n", pdr_chg_dat->chg_record[i].event_data_op);
-        printf("num_of_chg_entries %d\n", pdr_chg_dat->chg_record[i].num_of_chg_entries);
+        LOG("chg_entry %d\n", pdr_chg_dat->chg_record[i].chg_entry[0]);
+        LOG("event_data_op %d\n", pdr_chg_dat->chg_record[i].event_data_op);
+        LOG("num_of_chg_entries %d\n", pdr_chg_dat->chg_record[i].num_of_chg_entries);
     }
-    printf("end %s\n", __FUNCTION__);
+    LOG("end %s\n", __FUNCTION__);
 }
 
 void pldm_monitor_printf_event_rbuf(void *p)
@@ -189,7 +189,7 @@ void pldm_monitor_printf_event_rbuf(void *p)
         pldm_event_rbuf_try_read(p, event_data_info, sizeof(pldm_event_data_t), 0);
         pldm_event_data_t *pldm_event_data = (pldm_event_data_t *)event_data_info;                       /* the oldest event */
         // u8 event_cnt = g_event_id - pldm_event_data->event_id;
-        printf("event id : %d, class : %d, size : %d\n", pldm_event_data->event_id, pldm_event_data->event_class, pldm_event_data->event_data_size);
+        LOG("event id : %d, class : %d, size : %d\n", pldm_event_data->event_id, pldm_event_data->event_class, pldm_event_data->event_data_size);
         pldm_event_rbuf_try_read(g_pldm_monitor_info.pldm_event_rbuf, payload, pldm_event_data->event_data_size, sizeof(pldm_event_data_t));
         switch (pldm_event_data->event_class) {
             case SENSOR_EVENT:
@@ -199,13 +199,13 @@ void pldm_monitor_printf_event_rbuf(void *p)
                 // pldm_monitor_printf_repo_chg_event(payload);
                 break;
             default :
-                printf("err class : %d\n", pldm_event_data->event_class);
+                LOG("err class : %d\n", pldm_event_data->event_class);
                 break;
         }
         pldm_event_rbuf_read_done(p);
     }
     g_event_id = 1;
-    printf("event cnt : %d\n", event_cnt);
+    LOG("event cnt : %d\n", event_cnt);
 }
 
 void pldm_monitor_init(void)

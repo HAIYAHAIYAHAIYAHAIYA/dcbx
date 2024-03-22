@@ -120,7 +120,7 @@ void DCBX_ANALYZE(u8 *buf)
         // if(((&buf[100]) < ((u8 *)ptr + ptr->length + 2))){
         //     return ;
         // }
-        // printf("%x\n", ptr->val);
+        // LOG("%x\n", ptr->val);
         switch (ptr->type) {
             case 0x01:
             {
@@ -149,6 +149,6 @@ void DCBX_ANALYZE(u8 *buf)
             break;
         }
         ptr = (tlv_type_t *)((u8 *)ptr + ptr->length + 2);
-        // printf("%p %p\n", &buf[261], ((u8 *)ptr));
+        // LOG("%p %p\n", &buf[261], ((u8 *)ptr));
     }
 }

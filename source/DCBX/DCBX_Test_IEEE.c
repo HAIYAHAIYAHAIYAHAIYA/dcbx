@@ -26,118 +26,118 @@
 
 void printf_ETS_Configuration(tlv_type_t *ptr)
 {
-    printf("*******************************IEEE - ETS Configuration*******************************\n");
+    LOG("*******************************IEEE - ETS Configuration*******************************\n");
     ETS_Configuration_TLV *C_TLV = (ETS_Configuration_TLV *)ptr;
-    printf("type:%d\n", C_TLV->TL.type);
-    printf("length:%d\n", C_TLV->TL.length);
-    printf("Organization Unique Code:(IEEE)");
+    LOG("type:%d\n", C_TLV->TL.type);
+    LOG("length:%d\n", C_TLV->TL.length);
+    LOG("Organization Unique Code:(IEEE)");
     for (int j = 0; j < 3; j++)
     {
-        printf("%x ", C_TLV->OUC[j]);
+        LOG("%x ", C_TLV->OUC[j]);
     }
-    printf("\n");
-    printf("Subtype:0x%x\n", C_TLV->Subtype);
-    printf("Willing:%d\n", C_TLV->Willing);
-    printf("Credit-Based Shaper: %d\n", C_TLV->CBS);
-    printf("Maximum Number of Traffic Classes: %d\n", C_TLV->MaxTCS);
-    printf("PFC FOR Prio 0 :%d\n", C_TLV->Pgid_0);
-    printf("PFC FOR Prio 1 :%d\n", C_TLV->Pgid_1);
-    printf("PFC FOR Prio 2 :%d\n", C_TLV->Pgid_2);
-    printf("PFC FOR Prio 3 :%d\n", C_TLV->Pgid_3);
-    printf("PFC FOR Prio 4 :%d\n", C_TLV->Pgid_4);
-    printf("PFC FOR Prio 5 :%d\n", C_TLV->Pgid_5);
-    printf("PFC FOR Prio 6 :%d\n", C_TLV->Pgid_6);
-    printf("PFC FOR Prio 7 :%d\n", C_TLV->Pgid_7);
+    LOG("\n");
+    LOG("Subtype:0x%x\n", C_TLV->Subtype);
+    LOG("Willing:%d\n", C_TLV->Willing);
+    LOG("Credit-Based Shaper: %d\n", C_TLV->CBS);
+    LOG("Maximum Number of Traffic Classes: %d\n", C_TLV->MaxTCS);
+    LOG("PFC FOR Prio 0 :%d\n", C_TLV->Pgid_0);
+    LOG("PFC FOR Prio 1 :%d\n", C_TLV->Pgid_1);
+    LOG("PFC FOR Prio 2 :%d\n", C_TLV->Pgid_2);
+    LOG("PFC FOR Prio 3 :%d\n", C_TLV->Pgid_3);
+    LOG("PFC FOR Prio 4 :%d\n", C_TLV->Pgid_4);
+    LOG("PFC FOR Prio 5 :%d\n", C_TLV->Pgid_5);
+    LOG("PFC FOR Prio 6 :%d\n", C_TLV->Pgid_6);
+    LOG("PFC FOR Prio 7 :%d\n", C_TLV->Pgid_7);
     for(int j = 0; j < 8; j++){
-            printf("BW FOR PGID %d :%d\n", j, C_TLV->BW_PGID[j]);
+            LOG("BW FOR PGID %d :%d\n", j, C_TLV->BW_PGID[j]);
     }
     for(int j = 0; j < 8; j++){
-            printf("TSA for Traffic Class %d: %d\n", j, C_TLV->TSA_FOR_TC[j]);
+            LOG("TSA for Traffic Class %d: %d\n", j, C_TLV->TSA_FOR_TC[j]);
     }
-    printf("***********************************************************************");
-    printf("\n");
+    LOG("***********************************************************************");
+    LOG("\n");
 }
 void printf_ETS_Recommendation(tlv_type_t *ptr)
 {
-    printf("*******************************IEEE - ETS Recommendation*******************************\n");
+    LOG("*******************************IEEE - ETS Recommendation*******************************\n");
     ETS_Recommendation_TLV *R_TLV = (ETS_Recommendation_TLV *)ptr;
-    printf("type:%d\n", R_TLV->TL.type);
-    printf("length:%d\n", R_TLV->TL.length);
-    printf("Organization Unique Code:(IEEE)");
+    LOG("type:%d\n", R_TLV->TL.type);
+    LOG("length:%d\n", R_TLV->TL.length);
+    LOG("Organization Unique Code:(IEEE)");
     for (int j = 0; j < 3; j++)
     {
-        printf("%x ", R_TLV->OUC[j]);
+        LOG("%x ", R_TLV->OUC[j]);
     }
-    printf("\n");
-    printf("Subtype:0x%x\n", R_TLV->Subtype);
-    printf("Reserved:%d\n", R_TLV->R_RN.Reserved);
-    printf("PFC FOR Prio 0 :%d\n", R_TLV->PGIDS_0_3.Pgid_0);
-    printf("PFC FOR Prio 1 :%d\n", R_TLV->PGIDS_0_3.Pgid_1);
-    printf("PFC FOR Prio 2 :%d\n", R_TLV->PGIDS_0_3.Pgid_2);
-    printf("PFC FOR Prio 3 :%d\n", R_TLV->PGIDS_0_3.Pgid_3);
-    printf("PFC FOR Prio 4 :%d\n", R_TLV->PGIDS_4_7.Pgid_4);
-    printf("PFC FOR Prio 5 :%d\n", R_TLV->PGIDS_4_7.Pgid_5);
-    printf("PFC FOR Prio 6 :%d\n", R_TLV->PGIDS_4_7.Pgid_6);
-    printf("PFC FOR Prio 7 :%d\n", R_TLV->PGIDS_4_7.Pgid_7);
+    LOG("\n");
+    LOG("Subtype:0x%x\n", R_TLV->Subtype);
+    LOG("Reserved:%d\n", R_TLV->R_RN.Reserved);
+    LOG("PFC FOR Prio 0 :%d\n", R_TLV->PGIDS_0_3.Pgid_0);
+    LOG("PFC FOR Prio 1 :%d\n", R_TLV->PGIDS_0_3.Pgid_1);
+    LOG("PFC FOR Prio 2 :%d\n", R_TLV->PGIDS_0_3.Pgid_2);
+    LOG("PFC FOR Prio 3 :%d\n", R_TLV->PGIDS_0_3.Pgid_3);
+    LOG("PFC FOR Prio 4 :%d\n", R_TLV->PGIDS_4_7.Pgid_4);
+    LOG("PFC FOR Prio 5 :%d\n", R_TLV->PGIDS_4_7.Pgid_5);
+    LOG("PFC FOR Prio 6 :%d\n", R_TLV->PGIDS_4_7.Pgid_6);
+    LOG("PFC FOR Prio 7 :%d\n", R_TLV->PGIDS_4_7.Pgid_7);
     for(int j = 0; j < 8; j++){
-            printf("BW FOR PGID %d :%d\n", j, R_TLV->BW_PGID[j]);
+            LOG("BW FOR PGID %d :%d\n", j, R_TLV->BW_PGID[j]);
     }
     for(int j = 0; j < 8; j++){
-            printf("TSA for Traffic Class %d: %d\n", j, R_TLV->TSA_FOR_TC[j]);
+            LOG("TSA for Traffic Class %d: %d\n", j, R_TLV->TSA_FOR_TC[j]);
     }
-    printf("***********************************************************************");
-    printf("\n");
+    LOG("***********************************************************************");
+    LOG("\n");
 }
 void printf_ETS_Priority_Flow_Control_Configuration(tlv_type_t *ptr)
 {
-    printf("*******************************IEEE - Priority Flow Control Configuration*******************************\n");
+    LOG("*******************************IEEE - Priority Flow Control Configuration*******************************\n");
     ETS_PFC_TLV *PFC_TLV = (ETS_PFC_TLV *)ptr;
-    printf("type:%d\n", PFC_TLV->TL.type);
-    printf("length:%d\n", PFC_TLV->TL.length);
-    printf("Organization Unique Code:(IEEE)");
+    LOG("type:%d\n", PFC_TLV->TL.type);
+    LOG("length:%d\n", PFC_TLV->TL.length);
+    LOG("Organization Unique Code:(IEEE)");
     for (int j = 0; j < 3; j++)
     {
-        printf("%x ", PFC_TLV->OUC[j]);
+        LOG("%x ", PFC_TLV->OUC[j]);
     }
-    printf("\n");
-    printf("Subtype:0x%x\n", PFC_TLV->Subtype);
-    printf("Willing:%d\n", PFC_TLV->PFC_VCRM.Willing);
-    printf("MACsec Bypass Capability: %d\n", PFC_TLV->PFC_VCRM.MBC);
-    printf("Max PFC Enabled Traffic Classes: %d\n", PFC_TLV->PFC_VCRM.PFCCab);
-    printf("PFC FOR Prio 0 :%d\n", PFC_TLV->PECPs.PECP0);
-    printf("PFC FOR Prio 1 :%d\n", PFC_TLV->PECPs.PECP1);
-    printf("PFC FOR Prio 2 :%d\n", PFC_TLV->PECPs.PECP2);
-    printf("PFC FOR Prio 3 :%d\n", PFC_TLV->PECPs.PECP3);
-    printf("PFC FOR Prio 4 :%d\n", PFC_TLV->PECPs.PECP4);
-    printf("PFC FOR Prio 5 :%d\n", PFC_TLV->PECPs.PECP5);
-    printf("PFC FOR Prio 6 :%d\n", PFC_TLV->PECPs.PECP6);
-    printf("PFC FOR Prio 7 :%d\n", PFC_TLV->PECPs.PECP7);
-    printf("***********************************************************************");
-    printf("\n");
+    LOG("\n");
+    LOG("Subtype:0x%x\n", PFC_TLV->Subtype);
+    LOG("Willing:%d\n", PFC_TLV->PFC_VCRM.Willing);
+    LOG("MACsec Bypass Capability: %d\n", PFC_TLV->PFC_VCRM.MBC);
+    LOG("Max PFC Enabled Traffic Classes: %d\n", PFC_TLV->PFC_VCRM.PFCCab);
+    LOG("PFC FOR Prio 0 :%d\n", PFC_TLV->PECPs.PECP0);
+    LOG("PFC FOR Prio 1 :%d\n", PFC_TLV->PECPs.PECP1);
+    LOG("PFC FOR Prio 2 :%d\n", PFC_TLV->PECPs.PECP2);
+    LOG("PFC FOR Prio 3 :%d\n", PFC_TLV->PECPs.PECP3);
+    LOG("PFC FOR Prio 4 :%d\n", PFC_TLV->PECPs.PECP4);
+    LOG("PFC FOR Prio 5 :%d\n", PFC_TLV->PECPs.PECP5);
+    LOG("PFC FOR Prio 6 :%d\n", PFC_TLV->PECPs.PECP6);
+    LOG("PFC FOR Prio 7 :%d\n", PFC_TLV->PECPs.PECP7);
+    LOG("***********************************************************************");
+    LOG("\n");
 }
 void printf_ETS_Application_Protocol(tlv_type_t *ptr)
 {
-    printf("*******************************IEEE - Application Protocol*******************************\n");
+    LOG("*******************************IEEE - Application Protocol*******************************\n");
     ETS_APP_TLV *APP_TLV = (ETS_APP_TLV *)ptr;
-    printf("type:%d\n", APP_TLV->TL.type);
-    printf("length:%d\n", APP_TLV->TL.length);
-    printf("Organization Unique Code:(IEEE)");
+    LOG("type:%d\n", APP_TLV->TL.type);
+    LOG("length:%d\n", APP_TLV->TL.length);
+    LOG("Organization Unique Code:(IEEE)");
     for (int j = 0; j < 3; j++)
     {
-        printf("%x ", APP_TLV->OUC[j]);
+        LOG("%x ", APP_TLV->OUC[j]);
     }
-    printf("\n");
-    printf("Subtype:0x%x\n", APP_TLV->Subtype);
-    printf("Reserved:%d\n", APP_TLV->Reserved);
+    LOG("\n");
+    LOG("Subtype:0x%x\n", APP_TLV->Subtype);
+    LOG("Reserved:%d\n", APP_TLV->Reserved);
     for (int j = 0; j < (APP_TLV->TL.length - 5)/3; j++)
     {
-        printf("Sub APP %d\n", j);
-        printf(" Application Priority: %d\n", APP_TLV->APP_Sub[j].APP_P_Sel.Prio);
-        printf(" Application Selector: %d\n", APP_TLV->APP_Sub[j].APP_P_Sel.Sel);
-        printf(" Application Protocol Id: 0x%x\n", ntohs(APP_TLV->APP_Sub[j].Id));
+        LOG("Sub APP %d\n", j);
+        LOG(" Application Priority: %d\n", APP_TLV->APP_Sub[j].APP_P_Sel.Prio);
+        LOG(" Application Selector: %d\n", APP_TLV->APP_Sub[j].APP_P_Sel.Sel);
+        LOG(" Application Protocol Id: 0x%x\n", ntohs(APP_TLV->APP_Sub[j].Id));
     }
-    printf("***********************************************************************");
-    printf("\n");
+    LOG("***********************************************************************");
+    LOG("\n");
 }
 // void DCBX_Test_IEEE(int argc, char * argv [])
 // {
@@ -148,43 +148,43 @@ void printf_ETS_Application_Protocol(tlv_type_t *ptr)
 //     ptr = &buf_IEEE[i];
 //     while(ptr->type != 0) {
 //         ptr->val = ntohs(ptr->val);
-//         // printf("%d %d %d\n", ptr->val, ptr->type, ptr->length);
-//         // printf("%d\n", ptr->type);
+//         // LOG("%d %d %d\n", ptr->val, ptr->type, ptr->length);
+//         // LOG("%d\n", ptr->type);
 //         switch(ptr->type) {
 //             case 1:
 //             {
-//                 printf("*****************************chassis_id********************************\n");
+//                 LOG("*****************************chassis_id********************************\n");
 //                 tlv_chassis_id *chassis_id = (tlv_chassis_id *)ptr;
-//                 printf("type_length: 0x%x\n", (chassis_id->type_length));
-//                 printf("subtype: 0x%x\n", (chassis_id->subtype));
+//                 LOG("type_length: 0x%x\n", (chassis_id->type_length));
+//                 LOG("subtype: 0x%x\n", (chassis_id->subtype));
 //                 for(int j = 0; j < 6; j++){
-//                     printf("%x ", chassis_id->mac[j]);
+//                     LOG("%x ", chassis_id->mac[j]);
 //                 }
-//                 printf("\n");
-//                 printf("***********************************************************************\n");
+//                 LOG("\n");
+//                 LOG("***********************************************************************\n");
 //             }
 //             break;
 //             case 2:
 //             {
-//                 printf("*****************************port_id********************************\n");
+//                 LOG("*****************************port_id********************************\n");
 //                 tlv_port_id *port_id = (tlv_port_id *)ptr;
-//                 printf("type_length: 0x%x\n", (port_id->type_length));
-//                 printf("subtype: 0x%x\n", (port_id->subtype));
-//                 printf("Port Id: ");
+//                 LOG("type_length: 0x%x\n", (port_id->type_length));
+//                 LOG("subtype: 0x%x\n", (port_id->subtype));
+//                 LOG("Port Id: ");
 //                 for(int j = 0; j < (ptr->length - 1); j++){
-//                     printf("%d", port_id->mac[j] & 0xf);
+//                     LOG("%d", port_id->mac[j] & 0xf);
 //                 }
-//                 printf("\n");
-//                 printf("***********************************************************************\n");
+//                 LOG("\n");
+//                 LOG("***********************************************************************\n");
 //             }
 //             break;
 //             case 3:
 //             {
-//                 printf("*****************************TTL********************************\n");
+//                 LOG("*****************************TTL********************************\n");
 //                 tlv_ttl *TTL = (tlv_ttl *)ptr;
-//                 printf("type_length: 0x%x\n", (TTL->type_length));
-//                 printf("seconds: %d\n", ntohs(TTL->seconds));
-//                 printf("***********************************************************************\n");
+//                 LOG("type_length: 0x%x\n", (TTL->type_length));
+//                 LOG("seconds: %d\n", ntohs(TTL->seconds));
+//                 LOG("***********************************************************************\n");
 //             }
 //             break;
 //             case 127:
@@ -193,121 +193,121 @@ void printf_ETS_Application_Protocol(tlv_type_t *ptr)
 //                     switch(buf_IEEE[i + 5]){
 //                         case 0x09:
 //                         {
-//                             printf("*******************************IEEE - ETS Configuration*******************************\n");
+//                             LOG("*******************************IEEE - ETS Configuration*******************************\n");
 //                             ETS_Configuration_TLV *C_TLV = (ETS_Configuration_TLV *)ptr;
-//                             printf("type:%d\n", C_TLV->TL.type);
-//                             printf("length:%d\n", C_TLV->TL.length);
-//                             printf("Organization Unique Code:(IEEE)");
+//                             LOG("type:%d\n", C_TLV->TL.type);
+//                             LOG("length:%d\n", C_TLV->TL.length);
+//                             LOG("Organization Unique Code:(IEEE)");
 //                             for (int j = 0; j < 3; j++)
 //                             {
-//                                 printf("%x ", C_TLV->OUC[j]);
+//                                 LOG("%x ", C_TLV->OUC[j]);
 //                             }
-//                             printf("\n");
-//                             printf("Subtype:0x%x\n", C_TLV->Subtype);
-//                             printf("Willing:%d\n", C_TLV->C_VCRM.Willing);
-//                             printf("Credit-Based Shaper: %d\n", C_TLV->C_VCRM.CBS);
-//                             printf("Maximum Number of Traffic Classes: %d\n", C_TLV->C_VCRM.MaxTCS);
-//                             printf("PFC FOR Prio 0 :%d\n", C_TLV->PGIDS_0_3.Pgid_0);
-//                             printf("PFC FOR Prio 1 :%d\n", C_TLV->PGIDS_0_3.Pgid_1);
-//                             printf("PFC FOR Prio 2 :%d\n", C_TLV->PGIDS_0_3.Pgid_2);
-//                             printf("PFC FOR Prio 3 :%d\n", C_TLV->PGIDS_0_3.Pgid_3);
-//                             printf("PFC FOR Prio 4 :%d\n", C_TLV->PGIDS_4_7.Pgid_4);
-//                             printf("PFC FOR Prio 5 :%d\n", C_TLV->PGIDS_4_7.Pgid_5);
-//                             printf("PFC FOR Prio 6 :%d\n", C_TLV->PGIDS_4_7.Pgid_6);
-//                             printf("PFC FOR Prio 7 :%d\n", C_TLV->PGIDS_4_7.Pgid_7);
+//                             LOG("\n");
+//                             LOG("Subtype:0x%x\n", C_TLV->Subtype);
+//                             LOG("Willing:%d\n", C_TLV->C_VCRM.Willing);
+//                             LOG("Credit-Based Shaper: %d\n", C_TLV->C_VCRM.CBS);
+//                             LOG("Maximum Number of Traffic Classes: %d\n", C_TLV->C_VCRM.MaxTCS);
+//                             LOG("PFC FOR Prio 0 :%d\n", C_TLV->PGIDS_0_3.Pgid_0);
+//                             LOG("PFC FOR Prio 1 :%d\n", C_TLV->PGIDS_0_3.Pgid_1);
+//                             LOG("PFC FOR Prio 2 :%d\n", C_TLV->PGIDS_0_3.Pgid_2);
+//                             LOG("PFC FOR Prio 3 :%d\n", C_TLV->PGIDS_0_3.Pgid_3);
+//                             LOG("PFC FOR Prio 4 :%d\n", C_TLV->PGIDS_4_7.Pgid_4);
+//                             LOG("PFC FOR Prio 5 :%d\n", C_TLV->PGIDS_4_7.Pgid_5);
+//                             LOG("PFC FOR Prio 6 :%d\n", C_TLV->PGIDS_4_7.Pgid_6);
+//                             LOG("PFC FOR Prio 7 :%d\n", C_TLV->PGIDS_4_7.Pgid_7);
 //                             for(int j = 0; j < 8; j++){
-//                                     printf("BW FOR PGID %d :%d\n", j, C_TLV->BW_PGID[j]);
+//                                     LOG("BW FOR PGID %d :%d\n", j, C_TLV->BW_PGID[j]);
 //                             }
 //                             for(int j = 0; j < 8; j++){
-//                                     printf("TSA for Traffic Class %d: %d\n", j, C_TLV->TSA_FOR_TC[j]);
+//                                     LOG("TSA for Traffic Class %d: %d\n", j, C_TLV->TSA_FOR_TC[j]);
 //                             }
-//                             printf("***********************************************************************");
-//                             printf("\n");
+//                             LOG("***********************************************************************");
+//                             LOG("\n");
 //                         }
 //                         break;
 //                         case 0x0a:
 //                         {
-//                             printf("*******************************IEEE - ETS Recommendation*******************************\n");
+//                             LOG("*******************************IEEE - ETS Recommendation*******************************\n");
 //                             ETS_Recommendation_TLV *R_TLV = (ETS_Recommendation_TLV *)ptr;
-//                             printf("type:%d\n", R_TLV->TL.type);
-//                             printf("length:%d\n", R_TLV->TL.length);
-//                             printf("Organization Unique Code:(IEEE)");
+//                             LOG("type:%d\n", R_TLV->TL.type);
+//                             LOG("length:%d\n", R_TLV->TL.length);
+//                             LOG("Organization Unique Code:(IEEE)");
 //                             for (int j = 0; j < 3; j++)
 //                             {
-//                                 printf("%x ", R_TLV->OUC[j]);
+//                                 LOG("%x ", R_TLV->OUC[j]);
 //                             }
-//                             printf("\n");
-//                             printf("Subtype:0x%x\n", R_TLV->Subtype);
-//                             printf("Reserved:%d\n", R_TLV->R_RN.Reserved);
-//                             printf("PFC FOR Prio 0 :%d\n", R_TLV->PGIDS_0_3.Pgid_0);
-//                             printf("PFC FOR Prio 1 :%d\n", R_TLV->PGIDS_0_3.Pgid_1);
-//                             printf("PFC FOR Prio 2 :%d\n", R_TLV->PGIDS_0_3.Pgid_2);
-//                             printf("PFC FOR Prio 3 :%d\n", R_TLV->PGIDS_0_3.Pgid_3);
-//                             printf("PFC FOR Prio 4 :%d\n", R_TLV->PGIDS_4_7.Pgid_4);
-//                             printf("PFC FOR Prio 5 :%d\n", R_TLV->PGIDS_4_7.Pgid_5);
-//                             printf("PFC FOR Prio 6 :%d\n", R_TLV->PGIDS_4_7.Pgid_6);
-//                             printf("PFC FOR Prio 7 :%d\n", R_TLV->PGIDS_4_7.Pgid_7);
+//                             LOG("\n");
+//                             LOG("Subtype:0x%x\n", R_TLV->Subtype);
+//                             LOG("Reserved:%d\n", R_TLV->R_RN.Reserved);
+//                             LOG("PFC FOR Prio 0 :%d\n", R_TLV->PGIDS_0_3.Pgid_0);
+//                             LOG("PFC FOR Prio 1 :%d\n", R_TLV->PGIDS_0_3.Pgid_1);
+//                             LOG("PFC FOR Prio 2 :%d\n", R_TLV->PGIDS_0_3.Pgid_2);
+//                             LOG("PFC FOR Prio 3 :%d\n", R_TLV->PGIDS_0_3.Pgid_3);
+//                             LOG("PFC FOR Prio 4 :%d\n", R_TLV->PGIDS_4_7.Pgid_4);
+//                             LOG("PFC FOR Prio 5 :%d\n", R_TLV->PGIDS_4_7.Pgid_5);
+//                             LOG("PFC FOR Prio 6 :%d\n", R_TLV->PGIDS_4_7.Pgid_6);
+//                             LOG("PFC FOR Prio 7 :%d\n", R_TLV->PGIDS_4_7.Pgid_7);
 //                             for(int j = 0; j < 8; j++){
-//                                     printf("BW FOR PGID %d :%d\n", j, R_TLV->BW_PGID[j]);
+//                                     LOG("BW FOR PGID %d :%d\n", j, R_TLV->BW_PGID[j]);
 //                             }
 //                             for(int j = 0; j < 8; j++){
-//                                     printf("TSA for Traffic Class %d: %d\n", j, R_TLV->TSA_FOR_TC[j]);
+//                                     LOG("TSA for Traffic Class %d: %d\n", j, R_TLV->TSA_FOR_TC[j]);
 //                             }
-//                             printf("***********************************************************************");
-//                             printf("\n");
+//                             LOG("***********************************************************************");
+//                             LOG("\n");
 //                         }
 //                         break;
 //                         case 0x0b:
 //                         {
-//                             printf("*******************************IEEE - Priority Flow Control Configuration*******************************\n");
+//                             LOG("*******************************IEEE - Priority Flow Control Configuration*******************************\n");
 //                             ETS_PFC_TLV *PFC_TLV = (ETS_PFC_TLV *)ptr;
-//                             printf("type:%d\n", PFC_TLV->TL.type);
-//                             printf("length:%d\n", PFC_TLV->TL.length);
-//                             printf("Organization Unique Code:(IEEE)");
+//                             LOG("type:%d\n", PFC_TLV->TL.type);
+//                             LOG("length:%d\n", PFC_TLV->TL.length);
+//                             LOG("Organization Unique Code:(IEEE)");
 //                             for (int j = 0; j < 3; j++)
 //                             {
-//                                 printf("%x ", PFC_TLV->OUC[j]);
+//                                 LOG("%x ", PFC_TLV->OUC[j]);
 //                             }
-//                             printf("\n");
-//                             printf("Subtype:0x%x\n", PFC_TLV->Subtype);
-//                             printf("Willing:%d\n", PFC_TLV->PFC_VCRM.Willing);
-//                             printf("MACsec Bypass Capability: %d\n", PFC_TLV->PFC_VCRM.MBC);
-//                             printf("Max PFC Enabled Traffic Classes: %d\n", PFC_TLV->PFC_VCRM.PFCCab);
-//                             printf("PFC FOR Prio 0 :%d\n", PFC_TLV->PECPs.PECP0);
-//                             printf("PFC FOR Prio 1 :%d\n", PFC_TLV->PECPs.PECP1);
-//                             printf("PFC FOR Prio 2 :%d\n", PFC_TLV->PECPs.PECP2);
-//                             printf("PFC FOR Prio 3 :%d\n", PFC_TLV->PECPs.PECP3);
-//                             printf("PFC FOR Prio 4 :%d\n", PFC_TLV->PECPs.PECP4);
-//                             printf("PFC FOR Prio 5 :%d\n", PFC_TLV->PECPs.PECP5);
-//                             printf("PFC FOR Prio 6 :%d\n", PFC_TLV->PECPs.PECP6);
-//                             printf("PFC FOR Prio 7 :%d\n", PFC_TLV->PECPs.PECP7);
-//                             printf("***********************************************************************");
-//                             printf("\n");
+//                             LOG("\n");
+//                             LOG("Subtype:0x%x\n", PFC_TLV->Subtype);
+//                             LOG("Willing:%d\n", PFC_TLV->PFC_VCRM.Willing);
+//                             LOG("MACsec Bypass Capability: %d\n", PFC_TLV->PFC_VCRM.MBC);
+//                             LOG("Max PFC Enabled Traffic Classes: %d\n", PFC_TLV->PFC_VCRM.PFCCab);
+//                             LOG("PFC FOR Prio 0 :%d\n", PFC_TLV->PECPs.PECP0);
+//                             LOG("PFC FOR Prio 1 :%d\n", PFC_TLV->PECPs.PECP1);
+//                             LOG("PFC FOR Prio 2 :%d\n", PFC_TLV->PECPs.PECP2);
+//                             LOG("PFC FOR Prio 3 :%d\n", PFC_TLV->PECPs.PECP3);
+//                             LOG("PFC FOR Prio 4 :%d\n", PFC_TLV->PECPs.PECP4);
+//                             LOG("PFC FOR Prio 5 :%d\n", PFC_TLV->PECPs.PECP5);
+//                             LOG("PFC FOR Prio 6 :%d\n", PFC_TLV->PECPs.PECP6);
+//                             LOG("PFC FOR Prio 7 :%d\n", PFC_TLV->PECPs.PECP7);
+//                             LOG("***********************************************************************");
+//                             LOG("\n");
 //                         }
 //                         break;
 //                         case 0x0c:
 //                         {
-//                             printf("*******************************IEEE - Application Protocol*******************************\n");
+//                             LOG("*******************************IEEE - Application Protocol*******************************\n");
 //                             ETS_APP_TLV *APP_TLV = (ETS_APP_TLV *)ptr;
-//                             printf("type:%d\n", APP_TLV->TL.type);
-//                             printf("length:%d\n", APP_TLV->TL.length);
-//                             printf("Organization Unique Code:(IEEE)");
+//                             LOG("type:%d\n", APP_TLV->TL.type);
+//                             LOG("length:%d\n", APP_TLV->TL.length);
+//                             LOG("Organization Unique Code:(IEEE)");
 //                             for (int j = 0; j < 3; j++)
 //                             {
-//                                 printf("%x ", APP_TLV->OUC[j]);
+//                                 LOG("%x ", APP_TLV->OUC[j]);
 //                             }
-//                             printf("\n");
-//                             printf("Subtype:0x%x\n", APP_TLV->Subtype);
-//                             printf("Reserved:%d\n", APP_TLV->Reserved);
+//                             LOG("\n");
+//                             LOG("Subtype:0x%x\n", APP_TLV->Subtype);
+//                             LOG("Reserved:%d\n", APP_TLV->Reserved);
 //                             for (int j = 0; j < (APP_TLV->TL.length - 5)/3; j++)
 //                             {
-//                                 printf("Sub APP %d\n", j);
-//                                 printf(" Application Priority: %d\n", APP_TLV->APP_Sub[j].APP_P_Sel.Prio);
-//                                 printf(" Application Selector: %d\n", APP_TLV->APP_Sub[j].APP_P_Sel.Sel);
-//                                 printf(" Application Protocol Id: 0x%x\n", ntohs(APP_TLV->APP_Sub[j].Id));
+//                                 LOG("Sub APP %d\n", j);
+//                                 LOG(" Application Priority: %d\n", APP_TLV->APP_Sub[j].APP_P_Sel.Prio);
+//                                 LOG(" Application Selector: %d\n", APP_TLV->APP_Sub[j].APP_P_Sel.Sel);
+//                                 LOG(" Application Protocol Id: 0x%x\n", ntohs(APP_TLV->APP_Sub[j].Id));
 //                             }
-//                             printf("***********************************************************************");
-//                             printf("\n");
+//                             LOG("***********************************************************************");
+//                             LOG("\n");
 //                         }
 //                         break;
 //                     }

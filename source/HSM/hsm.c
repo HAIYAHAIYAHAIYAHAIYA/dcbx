@@ -1,23 +1,23 @@
 /****************************************************************************
-×÷Õß£ºÐ¡Óã¶ù·ÉÑ¾·É
-ÈÕÆÚ£º2020-6-19
-ÎÄ¼þÃû£ºFSM²ã´Î×´Ì¬»úÖ´ÐÐÎÄ¼þ
+ï¿½ï¿½ï¿½ß£ï¿½Ð¡ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¾ï¿½ï¿½
+ï¿½ï¿½ï¿½Ú£ï¿½2020-6-19
+ï¿½Ä¼ï¿½ï¿½ï¿½ï¿½ï¿½FSMï¿½ï¿½ï¿½×´Ì¬ï¿½ï¿½Ö´ï¿½ï¿½ï¿½Ä¼ï¿½
 ****************************************************************************/
 /****************************************************************************
-Í·ÎÄ¼þ
+Í·ï¿½Ä¼ï¿½
 ****************************************************************************/
 #include "hsm.h"
 /****************************************************************************
-ºê¶¨Òå
+ï¿½ê¶¨ï¿½ï¿½
 ****************************************************************************/
 
 /****************************************************************************
-±äÁ¿
+ï¿½ï¿½ï¿½ï¿½
 ****************************************************************************/
 
 S_state_fun father_state[2] = {
     {F_Static_Init, F_Static_Keep, F_Satic_Done, F_Static_Default},
-    {F_Run_Init, F_Run_Keep, F_Run_Done, F_Run_Default}}; //--³¬Àà/¸¸Àà
+    {F_Run_Init, F_Run_Keep, F_Run_Done, F_Run_Default}}; //--ï¿½ï¿½ï¿½ï¿½/ï¿½ï¿½ï¿½ï¿½
 S_state_fun childer_state[8] = {
     {C_Static_Set_Init, C_Static_Set_Keep, C_Satic_Set_Done, C_Static_Set_Default},
     {C_Static_Distribution_Network_Init, C_Static_Distribution_Network_Keep, C_Satic_Distribution_Network_Done, C_Static_Distribution_Network_Default},
@@ -26,19 +26,19 @@ S_state_fun childer_state[8] = {
     {C_Run_Normal_Init, C_Run_Normal_Keep, C_Run_Normal_Done, C_Run_Normal_Default},
     {C_Run_Dry_Init, C_Run_Dry_Keep, C_Run_Dry_Done, C_Run_Dry_Default},
     {C_Run_Besiege_Init, C_Run_Besiege_Keep, C_Run_Besiege_Done, C_Run_Besiege_Default},
-    {C_Run_Avoid_Obstacles_Init, C_Run_Avoid_Obstacles_Keep, C_Run_Avoid_Obstacles_Done, C_Run_Avoid_Obstacles_Default}}; //--×ÓÀà1
-E_father_states s_father_step = s_father_init;                                                                            //--¸¸Ààµ¥¸ö×´Ì¬ÄÚ²¿×ª»»²½Öè
+    {C_Run_Avoid_Obstacles_Init, C_Run_Avoid_Obstacles_Keep, C_Run_Avoid_Obstacles_Done, C_Run_Avoid_Obstacles_Default}}; //--ï¿½ï¿½ï¿½ï¿½1
+E_father_states s_father_step = s_father_init;                                                                            //--ï¿½ï¿½ï¿½àµ¥ï¿½ï¿½×´Ì¬ï¿½Ú²ï¿½×ªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 E_childer_states s_childer_step = s_childer_init;
-E_hsm_father_state hsm_current_father_state = e_static_state; //--¸¸Àà³õÊ¼»¯
+E_hsm_father_state hsm_current_father_state = e_static_state; //--ï¿½ï¿½ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½
 E_hsm_father_state hsm_last_father_state = e_static_state;
-E_hsm_childer_state hsm_current_childer_state = e_set_state; //--×ÓÀà³õÊ¼»¯
+E_hsm_childer_state hsm_current_childer_state = e_set_state; //--ï¿½ï¿½ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½
 E_hsm_childer_state hsm_last_childer_state = e_set_state;
 /****************************************************************************
-º¯Êý
-×´Ì¬º¯ÊýÃüÃû¹æÔò
-     Àý £º C_Static_Set_Init
-              C   £ß  Static_   Set  _    Init
-         £Ã£º×ÓÀà £Æ£º¸¸Àà£ßÒÀ¸½µÄ¸¸Àà£ß×ÓÀà±¾ÉíÃû×Ö£ß¸Ã×ÓÀà×´Ì¬ÄÚ²¿½×¶Î
+ï¿½ï¿½ï¿½ï¿½
+×´Ì¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+     ï¿½ï¿½ ï¿½ï¿½ C_Static_Set_Init
+              C   ï¿½ï¿½  Static_   Set  _    Init
+         ï¿½Ã£ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Æ£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½à±¾ï¿½ï¿½ï¿½ï¿½ï¿½Ö£ß¸ï¿½ï¿½ï¿½ï¿½ï¿½×´Ì¬ï¿½Ú²ï¿½ï¿½×¶ï¿½
 ****************************************************************************/
 // int main(void)
 // {
@@ -93,17 +93,17 @@ E_hsm_childer_state hsm_last_childer_state = e_set_state;
 //         {
 //             update_cnt = 80;
 //         }
-//         // printf("hsm_current_father_state:%d hsm_current_childer_state:%d\r\n",hsm_current_father_state,hsm_current_childer_state);
-//         //=================================¸¸Àà×´Ì¬»úµ÷¶ÈÆ÷=========================================
-//         if (Father_State_Is_Allow_Jump())                                  //--Èç¹ûÔÊÐíÌø×ª
-//             father_state[hsm_current_father_state].steps[s_father_step](); //--¸¸Àà×´Ì¬
+//         // LOG("hsm_current_father_state:%d hsm_current_childer_state:%d\r\n",hsm_current_father_state,hsm_current_childer_state);
+//         //=================================ï¿½ï¿½ï¿½ï¿½×´Ì¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½=========================================
+//         if (Father_State_Is_Allow_Jump())                                  //--ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×ª
+//             father_state[hsm_current_father_state].steps[s_father_step](); //--ï¿½ï¿½ï¿½ï¿½×´Ì¬
 //         else
-//             father_state[hsm_last_father_state].steps[s_father_step](); //--¸¸Àà×´Ì¬
+//             father_state[hsm_last_father_state].steps[s_father_step](); //--ï¿½ï¿½ï¿½ï¿½×´Ì¬
 //                                                                         //==========================================================================
 //     }
 //     return 0;
 // }
-//--×Ó×´Ì¬ÊÇ·ñÔÊÐíÌø×ª
+//--ï¿½ï¿½×´Ì¬ï¿½Ç·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×ª
 uint8_t Childer_State_Is_Allow_Jump(void)
 {
     if (s_childer_step == s_childer_init)
@@ -111,7 +111,7 @@ uint8_t Childer_State_Is_Allow_Jump(void)
     else
         return 0;
 }
-//--×Ó×´Ì¬ÊÇ·ñÒª·¢Éú×´Ì¬×ª»»
+//--ï¿½ï¿½×´Ì¬ï¿½Ç·ï¿½Òªï¿½ï¿½ï¿½ï¿½×´Ì¬×ªï¿½ï¿½
 uint8_t Is_Three_A_Childer_State_Transition(void)
 {
     if (hsm_last_childer_state == hsm_current_childer_state)
@@ -119,22 +119,22 @@ uint8_t Is_Three_A_Childer_State_Transition(void)
     else
         return 1;
 }
-//--×ÓÀà×´Ì¬×ª»»
+//--ï¿½ï¿½ï¿½ï¿½×´Ì¬×ªï¿½ï¿½
 void Childer_State_Transition(E_hsm_childer_state temp)
 {
     hsm_current_childer_state = temp;
 }
-//--×ÓÀà¸üÐÂÉÏÒ»´Î×´Ì¬
+//--ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½×´Ì¬
 void Update_Childer_Last_State_Transition(void)
 {
     hsm_last_childer_state = hsm_current_childer_state;
 }
-//--×ÓÀàµ¥¸ö×´Ì¬ÄÚ²¿×ª»»
+//--ï¿½ï¿½ï¿½àµ¥ï¿½ï¿½×´Ì¬ï¿½Ú²ï¿½×ªï¿½ï¿½
 void Childer_Step_Transition(E_childer_states temp)
 {
     s_childer_step = temp;
 }
-//--¸¸×´Ì¬ÊÇ·ñÔÊÐíÌø×ª
+//--ï¿½ï¿½×´Ì¬ï¿½Ç·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×ª
 uint8_t Father_State_Is_Allow_Jump(void)
 {
     if (s_father_step == s_father_init)
@@ -142,7 +142,7 @@ uint8_t Father_State_Is_Allow_Jump(void)
     else
         return 0;
 }
-//--¸¸×´Ì¬ÊÇ·ñÒª·¢Éú×´Ì¬×ª»»
+//--ï¿½ï¿½×´Ì¬ï¿½Ç·ï¿½Òªï¿½ï¿½ï¿½ï¿½×´Ì¬×ªï¿½ï¿½
 uint8_t Is_Three_A_Father_State_Transition(void)
 {
     if (hsm_last_father_state == hsm_current_father_state)
@@ -150,46 +150,46 @@ uint8_t Is_Three_A_Father_State_Transition(void)
     else
         return 1;
 }
-//--¸¸Àà×´Ì¬×ª»»
+//--ï¿½ï¿½ï¿½ï¿½×´Ì¬×ªï¿½ï¿½
 void Father_State_Transition(E_hsm_father_state temp)
 {
     hsm_current_father_state = temp;
 }
-//--¸¸Àà¸üÐÂÉÏÒ»´Î×´Ì¬
+//--ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½×´Ì¬
 void Update_Father_Last_State_Transition(void)
 {
     hsm_last_father_state = hsm_current_father_state;
 }
-//--¸¸Àà×´Ì¬ÄÚ²¿×ª»»
+//--ï¿½ï¿½ï¿½ï¿½×´Ì¬ï¿½Ú²ï¿½×ªï¿½ï¿½
 void Father_Step_Transition(E_father_states temp)
 {
     s_father_step = temp;
 }
 /*************************************************
- * ¾²Ö¹×´Ì¬£¨¸¸Àà£©
- * ½øÈëº¯Êý
- * ±£³Öº¯Êý
- * ÍË³öº¯Êý
- * ´íÎóº¯Êý
+ * ï¿½ï¿½Ö¹×´Ì¬ï¿½ï¿½ï¿½ï¿½ï¿½à£©
+ * ï¿½ï¿½ï¿½ëº¯ï¿½ï¿½
+ * ï¿½ï¿½ï¿½Öºï¿½ï¿½ï¿½
+ * ï¿½Ë³ï¿½ï¿½ï¿½ï¿½ï¿½
+ * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
  * *************************************************/
 void F_Static_Init(void)
 {
     Update_Father_Last_State_Transition();
     //---------------------
-    //--´úÂë¶Î
-    printf("===¸¸Àà£º¾²Ö¹×´Ì¬====½øÈëº¯Êý>>>>>>>>>>>>>>>>>>>>>\r\n");
+    //--ï¿½ï¿½ï¿½ï¿½ï¿½
+    LOG("===ï¿½ï¿½ï¿½à£ºï¿½ï¿½Ö¹×´Ì¬====ï¿½ï¿½ï¿½ëº¯ï¿½ï¿½>>>>>>>>>>>>>>>>>>>>>\r\n");
     //--------------------
     Father_Step_Transition(s_father_keep);
 }
 void F_Static_Keep(void)
 {
     //---------------------
-    //--´úÂë¶Î
-    // printf("===¸¸Àà£º¾²Ö¹×´Ì¬====±£³Öº¯Êý--------------------\r\n");
-    //==========×ÓÀà×´Ì¬»úµ÷¶ÈÆ÷======================
-    if (Childer_State_Is_Allow_Jump()) //--Èç¹ûÔÊÐíÌø×ª
+    //--ï¿½ï¿½ï¿½ï¿½ï¿½
+    // LOG("===ï¿½ï¿½ï¿½à£ºï¿½ï¿½Ö¹×´Ì¬====ï¿½ï¿½ï¿½Öºï¿½ï¿½ï¿½--------------------\r\n");
+    //==========ï¿½ï¿½ï¿½ï¿½×´Ì¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½======================
+    if (Childer_State_Is_Allow_Jump()) //--ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×ª
     {
-        //--Èç¹û¸¸Àà³öÏÖÀàÌø×ª£¬×ÓÀàÒÑ¾­×öºÃÌø×ªµÄ×¼±¸£¬µ«ÊÇ¸¸Àà»¹Î´×öºÃÌø×ªµÄ×¼±¸£¬´ËÊ±²»Ö´ÐÐ×ÓÀàÌø×ª
+        //--ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×ªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¾ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×ªï¿½ï¿½×¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç¸ï¿½ï¿½à»¹Î´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×ªï¿½ï¿½×¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½Ö´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×ª
         if (Is_Three_A_Father_State_Transition())
         {
             Father_Step_Transition(s_father_done);
@@ -197,19 +197,19 @@ void F_Static_Keep(void)
         }
         else
             Father_Step_Transition(s_father_keep);
-        childer_state[hsm_current_childer_state].steps[s_childer_step](); //--×ÓÀà×´Ì¬
+        childer_state[hsm_current_childer_state].steps[s_childer_step](); //--ï¿½ï¿½ï¿½ï¿½×´Ì¬
     }
     else
-        childer_state[hsm_last_childer_state].steps[s_childer_step](); //--×ÓÀà×´Ì¬
+        childer_state[hsm_last_childer_state].steps[s_childer_step](); //--ï¿½ï¿½ï¿½ï¿½×´Ì¬
     //--------------------
 }
 void F_Satic_Done(void)
 {
     //---------------------
-    //--´úÂë¶Î
-    printf("===¸¸Àà£º¾²Ö¹×´Ì¬====ÍË³öº¯Êý<<<<<<<<<<<<<<<<<<<<<<<<\r\n");
+    //--ï¿½ï¿½ï¿½ï¿½ï¿½
+    LOG("===ï¿½ï¿½ï¿½à£ºï¿½ï¿½Ö¹×´Ì¬====ï¿½Ë³ï¿½ï¿½ï¿½ï¿½ï¿½<<<<<<<<<<<<<<<<<<<<<<<<\r\n");
     //--------------------
-    //--ÄÚ²¿ÇÐ»»
+    //--ï¿½Ú²ï¿½ï¿½Ð»ï¿½
     Father_Step_Transition(s_father_init);
 }
 void F_Static_Default(void)
@@ -217,30 +217,30 @@ void F_Static_Default(void)
     ;
 }
 /*************************************************
- * ÔËÐÐ×´Ì¬£¨¸¸Àà£©
- * ½øÈëº¯Êý
- * ±£³Öº¯Êý
- * ÍË³öº¯Êý
- * ´íÎóº¯Êý
+ * ï¿½ï¿½ï¿½ï¿½×´Ì¬ï¿½ï¿½ï¿½ï¿½ï¿½à£©
+ * ï¿½ï¿½ï¿½ëº¯ï¿½ï¿½
+ * ï¿½ï¿½ï¿½Öºï¿½ï¿½ï¿½
+ * ï¿½Ë³ï¿½ï¿½ï¿½ï¿½ï¿½
+ * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
  * *************************************************/
 void F_Run_Init(void)
 {
     Update_Father_Last_State_Transition();
     //---------------------
-    //--´úÂë¶Î
-    printf("===¸¸Àà£ºÔËÐÐ×´Ì¬====½øÈëº¯Êý>>>>>>>>>>>>>>>>>>>>>>>>>>\r\n");
+    //--ï¿½ï¿½ï¿½ï¿½ï¿½
+    LOG("===ï¿½ï¿½ï¿½à£ºï¿½ï¿½ï¿½ï¿½×´Ì¬====ï¿½ï¿½ï¿½ëº¯ï¿½ï¿½>>>>>>>>>>>>>>>>>>>>>>>>>>\r\n");
     //--------------------
     Father_Step_Transition(s_father_keep);
 }
 void F_Run_Keep(void)
 {
     //---------------------
-    //--´úÂë¶Î
-    // printf("===¸¸Àà£ºÔËÐÐ×´Ì¬====±£³Öº¯Êý--------------------\r\n");
-    //==========×ÓÀà×´Ì¬»úµ÷¶ÈÆ÷======================
-    if (Childer_State_Is_Allow_Jump()) //--Èç¹ûÔÊÐíÌø×ª
+    //--ï¿½ï¿½ï¿½ï¿½ï¿½
+    // LOG("===ï¿½ï¿½ï¿½à£ºï¿½ï¿½ï¿½ï¿½×´Ì¬====ï¿½ï¿½ï¿½Öºï¿½ï¿½ï¿½--------------------\r\n");
+    //==========ï¿½ï¿½ï¿½ï¿½×´Ì¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½======================
+    if (Childer_State_Is_Allow_Jump()) //--ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×ª
     {
-        //--Èç¹û¸¸Àà³öÏÖÀàÌø×ª£¬×ÓÀàÒÑ¾­×öºÃÌø×ªµÄ×¼±¸£¬µ«ÊÇ¸¸Àà»¹Î´×öºÃÌø×ªµÄ×¼±¸£¬´ËÊ±²»Ö´ÐÐ×ÓÀàÌø×ª
+        //--ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×ªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¾ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×ªï¿½ï¿½×¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç¸ï¿½ï¿½à»¹Î´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×ªï¿½ï¿½×¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½Ö´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×ª
         if (Is_Three_A_Father_State_Transition())
         {
             Father_Step_Transition(s_father_done);
@@ -248,18 +248,18 @@ void F_Run_Keep(void)
         }
         else
             Father_Step_Transition(s_father_keep);
-        childer_state[hsm_current_childer_state].steps[s_childer_step](); //--×ÓÀà×´Ì¬
+        childer_state[hsm_current_childer_state].steps[s_childer_step](); //--ï¿½ï¿½ï¿½ï¿½×´Ì¬
     }
     else
-        childer_state[hsm_last_childer_state].steps[s_childer_step](); //--×ÓÀà×´Ì¬
+        childer_state[hsm_last_childer_state].steps[s_childer_step](); //--ï¿½ï¿½ï¿½ï¿½×´Ì¬
 }
 void F_Run_Done(void)
 {
     //---------------------
-    //--´úÂë¶Î
-    printf("===¸¸Àà£ºÔËÐÐ×´Ì¬====ÍË³öº¯Êý<<<<<<<<<<<<<<<<<<<<<<\r\n");
+    //--ï¿½ï¿½ï¿½ï¿½ï¿½
+    LOG("===ï¿½ï¿½ï¿½à£ºï¿½ï¿½ï¿½ï¿½×´Ì¬====ï¿½Ë³ï¿½ï¿½ï¿½ï¿½ï¿½<<<<<<<<<<<<<<<<<<<<<<\r\n");
     //--------------------
-    //--ÄÚ²¿ÇÐ»»
+    //--ï¿½Ú²ï¿½ï¿½Ð»ï¿½
     Father_Step_Transition(s_father_init);
 }
 void F_Run_Default(void)
@@ -267,26 +267,26 @@ void F_Run_Default(void)
     ;
 }
 /*************************************************
- * ÉèÖÃ×´Ì¬£¨×ÓÀà£©ÒÀ¸½¾²Ö¹£¨¸¸Àà£©
- * ½øÈëº¯Êý
- * ±£³Öº¯Êý
- * ÍË³öº¯Êý
- * ´íÎóº¯Êý
+ * ï¿½ï¿½ï¿½ï¿½×´Ì¬ï¿½ï¿½ï¿½ï¿½ï¿½à£©ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¹ï¿½ï¿½ï¿½ï¿½ï¿½à£©
+ * ï¿½ï¿½ï¿½ëº¯ï¿½ï¿½
+ * ï¿½ï¿½ï¿½Öºï¿½ï¿½ï¿½
+ * ï¿½Ë³ï¿½ï¿½ï¿½ï¿½ï¿½
+ * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
  * *************************************************/
 void C_Static_Set_Init(void)
 {
     Update_Childer_Last_State_Transition();
     //---------------------
-    //--´úÂë¶Î
-    printf("===×ÓÀà£ºÉèÖÃ×´Ì¬====½øÈëº¯Êý>>>\r\n");
+    //--ï¿½ï¿½ï¿½ï¿½ï¿½
+    LOG("===ï¿½ï¿½ï¿½à£ºï¿½ï¿½ï¿½ï¿½×´Ì¬====ï¿½ï¿½ï¿½ëº¯ï¿½ï¿½>>>\r\n");
     //--------------------
     Childer_Step_Transition(s_childer_keep);
 }
 void C_Static_Set_Keep(void)
 {
     //---------------------
-    //--´úÂë¶Î
-    printf("===×ÓÀà£ºÉèÖÃ×´Ì¬====±£³Öº¯Êý\r\n");
+    //--ï¿½ï¿½ï¿½ï¿½ï¿½
+    LOG("===ï¿½ï¿½ï¿½à£ºï¿½ï¿½ï¿½ï¿½×´Ì¬====ï¿½ï¿½ï¿½Öºï¿½ï¿½ï¿½\r\n");
     //--------------------
     if (Is_Three_A_Childer_State_Transition())
         Childer_Step_Transition(s_childer_done);
@@ -296,10 +296,10 @@ void C_Static_Set_Keep(void)
 void C_Satic_Set_Done(void)
 {
     //---------------------
-    //--´úÂë¶Î
-    printf("===×ÓÀà£ºÉèÖÃ×´Ì¬====ÍË³öº¯Êý<<<\r\n");
+    //--ï¿½ï¿½ï¿½ï¿½ï¿½
+    LOG("===ï¿½ï¿½ï¿½à£ºï¿½ï¿½ï¿½ï¿½×´Ì¬====ï¿½Ë³ï¿½ï¿½ï¿½ï¿½ï¿½<<<\r\n");
     //--------------------
-    //--ÄÚ²¿ÇÐ»»
+    //--ï¿½Ú²ï¿½ï¿½Ð»ï¿½
     Childer_Step_Transition(s_childer_init);
 }
 void C_Static_Set_Default(void)
@@ -307,26 +307,26 @@ void C_Static_Set_Default(void)
     ;
 }
 /*************************************************
- * ÅäÍø×´Ì¬£¨×ÓÀà£©ÒÀ¸½¾²Ö¹£¨¸¸Àà£©
- * ½øÈëº¯Êý
- * ±£³Öº¯Êý
- * ÍË³öº¯Êý
- * ´íÎóº¯Êý
+ * ï¿½ï¿½ï¿½ï¿½×´Ì¬ï¿½ï¿½ï¿½ï¿½ï¿½à£©ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¹ï¿½ï¿½ï¿½ï¿½ï¿½à£©
+ * ï¿½ï¿½ï¿½ëº¯ï¿½ï¿½
+ * ï¿½ï¿½ï¿½Öºï¿½ï¿½ï¿½
+ * ï¿½Ë³ï¿½ï¿½ï¿½ï¿½ï¿½
+ * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
  * *************************************************/
 void C_Static_Distribution_Network_Init(void)
 {
     Update_Childer_Last_State_Transition();
     //---------------------
-    //--´úÂë¶Î
-    printf("===×ÓÀà£ºÅãÍø×´Ì¬====½øÈëº¯Êý>>>\r\n");
+    //--ï¿½ï¿½ï¿½ï¿½ï¿½
+    LOG("===ï¿½ï¿½ï¿½à£ºï¿½ï¿½ï¿½ï¿½×´Ì¬====ï¿½ï¿½ï¿½ëº¯ï¿½ï¿½>>>\r\n");
     //--------------------
     Childer_Step_Transition(s_childer_keep);
 }
 void C_Static_Distribution_Network_Keep(void)
 {
     //---------------------
-    //--´úÂë¶Î
-    printf("===×ÓÀà£ºÅãÍø×´Ì¬====±£³Öº¯Êý\r\n");
+    //--ï¿½ï¿½ï¿½ï¿½ï¿½
+    LOG("===ï¿½ï¿½ï¿½à£ºï¿½ï¿½ï¿½ï¿½×´Ì¬====ï¿½ï¿½ï¿½Öºï¿½ï¿½ï¿½\r\n");
     //--------------------
     if (Is_Three_A_Childer_State_Transition())
         Childer_Step_Transition(s_childer_done);
@@ -336,10 +336,10 @@ void C_Static_Distribution_Network_Keep(void)
 void C_Satic_Distribution_Network_Done(void)
 {
     //---------------------
-    //--´úÂë¶Î
-    printf("===×ÓÀà£ºÅãÍø×´Ì¬====ÍË³öº¯Êý<<<\r\n");
+    //--ï¿½ï¿½ï¿½ï¿½ï¿½
+    LOG("===ï¿½ï¿½ï¿½à£ºï¿½ï¿½ï¿½ï¿½×´Ì¬====ï¿½Ë³ï¿½ï¿½ï¿½ï¿½ï¿½<<<\r\n");
     //--------------------
-    //--ÄÚ²¿ÇÐ»»
+    //--ï¿½Ú²ï¿½ï¿½Ð»ï¿½
     Childer_Step_Transition(s_childer_init);
 }
 void C_Static_Distribution_Network_Default(void)
@@ -347,26 +347,26 @@ void C_Static_Distribution_Network_Default(void)
     ;
 }
 /*************************************************
- * ´ý»ú×´Ì¬£¨×ÓÀà£©ÒÀ¸½¾²Ö¹£¨¸¸Àà£©
- * ½øÈëº¯Êý
- * ±£³Öº¯Êý
- * ÍË³öº¯Êý
- * ´íÎóº¯Êý
+ * ï¿½ï¿½ï¿½ï¿½×´Ì¬ï¿½ï¿½ï¿½ï¿½ï¿½à£©ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¹ï¿½ï¿½ï¿½ï¿½ï¿½à£©
+ * ï¿½ï¿½ï¿½ëº¯ï¿½ï¿½
+ * ï¿½ï¿½ï¿½Öºï¿½ï¿½ï¿½
+ * ï¿½Ë³ï¿½ï¿½ï¿½ï¿½ï¿½
+ * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
  * *************************************************/
 void C_Static_Shut_Down_Init(void)
 {
     Update_Childer_Last_State_Transition();
     //---------------------
-    //--´úÂë¶Î
-    printf("===×ÓÀà£º´ý»ú×´Ì¬====½øÈëº¯Êý>>>\r\n");
+    //--ï¿½ï¿½ï¿½ï¿½ï¿½
+    LOG("===ï¿½ï¿½ï¿½à£ºï¿½ï¿½ï¿½ï¿½×´Ì¬====ï¿½ï¿½ï¿½ëº¯ï¿½ï¿½>>>\r\n");
     //--------------------
     Childer_Step_Transition(s_childer_keep);
 }
 void C_Static_Shut_Down_Keep(void)
 {
     //---------------------
-    //--´úÂë¶Î
-    printf("===×ÓÀà£º´ý»ú×´Ì¬====±£³Öº¯Êý\r\n");
+    //--ï¿½ï¿½ï¿½ï¿½ï¿½
+    LOG("===ï¿½ï¿½ï¿½à£ºï¿½ï¿½ï¿½ï¿½×´Ì¬====ï¿½ï¿½ï¿½Öºï¿½ï¿½ï¿½\r\n");
     //--------------------
     if (Is_Three_A_Childer_State_Transition())
         Childer_Step_Transition(s_childer_done);
@@ -376,10 +376,10 @@ void C_Static_Shut_Down_Keep(void)
 void C_Satic_Shut_Down_Done(void)
 {
     //---------------------
-    //--´úÂë¶Î
-    printf("===×ÓÀà£º´ý»ú×´Ì¬====ÍË³öº¯Êý<<<\r\n");
+    //--ï¿½ï¿½ï¿½ï¿½ï¿½
+    LOG("===ï¿½ï¿½ï¿½à£ºï¿½ï¿½ï¿½ï¿½×´Ì¬====ï¿½Ë³ï¿½ï¿½ï¿½ï¿½ï¿½<<<\r\n");
     //--------------------
-    //--ÄÚ²¿ÇÐ»»
+    //--ï¿½Ú²ï¿½ï¿½Ð»ï¿½
     Childer_Step_Transition(s_childer_init);
 }
 void C_Static_Shut_Down_Default(void)
@@ -388,27 +388,27 @@ void C_Static_Shut_Down_Default(void)
 }
 
 /*************************************************
- * ³äµç×´Ì¬£¨×ÓÀà£©ÒÀ¸½¾²Ö¹£¨¸¸Àà£©
- * ½øÈëº¯Êý
- * ±£³Öº¯Êý
- * ÍË³öº¯Êý
- * ´íÎóº¯Êý
+ * ï¿½ï¿½ï¿½×´Ì¬ï¿½ï¿½ï¿½ï¿½ï¿½à£©ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¹ï¿½ï¿½ï¿½ï¿½ï¿½à£©
+ * ï¿½ï¿½ï¿½ëº¯ï¿½ï¿½
+ * ï¿½ï¿½ï¿½Öºï¿½ï¿½ï¿½
+ * ï¿½Ë³ï¿½ï¿½ï¿½ï¿½ï¿½
+ * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
  * *************************************************/
 
 void C_Static_Charge_Init(void)
 {
     Update_Childer_Last_State_Transition();
     //---------------------
-    //--´úÂë¶Î
-    printf("===×ÓÀà£º³äµç×´Ì¬====½øÈëº¯Êý>>>\r\n");
+    //--ï¿½ï¿½ï¿½ï¿½ï¿½
+    LOG("===ï¿½ï¿½ï¿½à£ºï¿½ï¿½ï¿½×´Ì¬====ï¿½ï¿½ï¿½ëº¯ï¿½ï¿½>>>\r\n");
     //--------------------
     Childer_Step_Transition(s_childer_keep);
 }
 void C_Static_Charge_Keep(void)
 {
     //---------------------
-    //--´úÂë¶Î
-    printf("===×ÓÀà£º³äµç×´Ì¬====±£³Öº¯Êý\r\n");
+    //--ï¿½ï¿½ï¿½ï¿½ï¿½
+    LOG("===ï¿½ï¿½ï¿½à£ºï¿½ï¿½ï¿½×´Ì¬====ï¿½ï¿½ï¿½Öºï¿½ï¿½ï¿½\r\n");
     //--------------------
     if (Is_Three_A_Childer_State_Transition())
         Childer_Step_Transition(s_childer_done);
@@ -418,10 +418,10 @@ void C_Static_Charge_Keep(void)
 void C_Satic_Charge_Done(void)
 {
     //---------------------
-    //--´úÂë¶Î
-    printf("===×ÓÀà£º³äµç×´Ì¬====ÍË³öº¯Êý<<<\r\n");
+    //--ï¿½ï¿½ï¿½ï¿½ï¿½
+    LOG("===ï¿½ï¿½ï¿½à£ºï¿½ï¿½ï¿½×´Ì¬====ï¿½Ë³ï¿½ï¿½ï¿½ï¿½ï¿½<<<\r\n");
     //--------------------
-    //--ÄÚ²¿ÇÐ»»
+    //--ï¿½Ú²ï¿½ï¿½Ð»ï¿½
     Childer_Step_Transition(s_childer_init);
 }
 void C_Static_Charge_Default(void)
@@ -430,26 +430,26 @@ void C_Static_Charge_Default(void)
 }
 
 /*************************************************
- * Õý³£×´Ì¬£¨×ÓÀà£©ÒÀ¸½ÔËÐÐ£¨¸¸Àà£©
- * ½øÈëº¯Êý
- * ±£³Öº¯Êý
- * ÍË³öº¯Êý
- * ´íÎóº¯Êý
+ * ï¿½ï¿½ï¿½ï¿½×´Ì¬ï¿½ï¿½ï¿½ï¿½ï¿½à£©ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð£ï¿½ï¿½ï¿½ï¿½à£©
+ * ï¿½ï¿½ï¿½ëº¯ï¿½ï¿½
+ * ï¿½ï¿½ï¿½Öºï¿½ï¿½ï¿½
+ * ï¿½Ë³ï¿½ï¿½ï¿½ï¿½ï¿½
+ * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
  * *************************************************/
 void C_Run_Normal_Init(void)
 {
     Update_Childer_Last_State_Transition();
     //---------------------
-    //--´úÂë¶Î
-    printf("===×ÓÀà£ºÕý³£×´Ì¬====½øÈëº¯Êý>>>\r\n");
+    //--ï¿½ï¿½ï¿½ï¿½ï¿½
+    LOG("===ï¿½ï¿½ï¿½à£ºï¿½ï¿½ï¿½ï¿½×´Ì¬====ï¿½ï¿½ï¿½ëº¯ï¿½ï¿½>>>\r\n");
     //--------------------
     Childer_Step_Transition(s_childer_keep);
 }
 void C_Run_Normal_Keep(void)
 {
     //---------------------
-    //--´úÂë¶Î
-    printf("===×ÓÀà£ºÕý³£×´Ì¬====±£³Öº¯Êý\r\n");
+    //--ï¿½ï¿½ï¿½ï¿½ï¿½
+    LOG("===ï¿½ï¿½ï¿½à£ºï¿½ï¿½ï¿½ï¿½×´Ì¬====ï¿½ï¿½ï¿½Öºï¿½ï¿½ï¿½\r\n");
     //--------------------
     if (Is_Three_A_Childer_State_Transition())
         Childer_Step_Transition(s_childer_done);
@@ -459,10 +459,10 @@ void C_Run_Normal_Keep(void)
 void C_Run_Normal_Done(void)
 {
     //---------------------
-    //--´úÂë¶Î
-    printf("===×ÓÀà£ºÕý³£×´Ì¬====ÍË³öº¯Êý<<<\r\n");
+    //--ï¿½ï¿½ï¿½ï¿½ï¿½
+    LOG("===ï¿½ï¿½ï¿½à£ºï¿½ï¿½ï¿½ï¿½×´Ì¬====ï¿½Ë³ï¿½ï¿½ï¿½ï¿½ï¿½<<<\r\n");
     //--------------------
-    //--ÄÚ²¿ÇÐ»»
+    //--ï¿½Ú²ï¿½ï¿½Ð»ï¿½
     Childer_Step_Transition(s_childer_init);
 }
 void C_Run_Normal_Default(void)
@@ -470,26 +470,26 @@ void C_Run_Normal_Default(void)
     ;
 }
 /*************************************************
- * ¸ÉÍÐ×´Ì¬£¨×ÓÀà£©ÒÀ¸½ÔËÐÐ£¨¸¸Àà£©
- * ½øÈëº¯Êý
- * ±£³Öº¯Êý
- * ÍË³öº¯Êý
- * ´íÎóº¯Êý
+ * ï¿½ï¿½ï¿½ï¿½×´Ì¬ï¿½ï¿½ï¿½ï¿½ï¿½à£©ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð£ï¿½ï¿½ï¿½ï¿½à£©
+ * ï¿½ï¿½ï¿½ëº¯ï¿½ï¿½
+ * ï¿½ï¿½ï¿½Öºï¿½ï¿½ï¿½
+ * ï¿½Ë³ï¿½ï¿½ï¿½ï¿½ï¿½
+ * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
  * *************************************************/
 void C_Run_Dry_Init(void)
 {
     Update_Childer_Last_State_Transition();
     //---------------------
-    //--´úÂë¶Î
-    printf("===×ÓÀà£º¸ÉÍÐ×´Ì¬====½øÈëº¯Êý>>>\r\n");
+    //--ï¿½ï¿½ï¿½ï¿½ï¿½
+    LOG("===ï¿½ï¿½ï¿½à£ºï¿½ï¿½ï¿½ï¿½×´Ì¬====ï¿½ï¿½ï¿½ëº¯ï¿½ï¿½>>>\r\n");
     //--------------------
     Childer_Step_Transition(s_childer_keep);
 }
 void C_Run_Dry_Keep(void)
 {
     //---------------------
-    //--´úÂë¶Î
-    printf("===×ÓÀà£º¸ÉÍÐ×´Ì¬====±£³Öº¯Êý\r\n");
+    //--ï¿½ï¿½ï¿½ï¿½ï¿½
+    LOG("===ï¿½ï¿½ï¿½à£ºï¿½ï¿½ï¿½ï¿½×´Ì¬====ï¿½ï¿½ï¿½Öºï¿½ï¿½ï¿½\r\n");
     //--------------------
     if (Is_Three_A_Childer_State_Transition())
         Childer_Step_Transition(s_childer_done);
@@ -499,10 +499,10 @@ void C_Run_Dry_Keep(void)
 void C_Run_Dry_Done(void)
 {
     //---------------------
-    //--´úÂë¶Î
-    printf("===×ÓÀà£º¸ÉÍÐ×´Ì¬====ÍË³öº¯Êý<<<\r\n");
+    //--ï¿½ï¿½ï¿½ï¿½ï¿½
+    LOG("===ï¿½ï¿½ï¿½à£ºï¿½ï¿½ï¿½ï¿½×´Ì¬====ï¿½Ë³ï¿½ï¿½ï¿½ï¿½ï¿½<<<\r\n");
     //--------------------
-    //--ÄÚ²¿ÇÐ»»
+    //--ï¿½Ú²ï¿½ï¿½Ð»ï¿½
     Childer_Step_Transition(s_childer_init);
 }
 void C_Run_Dry_Default(void)
@@ -510,26 +510,26 @@ void C_Run_Dry_Default(void)
     ;
 }
 /*************************************************
- * ÊÜÀ§×´Ì¬£¨×ÓÀà£©ÒÀ¸½ÔËÐÐ£¨¸¸Àà£©
- * ½øÈëº¯Êý
- * ±£³Öº¯Êý
- * ÍË³öº¯Êý
- * ´íÎóº¯Êý
+ * ï¿½ï¿½ï¿½ï¿½×´Ì¬ï¿½ï¿½ï¿½ï¿½ï¿½à£©ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð£ï¿½ï¿½ï¿½ï¿½à£©
+ * ï¿½ï¿½ï¿½ëº¯ï¿½ï¿½
+ * ï¿½ï¿½ï¿½Öºï¿½ï¿½ï¿½
+ * ï¿½Ë³ï¿½ï¿½ï¿½ï¿½ï¿½
+ * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
  * *************************************************/
 void C_Run_Besiege_Init(void)
 {
     Update_Childer_Last_State_Transition();
     //---------------------
-    //--´úÂë¶Î
-    printf("===×ÓÀà£ºÊÜÀ§×´Ì¬====½øÈëº¯Êý>>>\r\n");
+    //--ï¿½ï¿½ï¿½ï¿½ï¿½
+    LOG("===ï¿½ï¿½ï¿½à£ºï¿½ï¿½ï¿½ï¿½×´Ì¬====ï¿½ï¿½ï¿½ëº¯ï¿½ï¿½>>>\r\n");
     //--------------------
     Childer_Step_Transition(s_childer_keep);
 }
 void C_Run_Besiege_Keep(void)
 {
     //---------------------
-    //--´úÂë¶Î
-    printf("===×ÓÀà£ºÊÜÀ§×´Ì¬====±£³Öº¯Êý\r\n");
+    //--ï¿½ï¿½ï¿½ï¿½ï¿½
+    LOG("===ï¿½ï¿½ï¿½à£ºï¿½ï¿½ï¿½ï¿½×´Ì¬====ï¿½ï¿½ï¿½Öºï¿½ï¿½ï¿½\r\n");
     //--------------------
     if (Is_Three_A_Childer_State_Transition())
         Childer_Step_Transition(s_childer_done);
@@ -539,10 +539,10 @@ void C_Run_Besiege_Keep(void)
 void C_Run_Besiege_Done(void)
 {
     //---------------------
-    //--´úÂë¶Î
-    printf("===×ÓÀà£ºÊÜÀ§×´Ì¬====ÍË³öº¯Êý<<<\r\n");
+    //--ï¿½ï¿½ï¿½ï¿½ï¿½
+    LOG("===ï¿½ï¿½ï¿½à£ºï¿½ï¿½ï¿½ï¿½×´Ì¬====ï¿½Ë³ï¿½ï¿½ï¿½ï¿½ï¿½<<<\r\n");
     //--------------------
-    //--ÄÚ²¿ÇÐ»»
+    //--ï¿½Ú²ï¿½ï¿½Ð»ï¿½
     Childer_Step_Transition(s_childer_init);
 }
 void C_Run_Besiege_Default(void)
@@ -550,26 +550,26 @@ void C_Run_Besiege_Default(void)
     ;
 }
 /*************************************************
- * ±ÜÕÏ×´Ì¬£¨×ÓÀà£©ÒÀ¸½ÔËÐÐ£¨¸¸Àà£©
- * ½øÈëº¯Êý
- * ±£³Öº¯Êý
- * ÍË³öº¯Êý
- * ´íÎóº¯Êý
+ * ï¿½ï¿½ï¿½ï¿½×´Ì¬ï¿½ï¿½ï¿½ï¿½ï¿½à£©ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð£ï¿½ï¿½ï¿½ï¿½à£©
+ * ï¿½ï¿½ï¿½ëº¯ï¿½ï¿½
+ * ï¿½ï¿½ï¿½Öºï¿½ï¿½ï¿½
+ * ï¿½Ë³ï¿½ï¿½ï¿½ï¿½ï¿½
+ * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
  * *************************************************/
 void C_Run_Avoid_Obstacles_Init(void)
 {
     Update_Childer_Last_State_Transition();
     //---------------------
-    //--´úÂë¶Î
-    printf("===×ÓÀà£º±ÜÕÏ×´Ì¬====½øÈëº¯Êý>>>\r\n");
+    //--ï¿½ï¿½ï¿½ï¿½ï¿½
+    LOG("===ï¿½ï¿½ï¿½à£ºï¿½ï¿½ï¿½ï¿½×´Ì¬====ï¿½ï¿½ï¿½ëº¯ï¿½ï¿½>>>\r\n");
     //--------------------
     Childer_Step_Transition(s_childer_keep);
 }
 void C_Run_Avoid_Obstacles_Keep(void)
 {
     //---------------------
-    //--´úÂë¶Î
-    printf("===×ÓÀà£º±ÜÕÏ×´Ì¬====±£³Öº¯Êý\r\n");
+    //--ï¿½ï¿½ï¿½ï¿½ï¿½
+    LOG("===ï¿½ï¿½ï¿½à£ºï¿½ï¿½ï¿½ï¿½×´Ì¬====ï¿½ï¿½ï¿½Öºï¿½ï¿½ï¿½\r\n");
     //--------------------
     if (Is_Three_A_Childer_State_Transition())
         Childer_Step_Transition(s_childer_done);
@@ -579,10 +579,10 @@ void C_Run_Avoid_Obstacles_Keep(void)
 void C_Run_Avoid_Obstacles_Done(void)
 {
     //---------------------
-    //--´úÂë¶Î
-    printf("===×ÓÀà£º±ÜÕÏ×´Ì¬====ÍË³öº¯Êý<<<\r\n");
+    //--ï¿½ï¿½ï¿½ï¿½ï¿½
+    LOG("===ï¿½ï¿½ï¿½à£ºï¿½ï¿½ï¿½ï¿½×´Ì¬====ï¿½Ë³ï¿½ï¿½ï¿½ï¿½ï¿½<<<\r\n");
     //--------------------
-    //--ÄÚ²¿ÇÐ»»
+    //--ï¿½Ú²ï¿½ï¿½Ð»ï¿½
     Childer_Step_Transition(s_childer_init);
 }
 void C_Run_Avoid_Obstacles_Default(void)

@@ -233,7 +233,7 @@ void sha256(const unsigned char *data, u64 len, unsigned char *out) {
         h6 += g;
         h7 += h;
     }
-	//printf("The ho is %x\n",h0);
+	//LOG("The ho is %x\n",h0);
     copy_uint32(out, h0);
     copy_uint32(out + 1, h1);
     copy_uint32(out + 2, h2);
@@ -245,6 +245,6 @@ void sha256(const unsigned char *data, u64 len, unsigned char *out) {
 	
     /*for(int i=0;i<32;i++)
 	{
-		printf("%x",out[i]);	
+		LOG("%x",out[i]);	
 	}*/
 }

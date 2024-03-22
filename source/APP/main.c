@@ -114,7 +114,7 @@ extern u8 json_test[];
 void printf_cjson(cJSON *node)
 {
     if (!node) return;
-    printf("name : %s\n", node->string);
+    LOG("name : %s\n", node->string);
     printf_cjson(node->child);
     printf_cjson(node->next);
 }
@@ -130,28 +130,28 @@ int main(int argc, char * argv [])
     // ((u32 *)b)[0] = 0x12345678;
     // u8 pec = crc16_i2c_smbus(0, gs_sumbus_pkt0, gs_sumbus_pkt0[2] + 3);
     // pldm_poll_for_platform_event_msg_rsp_dat_t *a = NULL;
-    // printf("0x%x\n", pec);
-    // printf("%x\n", *((u32 *)(&b[0])));
+    // LOG("0x%x\n", pec);
+    // LOG("%x\n", *((u32 *)(&b[0])));
     // DCBX_ANALYZE(g_dcbx_sample_capture_2_pcap_buf);
     // u8 present_state = 10;
     // u8 *a = &present_state;
-    // printf("%d", a[0]);
-    // printf("%d\n", test());
+    // LOG("%d", a[0]);
+    // LOG("%d\n", test());
     // unsigned char in[] = "hello world";
 	// unsigned char buff[32];//必须带unsigned ,sha256消息摘要输出为256位,即32字节
 	// memset(buff,0,32);
 	// puts("start sha256 hash \n");
 	// sha256(in,strlen(in),buff);
-	// printf("\nThe sha256 hash is :\n");
+	// LOG("\nThe sha256 hash is :\n");
     // 	for(int i=0;i<32;i++)
 	// {
  
-	// 	printf("%02x",buff[i]);	
+	// 	LOG("%02x",buff[i]);	
 	// }
 	// puts("\n end sha256 hash \n");
     // rsa_test();
     // u8 xzxz[] = {0x1c, 0x1c, 0x1c, 0x1c};
-    // printf("%x", crc32_pldm(xzxz, 4));
+    // LOG("%x", crc32_pldm(xzxz, 4));
     // u32 notify_buf[] = {
     //     0xa7006003, \
     //     0x00000000, \
@@ -163,39 +163,39 @@ int main(int argc, char * argv [])
     //     0x00000000
     // };
     // mctp_hdr_t *mctp_hdr = (mctp_hdr_t *)&notify_buf[5];
-    // printf("src_eid : 0x%02x\n", mctp_hdr->dest_eid);
+    // LOG("src_eid : 0x%02x\n", mctp_hdr->dest_eid);
     // pldm_redfish_dictionary_format_t *dict_ptr = (pldm_redfish_dictionary_format_t *)dict0;
     // for (u8 i = 0; i < dict_ptr->entry_cnt; i++) {
-    //     printf("fmt : 0x%02x\n", dict_ptr->entry[i].format);
+    //     LOG("fmt : 0x%02x\n", dict_ptr->entry[i].format);
     // }
     // cJSON *fmt_err = NULL;
     // cJSON *dummy = NULL;
     // pldm_bej_init();
     // pldm_cjson_test();
-    // printf("total len : %d\n", pldm_bej_decode(bej_buf, dict0, &(dict_ptr->entry[0]), dict_ptr->entry_cnt, cjson_test));
+    // LOG("total len : %d\n", pldm_bej_decode(bej_buf, dict0, &(dict_ptr->entry[0]), dict_ptr->entry_cnt, cjson_test));
     // char *str = cJSON_Print(cjson_test);
-    // printf("%s\n", str);
+    // LOG("%s\n", str);
     // dummy = cJSON_GetObjectItem(cjson_test, "DummySimple");
     // fmt_err = cJSON_GetObjectItem(dummy, "fmt_err");
-    // printf("%s\n", fmt_err->valuestring);
+    // LOG("%s\n", fmt_err->valuestring);
     // cJSON_Delete(cjson_test);
     // pldm_bej_encode(json_buf, dict);
     // pldm_cjson_test();
 
     // cJSON *tmp = cJSON_Parse(json_buf);
     // char *str = cJSON_Print(tmp);
-    // printf("%s\n", str);
+    // LOG("%s\n", str);
     // printf_cjson(tmp);
     // cJSON_Delete(tmp);
 
     // cJSON *ptr = cJSON_Parse((char *)json_test);
     // char *str = cJSON_Print(ptr);
-    // printf("%s\n", str);
+    // LOG("%s\n", str);
 
-    // printf("%08x\n", ~crc32_pldm(b, len));
-    // printf("%08x\n", ~0xa4fc415f);
+    // LOG("%08x\n", ~crc32_pldm(b, len));
+    // LOG("%08x\n", ~0xa4fc415f);
     // for (u8 i = 0; i < 8; i++) {
-    //     printf("%02x \n", b[i]);
+    //     LOG("%02x \n", b[i]);
     // }
     // pldm_redfish_dict_test();
     // pldm_fwup_verify_pkt_data_test();

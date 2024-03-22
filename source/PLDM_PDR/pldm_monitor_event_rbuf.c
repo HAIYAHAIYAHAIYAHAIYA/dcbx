@@ -154,7 +154,7 @@ void pldm_sensor_event_generate(void *p, u8 sensor_event_class, u8 event_msg_en,
 
         sensor_event->event_data_size += sizeof(pldm_field_per_numeric_sensor_state_format_t);
     } else {
-        printf("error sensor event class : %d", sensor_event_class);
+        LOG("error sensor event class : %d", sensor_event_class);
         goto L_RET;
     }
     pldm_event_rbuf_write(p, sensor_event, sizeof(pldm_event_data_t) + sensor_event->event_data_size);

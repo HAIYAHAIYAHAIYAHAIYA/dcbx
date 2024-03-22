@@ -1,6 +1,4 @@
-#include <stdio.h>
-#include <string.h>
-#include <stdbool.h>
+#include "main.h"
 int changdu;
 int c[100];
 // 判断两个数是不是互素。
@@ -24,12 +22,12 @@ bool gcd(int p, int q)
 	}
 	if (temp1 == 0 && temp2 == q)
 	{
-		printf("符合条件!\n");
+		LOG("符合条件!\n");
 		return true;
 	}
 	else
 	{
-		printf("不符合条件!请重新输入:\n");
+		LOG("不符合条件!请重新输入:\n");
 		return false;
 	}
 }
@@ -58,13 +56,13 @@ bool is_sushu(int s)
 // 将明文转换成数字明文
 // void convert(){
 //	char mingwen[100];    //符号明文
-//	printf("请输入明文:\n");
+//	LOG("请输入明文:\n");
 //	gets(mingwen);
 //	changdu=strlen();
 //	int ming[changdu];   //定义符号明文
 //	for(int i=0;i<changdu;i++){
 //	ming[i]=mingwen[i];        //将字母转换成对应的ascii码。
-//	printf("%d",mingwen[i]);
+//	LOG("%d",mingwen[i]);
 //	}
 //
 //
@@ -76,7 +74,7 @@ void encrypt(int e, int n)
 
 	// 先将符号明文转换成字母所对应的ascii码。
 	char mingwen[100]; // 符号明文
-	printf("请输入明文:\n");
+	LOG("请输入明文:\n");
 	scanf("%s", mingwen);
 	// gets(mingwen);
 	changdu = strlen(mingwen);
@@ -84,11 +82,11 @@ void encrypt(int e, int n)
 	for (int i = 0; i < strlen(mingwen); i++)
 	{
 		ming[i] = mingwen[i];	  // 将字母转换成对应的ascii码。
-		printf("%d", mingwen[i]); // 将字母转换成对应的ascii码。可以不打印
+		LOG("%d", mingwen[i]); // 将字母转换成对应的ascii码。可以不打印
 	}
-	printf("\n");
+	LOG("\n");
 	// 开始加密
-	printf("加密开始…………………………\n");
+	LOG("加密开始…………………………\n");
 	int zhuan = 1; // c为加密后的数字密文
 	for (int i = 0; i < strlen(mingwen); i++)
 	{
@@ -99,25 +97,25 @@ void encrypt(int e, int n)
 			// zhuan=zhuan%n;
 		}
 		c[i] = zhuan;
-		// printf("%d",mi[i]);
+		// LOG("%d",mi[i]);
 		zhuan = 1;
 	}
-	printf("加密密文为:\n");
+	LOG("加密密文为:\n");
 	for (int i = 0; i < strlen(mingwen); i++)
-		printf("%d", c[i]);
-	printf("\n加密结束…………………………\n");
+		LOG("%d", c[i]);
+	LOG("\n加密结束…………………………\n");
 	// 以下写法会导致溢出!
 	//	{
 	//		for(int i=0;i<strlen(mingwen);i++){
 	//		zhuan=pow()
 	//		mi[i]=int(pow(ming[i],e))%n;
-	//		printf("密文为:%d",mi[0]);
+	//		LOG("密文为:%d",mi[0]);
 	//	}
 	//	}
 
-	//	printf("密文为:\n");
+	//	LOG("密文为:\n");
 	//	for(int i=0;i<strlen(mingwen);i++){
-	//		printf("%d",mi[i]);
+	//		LOG("%d",mi[i]);
 	//	}
 }
 
@@ -135,21 +133,21 @@ void decrypto(int d, int n)
 			// zhuan=zhuan%n;
 		}
 		de_mingwen[i] = zhuan1;
-		// printf("%d",mi[i]);
+		// LOG("%d",mi[i]);
 		zhuan1 = 1;
 	}
-	printf("解密开始…………………………\n");
-	printf("解密后的数字明文为:\n");
+	LOG("解密开始…………………………\n");
+	LOG("解密后的数字明文为:\n");
 	for (int i = 0; i < changdu; i++)
-		printf("%d", de_mingwen[i]);
-	printf("\n");
-	printf("解密后的符号明文为:\n");
+		LOG("%d", de_mingwen[i]);
+	LOG("\n");
+	LOG("解密后的符号明文为:\n");
 	for (int i = 0; i < changdu; i++)
 	{
 		de_ming[i] = de_mingwen[i];
-		printf("%c", de_ming[i]);
+		LOG("%c", de_ming[i]);
 	}
-	printf("\n解密结束…………………………\n");
+	LOG("\n解密结束…………………………\n");
 }
 
 int rsa_test(void)
@@ -157,21 +155,21 @@ int rsa_test(void)
 	int q, p, e, d, n, t, x, tep;
 	while (1)
 	{
-		printf("请输入p:", p);
+		LOG("请输入p:", p);
 		scanf("%d", &p);
 		tep = is_sushu(p);
 		if (tep == 0)
 		{
-			printf("p不是素数,请重新输入p!\n");
+			LOG("p不是素数,请重新输入p!\n");
 			continue;
 		}
-		printf("请输入q:", q);
+		LOG("请输入q:", q);
 		scanf("%d", &q);
 		tep = is_sushu(q);
 		if (tep == 0)
 		{
-			printf("q不是素数,请重新输入q!\n");
-			printf("请输入q:", q);
+			LOG("q不是素数,请重新输入q!\n");
+			LOG("请输入q:", q);
 			scanf("%d", &q);
 			tep = is_sushu(q);
 		}
@@ -180,24 +178,24 @@ int rsa_test(void)
 		tep = gcd(p, q);
 		if (tep == 0)
 			continue;
-		printf("t=(q-1)*(p-1)=%d\n", t);
-		printf("请输入一个指数e,使得(e,t)=1\n");
+		LOG("t=(q-1)*(p-1)=%d\n", t);
+		LOG("请输入一个指数e,使得(e,t)=1\n");
 		scanf("%d", &e);
 		tep = gcd(e, t);
 		while (tep == 0)
 		{
-			printf("请重新输入一个指数e,使得(e,t)=1:");
+			LOG("请重新输入一个指数e,使得(e,t)=1:");
 			scanf("%d", &e);
 			tep = gcd(e, t);
 		}
 		d = extend(e, t);
-		printf("密钥为:%d,一定保管好!", d);
-		printf("\n\n-----------------------------------------------------------\n");
+		LOG("密钥为:%d,一定保管好!", d);
+		LOG("\n\n-----------------------------------------------------------\n");
 		encrypt(e, n);
-		printf("\n请输入正确的密钥,密钥正确将解密上面的密文:");
+		LOG("\n请输入正确的密钥,密钥正确将解密上面的密文:");
 		scanf("%d", &d);
 		decrypto(d, n);
-		printf("\n-----------------------------------------------------------\n");
+		LOG("\n-----------------------------------------------------------\n");
 	}
 
 	return 0;

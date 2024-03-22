@@ -20,7 +20,7 @@ void *pldm_cjson_malloc(u16 size)
 {
     size = ALIGN(size, 1);
     // if (gs_pldm_cjson_wt + size >= MY_CJSON_POLL_SIZE) {
-    //     printf("no more space\n");
+    //     LOG("no more space\n");
     //     return NULL;
     // }
     // u8 *pt = gs_pldm_cjson_pool + gs_pldm_cjson_wt;
@@ -41,7 +41,7 @@ void pldm_cjson_delete_node(pldm_cjson_t *node)
     if (!node) return;
     pldm_cjson_delete_node(node->next);
     pldm_cjson_delete_node(node->child);
-    // printf("\nseq : %d, fmt : 0x%02x, len : %d, name : %s : ", node->sflv.seq >> 1, node->sflv.fmt, node->sflv.len, node->name);
+    // LOG("\nseq : %d, fmt : 0x%02x, len : %d, name : %s : ", node->sflv.seq >> 1, node->sflv.fmt, node->sflv.len, node->name);
     pldm_cjson_free((u8 *)node->name);
     node->name = NULL;
     if (node->next) node->next = NULL;
@@ -131,8 +131,8 @@ void pldm_cjson_printf_root1(pldm_cjson_t *root)
 {
     pldm_cjson_t *tmp = root;
     while (tmp) {
-        // printf("seq : 0x%x, fmt : 0x%x, len : %d\n", tmp->sflv.seq, tmp->sflv.fmt, tmp->sflv.len);
-        if (tmp->name) printf("\nseq : %d, fmt : 0x%02x, len : %d, name : %s : ", tmp->sflv.seq, tmp->sflv.fmt, tmp->sflv.len, tmp->name);
+        // LOG("seq : 0x%x, fmt : 0x%x, len : %d\n", tmp->sflv.seq, tmp->sflv.fmt, tmp->sflv.len);
+        if (tmp->name) LOG("\nseq : %d, fmt : 0x%02x, len : %d, name : %s : ", tmp->sflv.seq, tmp->sflv.fmt, tmp->sflv.len, tmp->name);
         u8 fmt = tmp->sflv.fmt >> 4;
         if (fmt != BEJ_ENUM) pldm_cjson_printf_root1(tmp->child);
         if (!tmp->child && tmp->name) {
@@ -140,20 +140,20 @@ void pldm_cjson_printf_root1(pldm_cjson_t *root)
             for (u8 i = 0; i < tmp->sflv.len; i++) {
                 switch (fmt) {
                     case BEJ_INT:
-                        printf("0x%02x ", tmp->sflv.val[i]);
+                        LOG("0x%02x ", tmp->sflv.val[i]);
                     break;
                     case BEJ_ENUM:
-                        printf("0x%x ", tmp->sflv.val[i]);
+                        LOG("0x%x ", tmp->sflv.val[i]);
                     break;
                     default:
-                        printf("%c", tmp->sflv.val[i]);
+                        LOG("%c", tmp->sflv.val[i]);
                     break;
                 }
             }
         } else {
             if (fmt == BEJ_ENUM) {
                 for (u8 i = 0; i < tmp->sflv.len; i++) {
-                    printf("0x%x ", tmp->sflv.val[i]);
+                    LOG("0x%x ", tmp->sflv.val[i]);
                 }
             }
         }
@@ -188,7 +188,7 @@ void pldm_cjson_printf_root(pldm_cjson_t *root)
 {
 	if (!root) return;
     pldm_cjson_t *tmp = root;
-	printf("\nseq : %d, fmt : 0x%02x, len : %d, name : %s :", tmp->sflv.seq >> 1, tmp->sflv.fmt, tmp->sflv.len, tmp->name);
+	LOG("\nseq : %d, fmt : 0x%02x, len : %d, name : %s :", tmp->sflv.seq >> 1, tmp->sflv.fmt, tmp->sflv.len, tmp->name);
     u8 fmt = tmp->sflv.fmt >> 4;
 	if (fmt != BEJ_ENUM) pldm_cjson_printf_root(tmp->child);
     if (!tmp->child) {
@@ -196,17 +196,17 @@ void pldm_cjson_printf_root(pldm_cjson_t *root)
         for (u8 i = 0; i < tmp->sflv.len; i++) {
             switch (fmt) {
                 case BEJ_INT:
-                    printf("%d", tmp->sflv.val[i]);
+                    LOG("%d", tmp->sflv.val[i]);
                 break;
                 default:
-                    printf("%c", tmp->sflv.val[i]);
+                    LOG("%c", tmp->sflv.val[i]);
                 break;
             }
         }
     } else {
         if (fmt == BEJ_ENUM) {
             for (u8 i = 0; i < tmp->sflv.len; i++) {
-                printf("0x%x ", tmp->sflv.val[i]);
+                LOG("0x%x ", tmp->sflv.val[i]);
             }
         }
     }
@@ -455,7 +455,7 @@ void pldm_cjson_fill_dict_str(pldm_cjson_t *root, u8 *dictionary, u8 is_anno_dic
 	while (front != rear)
 	{
 		q = queue[++front];
-        // printf("seq : %d, fmt : %d, len : %d, name : %s\n", q->sflv.seq, q->sflv.fmt, q->sflv.len, q->name);
+        // LOG("seq : %d, fmt : %d, len : %d, name : %s\n", q->sflv.seq, q->sflv.fmt, q->sflv.len, q->name);
         u8 state = (is_anno_dict && q->sflv.seq & 1) || (!is_anno_dict && !(q->sflv.seq & 1));
         if (state) {
             u8 fmt = dict->entry[entry_cnt].format >> 4;
@@ -475,13 +475,13 @@ void pldm_cjson_fill_dict_str(pldm_cjson_t *root, u8 *dictionary, u8 is_anno_dic
                     offset += strlen(name) + 1;
                 }
                 entry_cnt++;
-                // printf("\n%s %d", name, entry_cnt);
+                // LOG("\n%s %d", name, entry_cnt);
             }
         }
 
         if (front == rear) {
             u8 cnt = rear - have_child;
-            // printf("cnt : %d\n", cnt);
+            // LOG("cnt : %d\n", cnt);
             for (u8 i = 0; i < cnt; i++) {
                 pldm_cjson_t *tmp = queue[have_child + i + 1];
                 if (tmp->child) {
@@ -518,7 +518,7 @@ void pldm_cjson_fill_dict_entry_data(pldm_cjson_t *root, u8 *dictionary, u8 is_a
 	while (front != rear)
 	{
 		q = queue[++front];
-		// printf("seq : %d, fmt : %d, len : %d, name : %s\n", q->sflv.seq >> 1, q->sflv.fmt, q->sflv.len, q->name);
+		// LOG("seq : %d, fmt : %d, len : %d, name : %s\n", q->sflv.seq >> 1, q->sflv.fmt, q->sflv.len, q->name);
         u8 state = (is_anno_dict && q->sflv.seq & 1) || (!is_anno_dict && !(q->sflv.seq & 1));
         if (state) {
             is_same = 0;
@@ -539,7 +539,7 @@ void pldm_cjson_fill_dict_entry_data(pldm_cjson_t *root, u8 *dictionary, u8 is_a
         }
         if (front == rear) {
             u8 cnt = rear - have_child;
-            // printf("cnt : %d\n", cnt);
+            // LOG("cnt : %d\n", cnt);
             for (u8 i = 0; i < cnt; i++) {
                 pldm_cjson_t *tmp = queue[have_child + i + 1];
                 if (tmp->child) {
@@ -552,7 +552,7 @@ void pldm_cjson_fill_dict_entry_data(pldm_cjson_t *root, u8 *dictionary, u8 is_a
         }
 	}
     dict->entry_cnt = entry_cnt;
-    // printf("entry cnt : %d\n", entry_cnt);
+    // LOG("entry cnt : %d\n", entry_cnt);
 }
 
 void pldm_cjson_fill_dict_child(pldm_cjson_t *root, u8 *dictionary)
@@ -573,11 +573,11 @@ void pldm_cjson_fill_dict_child(pldm_cjson_t *root, u8 *dictionary)
 	while (front != rear)
 	{
 		++front;
-        // printf("%d, %s\n", queue[front]->sflv.seq >> 1, queue[front]->name);
-		// printf("seq : %d, fmt : %d, len : %d, name : %s\n", queue[front]->sflv.seq, queue[front]->sflv.fmt, queue[front]->sflv.len, queue[front]->name);
+        // LOG("%d, %s\n", queue[front]->sflv.seq >> 1, queue[front]->name);
+		// LOG("seq : %d, fmt : %d, len : %d, name : %s\n", queue[front]->sflv.seq, queue[front]->sflv.fmt, queue[front]->sflv.len, queue[front]->name);
         if (front == rear) {
             u8 cnt = rear - have_child;
-            // printf("cnt : %d", cnt);
+            // LOG("cnt : %d", cnt);
             for (u8 k = 0; k < cnt; k++) {
                 pldm_cjson_t *tmp = queue[have_child + k + 1];
                 if (tmp->child) {
@@ -587,7 +587,7 @@ void pldm_cjson_fill_dict_child(pldm_cjson_t *root, u8 *dictionary)
                         }
                     }
                     for (u16 j = i; j < dict->entry_cnt; j++) {
-                        // printf("\nname : %s %s", &dictionary[dict->entry[j].name_off], tmp->child->name);
+                        // LOG("\nname : %s %s", &dictionary[dict->entry[j].name_off], tmp->child->name);
                         if (strcmp((char *)&dictionary[dict->entry[j].name_off], tmp->child->name) == 0) {
                             dict->entry[i].childpoint_off = (u8 *)&(dict->entry[j]) - dictionary;
                             break;
@@ -609,7 +609,7 @@ void pldm_cjson_fill_dict_child(pldm_cjson_t *root, u8 *dictionary)
 	}
     // for (u8 k = 0; k < dict->entry_cnt; k++) {
     //     pldm_redfish_dictionary_entry_t *entry = (pldm_redfish_dictionary_entry_t *)&dictionary[dict->entry[k].childpoint_off];
-    //     printf("child_cnt : %d, child_off : %s, name : %s\n", dict->entry[k].child_cnt, &dictionary[entry->name_off], &dictionary[dict->entry[k].name_off]);
+    //     LOG("child_cnt : %d, child_off : %s, name : %s\n", dict->entry[k].child_cnt, &dictionary[entry->name_off], &dictionary[dict->entry[k].name_off]);
     // }
 }
 
@@ -631,25 +631,25 @@ void pldm_cjson_fill_dict_copyright(u8 *dictionary, char *copyright_name)
     copyright->copyright_len = strlen(copyright_name) + 1;
     memcpy(copyright->copyright, copyright_name, copyright->copyright_len);
     dict->dictionary_size = copyright->copyright + copyright->copyright_len - dictionary;
-    // printf("entry_cnt : %d\n", dict->entry_cnt);
+    // LOG("entry_cnt : %d\n", dict->entry_cnt);
 }
 
 void pldm_cjson_printf_dict(u8 *dictionary)
 {
     pldm_redfish_dictionary_format_t *dict = (pldm_redfish_dictionary_format_t *)dictionary;
-    printf("\nversion_tag : %d\n", dict->version_tag);
-    printf("schema_version : %x\n", dict->schema_version);
-    printf("entry_cnt : %d\n", dict->entry_cnt);
-    printf("dictionay_flags : %d\n", dict->dictionay_flags);
-    printf("dictionary_size : %d\n", dict->dictionary_size);
+    LOG("\nversion_tag : %d\n", dict->version_tag);
+    LOG("schema_version : %x\n", dict->schema_version);
+    LOG("entry_cnt : %d\n", dict->entry_cnt);
+    LOG("dictionay_flags : %d\n", dict->dictionay_flags);
+    LOG("dictionary_size : %d\n", dict->dictionary_size);
     for (u16 i = 0; i < dict->entry_cnt; i++) {
-        printf("child_cnt : %d, seq : %d, fmt : %d name : ", dict->entry[i].child_cnt, dict->entry[i].sequence_num, dict->entry[i].format >> 4);
+        LOG("child_cnt : %d, seq : %d, fmt : %d name : ", dict->entry[i].child_cnt, dict->entry[i].sequence_num, dict->entry[i].format >> 4);
         for (u16 j = 0; j < dict->entry[i].name_len; j++) {
             u8 *name = &dictionary[dict->entry[i].name_off];
-            printf("%c", name[j]);
+            LOG("%c", name[j]);
         }
-        printf(" name off : %d, child off : %d, offset : %d" , dict->entry[i].name_off, dict->entry[i].childpoint_off, (u8 *)&(dict->entry[i]) - dictionary);
-        printf("\n");
+        LOG(" name off : %d, child off : %d, offset : %d" , dict->entry[i].name_off, dict->entry[i].childpoint_off, (u8 *)&(dict->entry[i]) - dictionary);
+        LOG("\n");
     }
     pldm_redfish_dictionary_copyright_t *copyright;
     u16 name_total_len = 0;
@@ -657,16 +657,16 @@ void pldm_cjson_printf_dict(u8 *dictionary)
         for (u16 i = 0; i < dict->entry_cnt; i++) {
             name_total_len += dict->entry[i].name_len + 1;
         }
-        printf("%d\n", name_total_len);
+        LOG("%d\n", name_total_len);
         copyright = (pldm_redfish_dictionary_copyright_t *)(((u8 *)&(dict->entry[dict->entry_cnt])) + name_total_len);
     } else {
         copyright = (pldm_redfish_dictionary_copyright_t *)&(dictionary[sizeof(pldm_redfish_dictionary_format_t)]);
     }
-    printf("name_total_len : %d, copyright len : %d, copyright : %s\n", name_total_len, copyright->copyright_len, copyright->copyright);
+    LOG("name_total_len : %d, copyright len : %d, copyright : %s\n", name_total_len, copyright->copyright_len, copyright->copyright);
     // for (u16 i = 0; i < dict->dictionary_size; i++) {
-    //     printf("0x%02x, ", dictionary[i]);
+    //     LOG("0x%02x, ", dictionary[i]);
     //     if (!((i + 1) % 8)) {
-    //         printf("\n");
+    //         LOG("\n");
     //     }
     // }
 }
@@ -706,7 +706,7 @@ void pldm_cjson_fill_anno_dict_entry_data(pldm_cjson_t *root, u8 *dictionary, u8
 	while (front != rear)
 	{
 		q = queue[++front];
-		// printf("seq : %d, fmt : %d, len : %d, name : %s\n", q->sflv.seq >> 1, q->sflv.fmt, q->sflv.len, q->name);
+		// LOG("seq : %d, fmt : %d, len : %d, name : %s\n", q->sflv.seq >> 1, q->sflv.fmt, q->sflv.len, q->name);
         if (q->sflv.seq & 1) {
             u8 is_same = 0;
             u8 used_name_idx = 0;
@@ -736,7 +736,7 @@ void pldm_cjson_fill_anno_dict_entry_data(pldm_cjson_t *root, u8 *dictionary, u8
 
         if (front == rear) {
             u8 cnt = rear - have_child;
-            // printf("cnt : %d\n", cnt);
+            // LOG("cnt : %d\n", cnt);
             for (u8 i = 0; i < cnt; i++) {
                 pldm_cjson_t *tmp = queue[have_child + i + 1];
                 if (tmp->child) {
@@ -749,7 +749,7 @@ void pldm_cjson_fill_anno_dict_entry_data(pldm_cjson_t *root, u8 *dictionary, u8
         }
 	}
     dict->entry_cnt = entry_cnt;
-    // printf("entry cnt : %d\n", entry_cnt);
+    // LOG("entry cnt : %d\n", entry_cnt);
 }
 
 void pldm_cjson_create_anno_dict(pldm_cjson_t *root, u8 *dictionary, u8 root_cnt, u8 step)
@@ -876,16 +876,16 @@ static pldm_cjson_schema_fmt_t *pldm_cjson_create_schema(pldm_cjson_t *obj, pldm
     u8 cnt = 0;
     sflv.seq = 0;
     sflv.fmt = (buf[0].fmt) << 4;
-    // printf("fmt : %d, cnt : %d\n", buf[0].fmt, buf[0].child_cnt);
+    // LOG("fmt : %d, cnt : %d\n", buf[0].fmt, buf[0].child_cnt);
     if (buf[0].fmt == BEJ_SET || buf[0].fmt == BEJ_ARRAY) {
         cnt = buf[0].child_cnt;
-        // printf("name : %s\n", tmp->name);
+        // LOG("name : %s\n", tmp->name);
         tmp1 = pldm_cjson_add_item_to_obj(tmp, &sflv, buf->key, buf->val, cm_strlen(buf->val));
         buf += 1;
     }
     for (u8 i = 0; i < cnt; i++) {
         buf = pldm_cjson_create_schema(tmp1, buf);
-        // printf("cnt %d\n", len);
+        // LOG("cnt %d\n", len);
     }
     if (!cnt && BEJ_SET != sflv.fmt >> 4 && BEJ_ARRAY != sflv.fmt >> 4) {
 
@@ -1438,11 +1438,11 @@ pldm_redfish_dictionary_entry_t *pldm_cjson_dict_fill_sf(u8 *dict, pldm_redfish_
 {
     if (!dict || !entry) return NULL;
     pldm_redfish_dictionary_entry_t *tmp = entry;
-    // printf("%s, %d\n", &dict[tmp->name_off], entry_cnt);
-    // printf("need 0x%x, 0x%x, 0x%02x", sflv->fmt >> 4, sflv->seq >> 1, sflv->len);
+    // LOG("%s, %d\n", &dict[tmp->name_off], entry_cnt);
+    // LOG("need 0x%x, 0x%x, 0x%02x", sflv->fmt >> 4, sflv->seq >> 1, sflv->len);
 
     for (u16 k = 0; k < entry_cnt; k++) {
-        // printf("0x%x, 0x%x", dict_fmt, tmp->sequence_num);
+        // LOG("0x%x, 0x%x", dict_fmt, tmp->sequence_num);
         char *name = NULL;
         if (strlen(root->name)) {
             name = (char *)&dict[tmp->name_off];
@@ -1452,13 +1452,13 @@ pldm_redfish_dictionary_entry_t *pldm_cjson_dict_fill_sf(u8 *dict, pldm_redfish_
         if (strcmp(name, root->name) == 0) {
             root->sflv.seq = tmp->sequence_num;
             root->sflv.fmt = tmp->format;
-            // printf("%s\n", root->name);
-            // printf("%d\n", tmp->sequence_num);
+            // LOG("%s\n", root->name);
+            // LOG("%d\n", tmp->sequence_num);
             return tmp;
         }
         tmp += 1;
     }
-    printf("fmt err : %s\n", root->name);
+    LOG("fmt err : %s\n", root->name);
     return entry;
 }
 
@@ -1467,21 +1467,21 @@ void pldm_cjson_anno_dict_fill_sf(u8 *anno_dict, pldm_cjson_t *root, u8 name_idx
     pldm_redfish_dictionary_format_t *dict = (pldm_redfish_dictionary_format_t *)anno_dict;
     pldm_redfish_dictionary_entry_t *tmp = (pldm_redfish_dictionary_entry_t *)&(dict->entry[0]);
     // dict->entry[1].sequence_num = 1;
-    // printf("entry cnt : %d\n", entry_cnt);
-    // printf("need 0x%x, 0x%x, %s\n", sflv->fmt >> 4, sflv->seq >> 1, sflv->val);
+    // LOG("entry cnt : %d\n", entry_cnt);
+    // LOG("need 0x%x, 0x%x, %s\n", sflv->fmt >> 4, sflv->seq >> 1, sflv->val);
 
-    // printf("%s\n", root->name);
+    // LOG("%s\n", root->name);
     for (u16 k = 0; k < dict->entry_cnt; k++) {
-        // printf("0x%x, 0x%x\n", dict_fmt, tmp->sequence_num);
+        // LOG("0x%x, 0x%x\n", dict_fmt, tmp->sequence_num);
         if (strcmp((char *)&dict[tmp->name_off], &(root->name[name_idx])) == 0) {
             root->sflv.seq = tmp->sequence_num << 1;
             root->sflv.fmt = tmp->format;
-            // printf("key.val %s: ", key.val);
+            // LOG("key.val %s: ", key.val);
             return;
         }
         tmp += 1;
     }
-    printf("fmt err: ");
+    LOG("fmt err: ");
 }
 
 void pldm_cjson_cal_sf_to_root(pldm_cjson_t *root, u8 *anno_dict, u8 *dict, pldm_redfish_dictionary_entry_t *entry, u8 entry_cnt)
@@ -1492,8 +1492,8 @@ void pldm_cjson_cal_sf_to_root(pldm_cjson_t *root, u8 *anno_dict, u8 *dict, pldm
         u8 child_cnt = entry_cnt;
         pldm_redfish_dictionary_entry_t *new_entry = entry;
         // tmp->sflv.seq = ((seq++) << 1) | (tmp->sflv.seq & 1);
-        // printf("%s, %s, %d\n", &dict[entry->name_off], tmp->name, entry_cnt);
-        // printf("\nseq : %d, fmt : 0x%02x, len : %d, name : %s : ", tmp->sflv.seq, tmp->sflv.fmt, tmp->sflv.len, tmp->name);
+        // LOG("%s, %s, %d\n", &dict[entry->name_off], tmp->name, entry_cnt);
+        // LOG("\nseq : %d, fmt : 0x%02x, len : %d, name : %s : ", tmp->sflv.seq, tmp->sflv.fmt, tmp->sflv.len, tmp->name);
         if (tmp->sflv.seq & 1) {
             u8 name_len = strlen(tmp->name) + 1;
             for (u8 j = 0; j < name_len; j++) {
@@ -1597,7 +1597,7 @@ void pldm_cjson_test(void)
     // pldm_cjson_cal_sf_to_root2(root, dict0, dict0, &(dict->entry[0]), dict->entry_cnt);
     // pldm_cjson_printf_root1(root);
     // for (u8 i = 0; i < dict->entry_cnt; i++) {
-    //     printf("seq : %d, len : %d, name off : %d, name : %s\n", dict->entry[i].sequence_num, dict->entry[i].name_len, dict->entry[i].name_off, &dict0[dict->entry[i].name_off]);
+    //     LOG("seq : %d, len : %d, name off : %d, name : %s\n", dict->entry[i].sequence_num, dict->entry[i].name_len, dict->entry[i].name_off, &dict0[dict->entry[i].name_off]);
     // }
     // pldm_cjson_create_dict(root, dict_test, 0);
     // // pldm_cjson_create_dict(root, anno_dict_test, 1);
@@ -1630,12 +1630,12 @@ void pldm_cjson_test(void)
 
     // fclose(fp);
 
-    // printf("\nmy_json_json_to_bej\n");
+    // LOG("\nmy_json_json_to_bej\n");
     // u8 *ptr = pldm_bej_encode(root, anno_dict_test, bej_test);
     // pldm_cjson_t *tmp = NULL;
     // tmp = pldm_bej_decode1(bej_test, anno_dict_test, dict_test, tmp);
     // u8 bej_test_len = ptr - bej_test;
-    // printf("%p, %p, %d\n", bej_test, ptr, bej_test_len);
+    // LOG("%p, %p, %d\n", bej_test, ptr, bej_test_len);
 
     // pldm_cjson_cal_len_to_root1(tmp, 0xFF);
     // pldm_cjson_printf_root1(tmp);
@@ -1645,7 +1645,7 @@ void pldm_cjson_test(void)
     // pldm_cjson_t *tmp1 = NULL;
     // tmp1 = pldm_bej_decode1(bej_buf1, dict0, tmp1);
     // u8 bej_test_len = ptr - bej_test;
-    // printf("%p, %p, %d\n", bej_test, ptr, bej_test_len);
+    // LOG("%p, %p, %d\n", bej_test, ptr, bej_test_len);
 
     // tmp1 = pldm_cjson_update(tmp1, tmp);
     // pldm_cjson_cal_len_to_root1(tmp, 0xFF);
@@ -1657,27 +1657,27 @@ void pldm_cjson_test(void)
     // u8 bej_test_len = ptr - bej_test;
 
     // for (u16 i = 0; i < bej_test_len; i++) {
-    //     printf("0x%02x, ", bej_test[i]);
+    //     LOG("0x%02x, ", bej_test[i]);
     //     if (!((i + 1) % 8)) {
-    //         printf("\n");
+    //         LOG("\n");
     //     }
     // }
 
     // pldm_cjson_t *root1 = NULL;
     // root1 = pldm_cjson_create_obj();
 
-    // printf("\ntotal len : %d\n", pldm_bej_decode1(bej_buf1, dict0, &(dict_ptr->entry[0]), dict_ptr->entry_cnt, root1));
+    // LOG("\ntotal len : %d\n", pldm_bej_decode1(bej_buf1, dict0, &(dict_ptr->entry[0]), dict_ptr->entry_cnt, root1));
 
     // root1 = root1->child;
     // pldm_cjson_cal_len_to_root1(root1);
     // pldm_cjson_printf_root1(root1);
 
-    // printf("\nmy_json_json_to_bej\n");
+    // LOG("\nmy_json_json_to_bej\n");
     // u8 *ptr = my_json_json_to_bej(root, bej_test);
     // u8 bej_test_len = ptr - bej_test;
-    // printf("%p, %p, %d\n", bej_test, ptr, bej_test_len);
+    // LOG("%p, %p, %d\n", bej_test, ptr, bej_test_len);
     // pldm_redfish_dictionary_format_t *dict_ptr = (pldm_redfish_dictionary_format_t *)dict0;
-    // printf("total len : %d\n", pldm_bej_decode1(bej_buf, dict0, &(dict_ptr->entry[0]), dict_ptr->entry_cnt, root));
+    // LOG("total len : %d\n", pldm_bej_decode1(bej_buf, dict0, &(dict_ptr->entry[0]), dict_ptr->entry_cnt, root));
     schema_create g_schemas[] = {
         create_networkadapter_v1_5_0_schema,
         create_pciedevice_v1_4_0_schema,
@@ -1699,11 +1699,11 @@ void pldm_cjson_test(void)
     for (u8 i = 0; i < sizeof(g_schemas) / sizeof(schema_create); i++) {
         root = g_schemas[i](dict, anno_dict);
         u8 *end_ptr = pldm_bej_encode(root, bej_data);
-        printf("len : %d\n", end_ptr - bej_data);
-        printf("\nused space : %d, max_space : %d\n", pldm_cjson_get_used_space(), MY_CJSON_POLL_SIZE);
+        LOG("len : %d\n", end_ptr - bej_data);
+        LOG("\nused space : %d, max_space : %d\n", pldm_cjson_get_used_space(), MY_CJSON_POLL_SIZE);
         pldm_cjson_pool_init();
     }
-    // printf("\nused space : %d, max_space : %d\n", pldm_cjson_get_used_space(), MY_CJSON_POLL_SIZE);
+    // LOG("\nused space : %d, max_space : %d\n", pldm_cjson_get_used_space(), MY_CJSON_POLL_SIZE);
 
     // pldm_bej_encode(root, dictionary);
 }
