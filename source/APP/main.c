@@ -9,6 +9,7 @@
 #include "pldm_redfish.h"
 #include "pldm_fw_update.h"
 #include "pldm_monitor.h"
+#include "pdr.h"
 #include "main.h"
 
 

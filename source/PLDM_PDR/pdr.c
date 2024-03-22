@@ -484,7 +484,7 @@ static int fill_terminus_locator_pdr(pldm_terminus_locator_pdr_t *terminus_locat
     return SUCCESS;
 }
 
-static pldm_pdr_entity_assoc_t *assoc_pdr_create_container(pldm_entity_t *container, volatile u32 record_handle, u16 container_id, u8 expected_contained_num, u8 assoc_type)
+static pldm_pdr_entity_assoc_t *assoc_pdr_create_container(pldm_entity_t *container, u32 record_handle, u16 container_id, u8 expected_contained_num, u8 assoc_type)
 {
     if (!container) {
         return NULL;
