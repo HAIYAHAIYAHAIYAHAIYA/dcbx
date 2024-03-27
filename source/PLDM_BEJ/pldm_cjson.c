@@ -1515,6 +1515,50 @@ void pldm_cjson_cal_sf_to_root(pldm_cjson_t *root, u8 *anno_dict, u8 *dict, pldm
     }
 }
 
+void pldm_cjson_schema_test(void)
+{
+    pldm_cjson_t *root = NULL;
+    schema_create g_schemas[] = {
+        create_networkadapter_v1_5_0_schema,
+        create_pciedevice_v1_4_0_schema,
+        create_networkinterface_v1_2_0_schema,
+        create_portcollection_schema,
+        create_pciefunctioncollection_schema,
+        create_networkdevicefunctioncollection_schema,
+        create_networkdevicefunction_v1_3_3_schema,
+        create_port_v1_3_1_schema,
+        create_pciefunction_v1_2_3_schema,
+        create_ethernetinterface_v1_5_1_schema,
+        create_ethernetinterfacecollection_schema
+    };
+    u8 dict[512];
+    u8 anno_dict[512];
+    u8 bej_data[1024];
+
+    pldm_cjson_pool_init();
+
+    for (u8 i = 0; i < sizeof(g_schemas) / sizeof(schema_create); i++) {
+        root = g_schemas[i](dict, anno_dict);
+        u8 *end_ptr = pldm_bej_encode(root, bej_data);
+        LOG("len : %d\n", end_ptr - bej_data);
+        LOG("\nused space : %d, max_space : %d\n", pldm_cjson_get_used_space(), MY_CJSON_POLL_SIZE);
+        pldm_cjson_pool_init();
+    }
+}
+
+void pldm_cjson_bej_test(void)
+{
+    pldm_cjson_t *root = NULL;
+    u8 dict[512];
+    u8 anno_dict[512];
+
+    pldm_cjson_pool_init();
+
+    root = pldm_bej_decode1(bej_buf, anno_dict, dict, root);
+    pldm_cjson_cal_len_to_root1(root, OTHER_TYPE);
+    pldm_cjson_printf_root1(root);
+}
+
 void pldm_cjson_test(void)
 {
     pldm_bej_sflv_dat_t sflv;
@@ -1526,6 +1570,8 @@ void pldm_cjson_test(void)
     pldm_cjson_t *obj3 = NULL;
 
     pldm_cjson_pool_init();
+    pldm_cjson_bej_test();
+    // pldm_cjson_schema_test();
     // tmp1 = create_event_schema(1234, dict, dict);
 
     // root = pldm_cjson_create_obj();
@@ -1678,31 +1724,9 @@ void pldm_cjson_test(void)
     // LOG("%p, %p, %d\n", bej_test, ptr, bej_test_len);
     // pldm_redfish_dictionary_format_t *dict_ptr = (pldm_redfish_dictionary_format_t *)dict0;
     // LOG("total len : %d\n", pldm_bej_decode1(bej_buf, dict0, &(dict_ptr->entry[0]), dict_ptr->entry_cnt, root));
-    schema_create g_schemas[] = {
-        create_networkadapter_v1_5_0_schema,
-        create_pciedevice_v1_4_0_schema,
-        create_networkinterface_v1_2_0_schema,
-        create_portcollection_schema,
-        create_pciefunctioncollection_schema,
-        create_networkdevicefunctioncollection_schema,
-        create_networkdevicefunction_v1_3_3_schema,
-        create_port_v1_3_1_schema,
-        create_pciefunction_v1_2_3_schema,
-        create_ethernetinterface_v1_5_1_schema,
-        create_ethernetinterfacecollection_schema
-    };
-    u8 dict[512];
-    u8 anno_dict[512];
-    u8 bej_data[1024];
-    // tmp1 = g_schemas[6](dict, anno_dict);
-    // pldm_cjson_printf_root1(tmp1);
-    for (u8 i = 0; i < sizeof(g_schemas) / sizeof(schema_create); i++) {
-        root = g_schemas[i](dict, anno_dict);
-        u8 *end_ptr = pldm_bej_encode(root, bej_data);
-        LOG("len : %d\n", end_ptr - bej_data);
-        LOG("\nused space : %d, max_space : %d\n", pldm_cjson_get_used_space(), MY_CJSON_POLL_SIZE);
-        pldm_cjson_pool_init();
-    }
+    // root = create_event_schema(1234, dict, anno_dict);
+    // u8 *ptr = pldm_bej_encode(root, bej_buf);
+    // LOG("encode len : %d\n", ptr - bej_buf);
     // LOG("\nused space : %d, max_space : %d\n", pldm_cjson_get_used_space(), MY_CJSON_POLL_SIZE);
 
     // pldm_bej_encode(root, dictionary);
