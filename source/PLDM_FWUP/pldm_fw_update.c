@@ -26,7 +26,8 @@ void pldm_fwup_analyze_pkg(void)
 {
     FILE *pd = NULL;
     u8 b[9000];
-    pd = fopen("upgrade_pldm_fwup_slot.img", "rb");
+    // pd = fopen("upgrade_pldm_fwup_slot.img", "rb");
+    pd = fopen("upgrade_pldm_fwup_chip.img", "rb");
     fread(&b, sizeof(u8), 1024, pd);
     fclose(pd);
     pldm_fwup_pkt_hdr_t *pkt_hdr = (pldm_fwup_pkt_hdr_t *)b;
@@ -43,6 +44,8 @@ void pldm_fwup_analyze_pkg(void)
     LOG("min : %d\n", pkt_hdr->pkt_release_datetime.min);
     LOG("sec : %d\n", pkt_hdr->pkt_release_datetime.sec);
     LOG("offset : %d\n", pkt_hdr->pkt_release_datetime.utc_offset);
+    LOG("time_resolution : %d\n", pkt_hdr->pkt_release_datetime.time_resolution);
+    LOG("utc_resolution : %d\n", pkt_hdr->pkt_release_datetime.utc_resolution);
     LOG("comp_bitmap_bitlen : %d\n", pkt_hdr->comp_bitmap_bitlen);
     LOG("pkt_ver_str_type : %d\n", pkt_hdr->pkt_ver_str_type);
     LOG("pkt_ver_str_len : %d\n", pkt_hdr->pkt_ver_str_len);

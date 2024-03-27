@@ -13,6 +13,8 @@ typedef struct {
     u8 day;
     u8 mon;
     u16 year;
+    u8 time_resolution      : 4;
+    u8 utc_resolution       : 4;
 } pldm_fwup_timestamp104_t;
 
 typedef struct {
