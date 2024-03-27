@@ -23,6 +23,18 @@ u8 crc8_pldm(u8 *data, u16 len)
     return crc8;
 }
 
+// u8 crc8 = 0;
+u8 crc8_pldm_1(u8 crc8, u8 *data, u16 len)
+{
+    while(len--){
+        crc8 ^= (u8)*data++;
+        for (u8 i = 0; i < 8; i++) {
+            crc8 = ( crc8 & 0x80 ) ? ((crc8 << 1) ^ 0x07) : (crc8 << 1);
+        }
+    }
+    return crc8;
+}
+
 // u32 crc32_pldm(u8 *data, u32 len)   /* CRC-32-MPEG-2 */
 // {
 //     u32 crc = 0xFFFFFFFF;
@@ -44,6 +56,22 @@ u32 crc32_pldm(u8 *data, u32 len)    /* IEEE 802.3 */
 {
     u32 crc = 0xFFFFFFFF;
 
+    while (len--) {
+        crc ^= (unsigned int)(*data++);
+        for (int i = 0; i < 8; ++i)
+        {
+            if (crc & 1)
+                crc = (crc >> 1) ^ 0xEDB88320UL;
+            else
+                crc >>= 1;
+        }
+    }
+    return ~crc;
+}
+
+// init_crc = 0;
+u32 crc32_pldm_1(u32 crc, u8 *data, u32 len)    /* IEEE 802.3 */
+{
     while (len--) {
         crc ^= (unsigned int)(*data++);
         for (int i = 0; i < 8; ++i)
