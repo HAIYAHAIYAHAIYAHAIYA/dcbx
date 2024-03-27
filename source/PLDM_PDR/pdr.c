@@ -130,6 +130,7 @@ void pldm_pdr_init(pldm_pdr_t *repo)
 {
 	repo->record_count = 0;
 	repo->size = 0;
+    repo->largest_pdr_size = 0;
     repo->repo_signature = 0;
     repo->update_time = 0;
 	repo->first = NULL;
@@ -157,6 +158,13 @@ static void pldm_pdr_insert(pldm_pdr_t *repo, pldm_pdr_record_t *insert_pdr)
     if (!repo || !insert_pdr) {
         return;
     }
+
+    if (insert_pdr->record_handle < repo->first->record_handle) {
+        pldm_pdr_record_t *tmp = repo->first;
+        repo->first = insert_pdr;
+        insert_pdr->next = tmp;
+        goto L_RET;
+    }
     pldm_pdr_record_t *insert_pos = pldm_find_insert(repo, insert_pdr->record_handle);
     pldm_pdr_record_t *insert_pos_next = insert_pos->next;
 
@@ -169,7 +177,7 @@ static void pldm_pdr_insert(pldm_pdr_t *repo, pldm_pdr_record_t *insert_pdr)
         insert_pdr->next = NULL;
     }
     // LOG("insert_pos : %04d, insert_pdr : %04d, last_pdr : %04d,\n", insert_pos->record_handle, insert_pdr->record_handle, repo->last->record_handle);
-
+L_RET:
     repo->size += insert_pdr->size;
     ++repo->record_count;
 }
@@ -199,6 +207,7 @@ int pldm_pdr_add(pldm_pdr_t *repo, u8 *pdr_data, u32 pdr_size, u16 record_handle
 	} else {
         pldm_pdr_insert(repo, add_pdr);
 	}
+    repo->largest_pdr_size = ALIGN(MAX(repo->largest_pdr_size, pdr_size), 64);
 
     return 0;
 L_RET:
@@ -221,6 +230,8 @@ int pldm_pdr_delete(pldm_pdr_t *repo, u16 record_handle)
             repo->size -= delete_pdr->size;
             --repo->record_count;
 
+            if (delete_pdr == repo->first) repo->first = delete_pdr->next;
+            if (delete_pdr == repo->last) repo->last = prev_pdr;
             prev_pdr->next = delete_pdr->next;
             delete_pdr->next = NULL;
             if (!(repo->is_deleted)) {

@@ -78,7 +78,7 @@ int pldm_event_rbuf_write(void *p, void *dat, int len)
     u32 size = PLDM_TERMINUS_MAX_BUFFERSIZE;
     u32 type = sizeof(u8);
     int valid = size - pldm_event_rbuf_read_size(p) - 1;
-    u16 w_len = ALIGN_LEN(type, len);
+    u16 w_len = ALIGN(len, type);
 
     while (valid < w_len) {                                   /* delete the oldest event */
         u8 event_data_info[sizeof(pldm_event_data_t)] = {0};

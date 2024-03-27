@@ -4,7 +4,7 @@
 #include "type.h"
 
 #define PDR_MIN_SIZE                    (1)
-#define PDR_POOL_SIZE                   (9 * 512)          /* all size 2825 bytes , only static size 968 bytes, except redfish pdr. */
+#define PDR_POOL_SIZE                   (9 * 512)
 #define NOT_FIELD                       (0xFF)
 
 typedef float real32_t;
@@ -163,6 +163,7 @@ typedef struct pldm_pdr_record {
 typedef struct {
 	u32 record_count;
 	u32 size;
+    u32 largest_pdr_size;
     u32 update_time;
     u32 repo_signature;
 	pldm_pdr_record_t *first;
