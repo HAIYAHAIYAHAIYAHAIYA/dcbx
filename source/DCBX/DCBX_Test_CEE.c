@@ -55,8 +55,8 @@ void printf_classix_id(tlv_type_t *ptr)
 {
     LOG("*****************************chassis_id********************************\n");
     tlv_chassis_id *chassis_id = (tlv_chassis_id *)ptr;
-    LOG("type_length: 0x%x\n", (chassis_id->type_length));
-    LOG("subtype: %d\n", (chassis_id->subtype));
+    LOG("type_length: 0x%x", (chassis_id->type_length));
+    LOG("subtype: %d", (chassis_id->subtype));
     for(int j = 0; j < 6; j++){
         LOG("%x ", chassis_id->mac[j]);
     }
@@ -67,8 +67,8 @@ void printf_port_id(tlv_type_t *ptr)
 {
     LOG("*****************************port_id********************************\n");
     tlv_port_id *port_id = (tlv_port_id *)ptr;
-    LOG("type_length: 0x%x\n", (port_id->type_length));
-    LOG("subtype: %d\n", (port_id->subtype));
+    LOG("type_length: 0x%x", (port_id->type_length));
+    LOG("subtype: %d", (port_id->subtype));
     for(int j = 0; j < (ptr->length - 1); j++){
         LOG("%x ", port_id->mac[j]);
     }
@@ -79,15 +79,15 @@ void printf_ttl(tlv_type_t *ptr)
 {
     LOG("*****************************TTL********************************\n");
     tlv_ttl *TTL = (tlv_ttl *)ptr;
-    LOG("type_length: 0x%x\n", (TTL->type_length));
-    LOG("seconds: %d\n", ntohs(TTL->seconds));
+    LOG("type_length: 0x%x", (TTL->type_length));
+    LOG("seconds: %d", ntohs(TTL->seconds));
     LOG("***********************************************************************\n");
 }
 void printf_sys_name(tlv_type_t *ptr)
 {
     LOG("*****************************sys_name********************************\n");
     tlv_sys_name *sys_name = (tlv_sys_name *)ptr;
-    LOG("type_length: 0x%x\n", (sys_name->type_length));
+    LOG("type_length: 0x%x", (sys_name->type_length));
     LOG("System Name: ");
     for(int k = 0; k < ptr->length; k++){
         LOG("%c", sys_name->name[k]);
@@ -99,77 +99,77 @@ void printf_C_TLV(tlv_type_t *ptr)
 {
     LOG("*******************************C_TLV*******************************\n");
     DCBX_Control_Tlv *C_TLV = (DCBX_Control_Tlv *)ptr;
-    LOG("type: %d\n", (C_TLV->TL.type));
-    LOG("length: %d\n", (C_TLV->TL.length));
-    LOG("Oper_Ver: %d\n", (C_TLV->Oper_Ver));
-    LOG("Max_Ver: %d\n", (C_TLV->Max_Ver));
-    LOG("SeqNo: %d\n", ntohl(C_TLV->SeqNo));
-    LOG("AckNo: %d\n", ntohl(C_TLV->AckNo));
+    LOG("type: %d", (C_TLV->TL.type));
+    LOG("length: %d", (C_TLV->TL.length));
+    LOG("Oper_Ver: %d", (C_TLV->Oper_Ver));
+    LOG("Max_Ver: %d", (C_TLV->Max_Ver));
+    LOG("SeqNo: %d", ntohl(C_TLV->SeqNo));
+    LOG("AckNo: %d", ntohl(C_TLV->AckNo));
 }
 void printf_PFC_TLV(tlv_type_t *ptr)
 {
     LOG("*******************************PFC_TLV*******************************\n");
     DCBX_PFC_Tlv *PFC_TLV = (DCBX_PFC_Tlv *)ptr;
-    LOG("type: %d\n", (PFC_TLV->TL.type));
-    LOG("length: %d\n", (PFC_TLV->TL.length));
-    LOG("Oper_Ver: %d\n", (PFC_TLV->Oper_Ver));
-    LOG("Max_Ver: %d\n", (PFC_TLV->Max_Ver));
-    LOG("Enabled:%d\n", (PFC_TLV->PFC_EWER.Enable));
-    LOG("Willing:%d\n", (PFC_TLV->PFC_EWER.Willing));
+    LOG("type: %d", (PFC_TLV->TL.type));
+    LOG("length: %d", (PFC_TLV->TL.length));
+    LOG("Oper_Ver: %d", (PFC_TLV->Oper_Ver));
+    LOG("Max_Ver: %d", (PFC_TLV->Max_Ver));
+    LOG("Enabled:%d", (PFC_TLV->PFC_EWER.Enable));
+    LOG("Willing:%d", (PFC_TLV->PFC_EWER.Willing));
     LOG("Error:%d\n"  , (PFC_TLV->PFC_EWER.Error));
-    LOG("Subtype:%d\n", (PFC_TLV->Sub_Type));
-    LOG("PFC FOR Prio 0 :%d\n", (PFC_TLV->PFCs.PFC0));
-    LOG("PFC FOR Prio 1 :%d\n", (PFC_TLV->PFCs.PFC1));
-    LOG("PFC FOR Prio 2 :%d\n", (PFC_TLV->PFCs.PFC2));
-    LOG("PFC FOR Prio 3 :%d\n", (PFC_TLV->PFCs.PFC3));
-    LOG("PFC FOR Prio 4 :%d\n", (PFC_TLV->PFCs.PFC4));
-    LOG("PFC FOR Prio 5 :%d\n", (PFC_TLV->PFCs.PFC5));
-    LOG("PFC FOR Prio 6 :%d\n", (PFC_TLV->PFCs.PFC6));
-    LOG("PFC FOR Prio 7 :%d\n", (PFC_TLV->PFCs.PFC7));
-    LOG("Number of Traffic Classes Supported: %d\n", (PFC_TLV->N_TCPFCs_S));
+    LOG("Subtype:%d", (PFC_TLV->Sub_Type));
+    LOG("PFC FOR Prio 0 :%d", (PFC_TLV->PFCs.PFC0));
+    LOG("PFC FOR Prio 1 :%d", (PFC_TLV->PFCs.PFC1));
+    LOG("PFC FOR Prio 2 :%d", (PFC_TLV->PFCs.PFC2));
+    LOG("PFC FOR Prio 3 :%d", (PFC_TLV->PFCs.PFC3));
+    LOG("PFC FOR Prio 4 :%d", (PFC_TLV->PFCs.PFC4));
+    LOG("PFC FOR Prio 5 :%d", (PFC_TLV->PFCs.PFC5));
+    LOG("PFC FOR Prio 6 :%d", (PFC_TLV->PFCs.PFC6));
+    LOG("PFC FOR Prio 7 :%d", (PFC_TLV->PFCs.PFC7));
+    LOG("Number of Traffic Classes Supported: %d", (PFC_TLV->N_TCPFCs_S));
 }
 void printf_PG_TLV(tlv_type_t *ptr)
 {
     LOG("*******************************PG_TLV*******************************\n");
     DCBX_PG_Tlv *PG_TLV = (DCBX_PG_Tlv *)ptr;
-    LOG("type: %d\n", (PG_TLV->TL.type));
-    LOG("length: %d\n", (PG_TLV->TL.length));
-    LOG("Oper_Ver: %d\n", (PG_TLV->Oper_Ver));
-    LOG("Max_Ver: %d\n", (PG_TLV->Max_Ver));
-    LOG("Enabled:%d\n", (PG_TLV->PG_EWER.Enable));
-    LOG("Willing:%d\n", (PG_TLV->PG_EWER.Willing));
+    LOG("type: %d", (PG_TLV->TL.type));
+    LOG("length: %d", (PG_TLV->TL.length));
+    LOG("Oper_Ver: %d", (PG_TLV->Oper_Ver));
+    LOG("Max_Ver: %d", (PG_TLV->Max_Ver));
+    LOG("Enabled:%d", (PG_TLV->PG_EWER.Enable));
+    LOG("Willing:%d", (PG_TLV->PG_EWER.Willing));
     LOG("Error:%d\n"  , (PG_TLV->PG_EWER.Error));
-    LOG("Subtype:%d\n", (PG_TLV->Sub_Type));
-    LOG("PFC FOR Prio 0 :%d\n", PG_TLV->PGIDS_0_3.Pgid_0);
-    LOG("PFC FOR Prio 1 :%d\n", PG_TLV->PGIDS_0_3.Pgid_1);
-    LOG("PFC FOR Prio 2 :%d\n", PG_TLV->PGIDS_0_3.Pgid_2);
-    LOG("PFC FOR Prio 3 :%d\n", PG_TLV->PGIDS_0_3.Pgid_3);
-    LOG("PFC FOR Prio 4 :%d\n", PG_TLV->PGIDS_4_7.Pgid_4);
-    LOG("PFC FOR Prio 5 :%d\n", PG_TLV->PGIDS_4_7.Pgid_5);
-    LOG("PFC FOR Prio 6 :%d\n", PG_TLV->PGIDS_4_7.Pgid_6);
-    LOG("PFC FOR Prio 7 :%d\n", PG_TLV->PGIDS_4_7.Pgid_7);
+    LOG("Subtype:%d", (PG_TLV->Sub_Type));
+    LOG("PFC FOR Prio 0 :%d", PG_TLV->PGIDS_0_3.Pgid_0);
+    LOG("PFC FOR Prio 1 :%d", PG_TLV->PGIDS_0_3.Pgid_1);
+    LOG("PFC FOR Prio 2 :%d", PG_TLV->PGIDS_0_3.Pgid_2);
+    LOG("PFC FOR Prio 3 :%d", PG_TLV->PGIDS_0_3.Pgid_3);
+    LOG("PFC FOR Prio 4 :%d", PG_TLV->PGIDS_4_7.Pgid_4);
+    LOG("PFC FOR Prio 5 :%d", PG_TLV->PGIDS_4_7.Pgid_5);
+    LOG("PFC FOR Prio 6 :%d", PG_TLV->PGIDS_4_7.Pgid_6);
+    LOG("PFC FOR Prio 7 :%d", PG_TLV->PGIDS_4_7.Pgid_7);
     for(int k = 0; k < 8; k++){
-        LOG("BW FOR PGID %d :%d\n", k, PG_TLV->Pg_Percentage[k]);
+        LOG("BW FOR PGID %d :%d", k, PG_TLV->Pg_Percentage[k]);
     }
-    LOG("Number of Traffic Classes Supported: %d\n", PG_TLV->Num_Tcs_Supported);
+    LOG("Number of Traffic Classes Supported: %d", PG_TLV->Num_Tcs_Supported);
 }
 void printf_APP_TLV(tlv_type_t *ptr)
 {
     LOG("*******************************APP_TLV*******************************\n");
     DCBX_APP_Tlv *APP_TLV = (DCBX_APP_Tlv *)ptr;
-    LOG("type: %d\n", (APP_TLV->TL.type));
-    LOG("length: %d\n", (APP_TLV->TL.length));
-    LOG("Oper_Ver: %d\n", (APP_TLV->Oper_Ver));
-    LOG("Max_Ver: %d\n", (APP_TLV->Max_Ver));
-    LOG("Enabled:%d\n", (APP_TLV->APP_EWER.Enable));
-    LOG("Willing:%d\n", (APP_TLV->APP_EWER.Willing));
+    LOG("type: %d", (APP_TLV->TL.type));
+    LOG("length: %d", (APP_TLV->TL.length));
+    LOG("Oper_Ver: %d", (APP_TLV->Oper_Ver));
+    LOG("Max_Ver: %d", (APP_TLV->Max_Ver));
+    LOG("Enabled:%d", (APP_TLV->APP_EWER.Enable));
+    LOG("Willing:%d", (APP_TLV->APP_EWER.Willing));
     LOG("Error:%d\n"  , (APP_TLV->APP_EWER.Error));
-    LOG("Subtype:%d\n", (APP_TLV->Sub_Type));
+    LOG("Subtype:%d", (APP_TLV->Sub_Type));
     for (int k = 0; k < (APP_TLV->TL.length - 4)/6; k++){
-        LOG("APP_Tlv_Sub%d : \n App_Id : 0x%x\n", k + 1, ntohs(APP_TLV->APP_Tlv_Sub[k].App_Id));
-        LOG(" SF :%d\n", APP_TLV->APP_Tlv_Sub[k].U_OUI_23_16_Bits.SF);
-        LOG(" OUI :0x%x\n", ntohs((APP_TLV->APP_Tlv_Sub[k].U_OUI_23_16_Bits.OUI_23_18_Bits << 24) | (APP_TLV->APP_Tlv_Sub[k].U_OUI_15_0_Bits.OUI_15_0_Bits)));
-        LOG(" Application Priority: %d\n", APP_TLV->APP_Tlv_Sub[k].Up_Map);
+        LOG("APP_Tlv_Sub%d : \n App_Id : 0x%x", k + 1, ntohs(APP_TLV->APP_Tlv_Sub[k].App_Id));
+        LOG(" SF :%d", APP_TLV->APP_Tlv_Sub[k].U_OUI_23_16_Bits.SF);
+        LOG(" OUI :0x%x", ntohs((APP_TLV->APP_Tlv_Sub[k].U_OUI_23_16_Bits.OUI_23_18_Bits << 24) | (APP_TLV->APP_Tlv_Sub[k].U_OUI_15_0_Bits.OUI_15_0_Bits)));
+        LOG(" Application Priority: %d", APP_TLV->APP_Tlv_Sub[k].Up_Map);
     }
 }
 
@@ -189,8 +189,8 @@ void printf_APP_TLV(tlv_type_t *ptr)
 //             {
 //                 LOG("*****************************chassis_id********************************\n");
 //                 tlv_chassis_id *chassis_id = (tlv_chassis_id *)ptr;
-//                 LOG("type_length: 0x%x\n", (chassis_id->type_length));
-//                 LOG("subtype: %d\n", (chassis_id->subtype));
+//                 LOG("type_length: 0x%x", (chassis_id->type_length));
+//                 LOG("subtype: %d", (chassis_id->subtype));
 //                 for(int j = 0; j < 6; j++){
 //                     LOG("%x ", chassis_id->mac[j]);
 //                 }
@@ -202,8 +202,8 @@ void printf_APP_TLV(tlv_type_t *ptr)
 //             {
 //                 LOG("*****************************port_id********************************\n");
 //                 tlv_port_id *port_id = (tlv_port_id *)ptr;
-//                 LOG("type_length: 0x%x\n", (port_id->type_length));
-//                 LOG("subtype: %d\n", (port_id->subtype));
+//                 LOG("type_length: 0x%x", (port_id->type_length));
+//                 LOG("subtype: %d", (port_id->subtype));
 //                 for(int j = 0; j < (ptr->length - 1); j++){
 //                     LOG("%x ", port_id->mac[j]);
 //                 }
@@ -215,8 +215,8 @@ void printf_APP_TLV(tlv_type_t *ptr)
 //             {
 //                 LOG("*****************************TTL********************************\n");
 //                 tlv_ttl *TTL = (tlv_ttl *)ptr;
-//                 LOG("type_length: 0x%x\n", (TTL->type_length));
-//                 LOG("seconds: %d\n", ntohs(TTL->seconds));
+//                 LOG("type_length: 0x%x", (TTL->type_length));
+//                 LOG("seconds: %d", ntohs(TTL->seconds));
 //                 LOG("***********************************************************************\n");
 //             }
 //             break;
@@ -224,7 +224,7 @@ void printf_APP_TLV(tlv_type_t *ptr)
 //             {
 //                 LOG("*****************************sys_name********************************\n");
 //                 tlv_sys_name *sys_name = (tlv_sys_name *)ptr;
-//                 LOG("type_length: 0x%x\n", (sys_name->type_length));
+//                 LOG("type_length: 0x%x", (sys_name->type_length));
 //                 LOG("System Name: ");
 //                 for(int k = 0; k < ptr->length; k++){
 //                     LOG("%c", sys_name->name[k]);
@@ -241,86 +241,86 @@ void printf_APP_TLV(tlv_type_t *ptr)
 //                 LOG("*****************************Intel Corporate - 1.01 CEE********************************\n");
 //                 ptr = &buf_CEE[i += 6];
 //                 ptr->val = ntohs(ptr->val);
-//                 // LOG("%d %d %d\n", (ptr->val), ptr->length, ptr->type);
+//                 // LOG("%d %d %d", (ptr->val), ptr->length, ptr->type);
 //                 for (int j = 0; j < 4; j++)
 //                 {
 //                     if(ptr->type == 1){
 //                         LOG("*******************************C_TLV*******************************\n");
 //                         DCBX_Control_Tlv *C_TLV = (DCBX_Control_Tlv *)ptr;
-//                         LOG("type: %d\n", (C_TLV->TL.type));
-//                         LOG("length: %d\n", (C_TLV->TL.length));
-//                         LOG("Oper_Ver: %d\n", (C_TLV->Oper_Ver));
-//                         LOG("Max_Ver: %d\n", (C_TLV->Max_Ver));
-//                         LOG("SeqNo: %d\n", ntohl(C_TLV->SeqNo));
-//                         LOG("AckNo: %d\n", ntohl(C_TLV->AckNo));
+//                         LOG("type: %d", (C_TLV->TL.type));
+//                         LOG("length: %d", (C_TLV->TL.length));
+//                         LOG("Oper_Ver: %d", (C_TLV->Oper_Ver));
+//                         LOG("Max_Ver: %d", (C_TLV->Max_Ver));
+//                         LOG("SeqNo: %d", ntohl(C_TLV->SeqNo));
+//                         LOG("AckNo: %d", ntohl(C_TLV->AckNo));
 //                         ptr = &buf_CEE[i += ptr->length + 2];
 //                         ptr->val = ntohs(ptr->val);
 //                     }
 //                     if(ptr->type == 2){
 //                         LOG("*******************************PG_TLV*******************************\n");
 //                         DCBX_PG_Tlv *PG_TLV = (DCBX_PG_Tlv *)ptr;
-//                         LOG("type: %d\n", (PG_TLV->TL.type));
-//                         LOG("length: %d\n", (PG_TLV->TL.length));
-//                         LOG("Oper_Ver: %d\n", (PG_TLV->Oper_Ver));
-//                         LOG("Max_Ver: %d\n", (PG_TLV->Max_Ver));
-//                         LOG("Enabled:%d\n", (PG_TLV->PG_EWER.Enable));
-//                         LOG("Willing:%d\n", (PG_TLV->PG_EWER.Willing));
+//                         LOG("type: %d", (PG_TLV->TL.type));
+//                         LOG("length: %d", (PG_TLV->TL.length));
+//                         LOG("Oper_Ver: %d", (PG_TLV->Oper_Ver));
+//                         LOG("Max_Ver: %d", (PG_TLV->Max_Ver));
+//                         LOG("Enabled:%d", (PG_TLV->PG_EWER.Enable));
+//                         LOG("Willing:%d", (PG_TLV->PG_EWER.Willing));
 //                         LOG("Error:%d\n"  , (PG_TLV->PG_EWER.Error));
-//                         LOG("Subtype:%d\n", (PG_TLV->Sub_Type));
-//                         LOG("PFC FOR Prio 0 :%d\n", PG_TLV->PGIDS_0_3.Pgid_0);
-//                         LOG("PFC FOR Prio 1 :%d\n", PG_TLV->PGIDS_0_3.Pgid_1);
-//                         LOG("PFC FOR Prio 2 :%d\n", PG_TLV->PGIDS_0_3.Pgid_2);
-//                         LOG("PFC FOR Prio 3 :%d\n", PG_TLV->PGIDS_0_3.Pgid_3);
-//                         LOG("PFC FOR Prio 4 :%d\n", PG_TLV->PGIDS_4_7.Pgid_4);
-//                         LOG("PFC FOR Prio 5 :%d\n", PG_TLV->PGIDS_4_7.Pgid_5);
-//                         LOG("PFC FOR Prio 6 :%d\n", PG_TLV->PGIDS_4_7.Pgid_6);
-//                         LOG("PFC FOR Prio 7 :%d\n", PG_TLV->PGIDS_4_7.Pgid_7);
+//                         LOG("Subtype:%d", (PG_TLV->Sub_Type));
+//                         LOG("PFC FOR Prio 0 :%d", PG_TLV->PGIDS_0_3.Pgid_0);
+//                         LOG("PFC FOR Prio 1 :%d", PG_TLV->PGIDS_0_3.Pgid_1);
+//                         LOG("PFC FOR Prio 2 :%d", PG_TLV->PGIDS_0_3.Pgid_2);
+//                         LOG("PFC FOR Prio 3 :%d", PG_TLV->PGIDS_0_3.Pgid_3);
+//                         LOG("PFC FOR Prio 4 :%d", PG_TLV->PGIDS_4_7.Pgid_4);
+//                         LOG("PFC FOR Prio 5 :%d", PG_TLV->PGIDS_4_7.Pgid_5);
+//                         LOG("PFC FOR Prio 6 :%d", PG_TLV->PGIDS_4_7.Pgid_6);
+//                         LOG("PFC FOR Prio 7 :%d", PG_TLV->PGIDS_4_7.Pgid_7);
 //                         for(int k = 0; k < 8; k++){
-//                             LOG("BW FOR PGID %d :%d\n", k, PG_TLV->Pg_Percentage[k]);
+//                             LOG("BW FOR PGID %d :%d", k, PG_TLV->Pg_Percentage[k]);
 //                         }
-//                         LOG("Number of Traffic Classes Supported: %d\n", PG_TLV->Num_Tcs_Supported);
+//                         LOG("Number of Traffic Classes Supported: %d", PG_TLV->Num_Tcs_Supported);
 //                         ptr = &buf_CEE[i += ptr->length + 2]; 
 //                         ptr->val = ntohs(ptr->val);
 //                     }
 //                     if(ptr->type == 3){
 //                         LOG("*******************************PFC_TLV*******************************\n");
 //                         DCBX_PFC_Tlv *PFC_TLV = (DCBX_PFC_Tlv *)ptr;
-//                         LOG("type: %d\n", (PFC_TLV->TL.type));
-//                         LOG("length: %d\n", (PFC_TLV->TL.length));
-//                         LOG("Oper_Ver: %d\n", (PFC_TLV->Oper_Ver));
-//                         LOG("Max_Ver: %d\n", (PFC_TLV->Max_Ver));
-//                         LOG("Enabled:%d\n", (PFC_TLV->PFC_EWER.Enable));
-//                         LOG("Willing:%d\n", (PFC_TLV->PFC_EWER.Willing));
+//                         LOG("type: %d", (PFC_TLV->TL.type));
+//                         LOG("length: %d", (PFC_TLV->TL.length));
+//                         LOG("Oper_Ver: %d", (PFC_TLV->Oper_Ver));
+//                         LOG("Max_Ver: %d", (PFC_TLV->Max_Ver));
+//                         LOG("Enabled:%d", (PFC_TLV->PFC_EWER.Enable));
+//                         LOG("Willing:%d", (PFC_TLV->PFC_EWER.Willing));
 //                         LOG("Error:%d\n"  , (PFC_TLV->PFC_EWER.Error));
-//                         LOG("Subtype:%d\n", (PFC_TLV->Sub_Type));
-//                         LOG("PFC FOR Prio 0 :%d\n", (PFC_TLV->PFCs.PFC0));
-//                         LOG("PFC FOR Prio 1 :%d\n", (PFC_TLV->PFCs.PFC1));
-//                         LOG("PFC FOR Prio 2 :%d\n", (PFC_TLV->PFCs.PFC2));
-//                         LOG("PFC FOR Prio 3 :%d\n", (PFC_TLV->PFCs.PFC3));
-//                         LOG("PFC FOR Prio 4 :%d\n", (PFC_TLV->PFCs.PFC4));
-//                         LOG("PFC FOR Prio 5 :%d\n", (PFC_TLV->PFCs.PFC5));
-//                         LOG("PFC FOR Prio 6 :%d\n", (PFC_TLV->PFCs.PFC6));
-//                         LOG("PFC FOR Prio 7 :%d\n", (PFC_TLV->PFCs.PFC7));
-//                         LOG("Number of Traffic Classes Supported: %d\n", (PFC_TLV->N_TCPFCs_S));
+//                         LOG("Subtype:%d", (PFC_TLV->Sub_Type));
+//                         LOG("PFC FOR Prio 0 :%d", (PFC_TLV->PFCs.PFC0));
+//                         LOG("PFC FOR Prio 1 :%d", (PFC_TLV->PFCs.PFC1));
+//                         LOG("PFC FOR Prio 2 :%d", (PFC_TLV->PFCs.PFC2));
+//                         LOG("PFC FOR Prio 3 :%d", (PFC_TLV->PFCs.PFC3));
+//                         LOG("PFC FOR Prio 4 :%d", (PFC_TLV->PFCs.PFC4));
+//                         LOG("PFC FOR Prio 5 :%d", (PFC_TLV->PFCs.PFC5));
+//                         LOG("PFC FOR Prio 6 :%d", (PFC_TLV->PFCs.PFC6));
+//                         LOG("PFC FOR Prio 7 :%d", (PFC_TLV->PFCs.PFC7));
+//                         LOG("Number of Traffic Classes Supported: %d", (PFC_TLV->N_TCPFCs_S));
 //                         ptr = &buf_CEE[i += ptr->length + 2]; 
 //                         ptr->val = ntohs(ptr->val);
 //                     }
 //                     if(ptr->type == 4){
 //                         LOG("*******************************APP_TLV*******************************\n");
 //                         DCBX_APP_Tlv *APP_TLV = (DCBX_APP_Tlv *)ptr;
-//                         LOG("type: %d\n", (APP_TLV->TL.type));
-//                         LOG("length: %d\n", (APP_TLV->TL.length));
-//                         LOG("Oper_Ver: %d\n", (APP_TLV->Oper_Ver));
-//                         LOG("Max_Ver: %d\n", (APP_TLV->Max_Ver));
-//                         LOG("Enabled:%d\n", (APP_TLV->APP_EWER.Enable));
-//                         LOG("Willing:%d\n", (APP_TLV->APP_EWER.Willing));
+//                         LOG("type: %d", (APP_TLV->TL.type));
+//                         LOG("length: %d", (APP_TLV->TL.length));
+//                         LOG("Oper_Ver: %d", (APP_TLV->Oper_Ver));
+//                         LOG("Max_Ver: %d", (APP_TLV->Max_Ver));
+//                         LOG("Enabled:%d", (APP_TLV->APP_EWER.Enable));
+//                         LOG("Willing:%d", (APP_TLV->APP_EWER.Willing));
 //                         LOG("Error:%d\n"  , (APP_TLV->APP_EWER.Error));
-//                         LOG("Subtype:%d\n", (APP_TLV->Sub_Type));
+//                         LOG("Subtype:%d", (APP_TLV->Sub_Type));
 //                         for (int k = 0; k < (APP_TLV->TL.length - 4)/6; k++){
-//                             LOG("APP_Tlv_Sub%d : \n App_Id : 0x%x\n", k + 1, ntohs(APP_TLV->APP_Tlv_Sub[k].App_Id));
-//                             LOG(" SF :%d\n", APP_TLV->APP_Tlv_Sub[k].U_OUI_23_16_Bits.SF);
-//                             LOG(" OUI :0x%x\n", ntohs(APP_TLV->APP_Tlv_Sub[k].U_OUI_15_0_Bits.OUI_15_0_Bits));
-//                             LOG(" Application Priority: %d\n", APP_TLV->APP_Tlv_Sub[k].Up_Map);
+//                             LOG("APP_Tlv_Sub%d : \n App_Id : 0x%x", k + 1, ntohs(APP_TLV->APP_Tlv_Sub[k].App_Id));
+//                             LOG(" SF :%d", APP_TLV->APP_Tlv_Sub[k].U_OUI_23_16_Bits.SF);
+//                             LOG(" OUI :0x%x", ntohs(APP_TLV->APP_Tlv_Sub[k].U_OUI_15_0_Bits.OUI_15_0_Bits));
+//                             LOG(" Application Priority: %d", APP_TLV->APP_Tlv_Sub[k].Up_Map);
 //                         }
 //                         ptr = &buf_CEE[i += ptr->length + 2]; 
 //                         ptr->val = ntohs(ptr->val);

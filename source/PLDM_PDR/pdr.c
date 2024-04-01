@@ -102,7 +102,7 @@ void pdrs_pool_init(u32 *addr)
     pdrs_pool = addr;
     pdrs_pool_wt = 0;
 
-    LOG("%s addr 0x%X, total size 0x%X\n",
+    LOG("%s addr 0x%X, total size 0x%X",
         __FUNCTION__, addr, PDR_POOL_SIZE);
 }
 
@@ -110,7 +110,7 @@ void *pdr_malloc(int size)
 {
     size = ALIGN(size, PDR_MIN_SIZE);
     if (pdrs_pool_wt + size >= PDR_POOL_SIZE) {
-        LOG( "pool size : %d, pdr_malloc failed\n", PDR_POOL_SIZE);
+        LOG( "pool size : %d, pdr_malloc failed", PDR_POOL_SIZE);
         return NULL;
     }
 
@@ -123,7 +123,7 @@ void *pdr_malloc(int size)
 
 void pldm_pde_get_used(void)
 {
-    LOG("used space : %d\n", pdrs_pool_wt);
+    LOG("used space : %d", pdrs_pool_wt);
 }
 
 void pldm_pdr_init(pldm_pdr_t *repo)
@@ -176,7 +176,7 @@ static void pldm_pdr_insert(pldm_pdr_t *repo, pldm_pdr_record_t *insert_pdr)
         repo->last = insert_pdr;
         insert_pdr->next = NULL;
     }
-    // LOG("insert_pos : %04d, insert_pdr : %04d, last_pdr : %04d,\n", insert_pos->record_handle, insert_pdr->record_handle, repo->last->record_handle);
+    // LOG("insert_pos : %04d, insert_pdr : %04d, last_pdr : %04d,", insert_pos->record_handle, insert_pdr->record_handle, repo->last->record_handle);
 L_RET:
     repo->size += insert_pdr->size;
     ++repo->record_count;
@@ -514,7 +514,7 @@ static pldm_pdr_entity_assoc_t *assoc_pdr_create_container(pldm_entity_t *contai
     expected_contained_num * sizeof(pldm_entity_t));
 
     if (!assoc_container) {
-        LOG("no more space for malloc!, %s\n", __FUNCTION__);
+        LOG("no more space for malloc!, %s", __FUNCTION__);
         return NULL;
     }
 
@@ -557,7 +557,7 @@ static pldm_composite_state_sensor_pdr_t *composite_state_pdr_create_sensor(pldm
     expected_sensor_count * sizeof(pldm_composite_sensor_attr_t));
 
     if (!composite_state_pdr) {
-        LOG("no more space for malloc!, %s\n", __FUNCTION__);
+        LOG("no more space for malloc!, %s", __FUNCTION__);
         return NULL;
     }
 
@@ -667,7 +667,7 @@ static void pldm_add_numeric_sensor_pdr(u8 data_size, pldm_data_struct_t *sensor
 
         void *buf = pdr_malloc(data_size);
         if (!buf) {
-            LOG("no more space for malloc!, %s\n", __FUNCTION__);
+            LOG("no more space for malloc!, %s", __FUNCTION__);
             return;
         }
 
@@ -1287,7 +1287,7 @@ void pldm_terminus_locator_pdr_init(void)
 
 	pldm_terminus_locator_pdr_t *terminus_locator_pdr = (pldm_terminus_locator_pdr_t *)pdr_malloc(sizeof(pldm_terminus_locator_pdr_t));
     if (!terminus_locator_pdr) {
-        LOG("no more space for malloc!, %s\n", __FUNCTION__);
+        LOG("no more space for malloc!, %s", __FUNCTION__);
         return;
     }
 

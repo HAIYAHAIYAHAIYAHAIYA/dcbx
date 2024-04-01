@@ -305,7 +305,7 @@ void printf_mctp_merge_pkt(void)
             for (int i = 0; i < get_mctp_buflen(); i++) {
                 LOG("%d ", gs_mctp_recv_buf[i]);
             }
-            LOG("%d %d\n", get_mctp_buflen(), get_mctp_error());
+            LOG("%d %d", get_mctp_buflen(), get_mctp_error());
             clear_mctp_gobal_param();
         }
     }

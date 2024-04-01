@@ -138,7 +138,7 @@ void mctp_split_process(PCIE_EXTCM_MSG *pkt)
         for (j = 0; j < (pkt->qw0.cnt + 1) * 2; j++) {
             LOG("%x ", sub_buf[j]);
         }
-        LOG("%d %d\n", j, ptr->pkt_seq);
+        LOG("%d %d", j, ptr->pkt_seq);
     }
 }
 void printf_mctp_split_pkt(void)

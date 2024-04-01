@@ -9,7 +9,11 @@
 #include <stdarg.h>
 
 #if 1
-    #define LOG(...)               printf(__VA_ARGS__)
+    #define LOG(...)               \
+    do {\
+        printf(__VA_ARGS__);\
+        printf("\r\n");\
+    } while(0)
 #else 
     #define LOG(...)
 #endif

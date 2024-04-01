@@ -93,7 +93,7 @@ E_hsm_childer_state hsm_last_childer_state = e_set_state;
 //         {
 //             update_cnt = 80;
 //         }
-//         // LOG("hsm_current_father_state:%d hsm_current_childer_state:%d\r\n",hsm_current_father_state,hsm_current_childer_state);
+//         // LOG("hsm_current_father_state:%d hsm_current_childer_state:%d",hsm_current_father_state,hsm_current_childer_state);
 //         //=================================����״̬��������=========================================
 //         if (Father_State_Is_Allow_Jump())                                  //--���������ת
 //             father_state[hsm_current_father_state].steps[s_father_step](); //--����״̬
@@ -177,7 +177,7 @@ void F_Static_Init(void)
     Update_Father_Last_State_Transition();
     //---------------------
     //--�����
-    LOG("===���ࣺ��ֹ״̬====���뺯��>>>>>>>>>>>>>>>>>>>>>\r\n");
+    LOG("===���ࣺ��ֹ״̬====���뺯��>>>>>>>>>>>>>>>>>>>>>");
     //--------------------
     Father_Step_Transition(s_father_keep);
 }
@@ -185,7 +185,7 @@ void F_Static_Keep(void)
 {
     //---------------------
     //--�����
-    // LOG("===���ࣺ��ֹ״̬====���ֺ���--------------------\r\n");
+    // LOG("===���ࣺ��ֹ״̬====���ֺ���--------------------");
     //==========����״̬��������======================
     if (Childer_State_Is_Allow_Jump()) //--���������ת
     {
@@ -207,7 +207,7 @@ void F_Satic_Done(void)
 {
     //---------------------
     //--�����
-    LOG("===���ࣺ��ֹ״̬====�˳�����<<<<<<<<<<<<<<<<<<<<<<<<\r\n");
+    LOG("===���ࣺ��ֹ״̬====�˳�����<<<<<<<<<<<<<<<<<<<<<<<<");
     //--------------------
     //--�ڲ��л�
     Father_Step_Transition(s_father_init);
@@ -228,7 +228,7 @@ void F_Run_Init(void)
     Update_Father_Last_State_Transition();
     //---------------------
     //--�����
-    LOG("===���ࣺ����״̬====���뺯��>>>>>>>>>>>>>>>>>>>>>>>>>>\r\n");
+    LOG("===���ࣺ����״̬====���뺯��>>>>>>>>>>>>>>>>>>>>>>>>>>");
     //--------------------
     Father_Step_Transition(s_father_keep);
 }
@@ -236,7 +236,7 @@ void F_Run_Keep(void)
 {
     //---------------------
     //--�����
-    // LOG("===���ࣺ����״̬====���ֺ���--------------------\r\n");
+    // LOG("===���ࣺ����״̬====���ֺ���--------------------");
     //==========����״̬��������======================
     if (Childer_State_Is_Allow_Jump()) //--���������ת
     {
@@ -257,7 +257,7 @@ void F_Run_Done(void)
 {
     //---------------------
     //--�����
-    LOG("===���ࣺ����״̬====�˳�����<<<<<<<<<<<<<<<<<<<<<<\r\n");
+    LOG("===���ࣺ����״̬====�˳�����<<<<<<<<<<<<<<<<<<<<<<");
     //--------------------
     //--�ڲ��л�
     Father_Step_Transition(s_father_init);
@@ -278,7 +278,7 @@ void C_Static_Set_Init(void)
     Update_Childer_Last_State_Transition();
     //---------------------
     //--�����
-    LOG("===���ࣺ����״̬====���뺯��>>>\r\n");
+    LOG("===���ࣺ����״̬====���뺯��>>>");
     //--------------------
     Childer_Step_Transition(s_childer_keep);
 }
@@ -286,7 +286,7 @@ void C_Static_Set_Keep(void)
 {
     //---------------------
     //--�����
-    LOG("===���ࣺ����״̬====���ֺ���\r\n");
+    LOG("===���ࣺ����״̬====���ֺ���");
     //--------------------
     if (Is_Three_A_Childer_State_Transition())
         Childer_Step_Transition(s_childer_done);
@@ -297,7 +297,7 @@ void C_Satic_Set_Done(void)
 {
     //---------------------
     //--�����
-    LOG("===���ࣺ����״̬====�˳�����<<<\r\n");
+    LOG("===���ࣺ����״̬====�˳�����<<<");
     //--------------------
     //--�ڲ��л�
     Childer_Step_Transition(s_childer_init);
@@ -318,7 +318,7 @@ void C_Static_Distribution_Network_Init(void)
     Update_Childer_Last_State_Transition();
     //---------------------
     //--�����
-    LOG("===���ࣺ����״̬====���뺯��>>>\r\n");
+    LOG("===���ࣺ����״̬====���뺯��>>>");
     //--------------------
     Childer_Step_Transition(s_childer_keep);
 }
@@ -326,7 +326,7 @@ void C_Static_Distribution_Network_Keep(void)
 {
     //---------------------
     //--�����
-    LOG("===���ࣺ����״̬====���ֺ���\r\n");
+    LOG("===���ࣺ����״̬====���ֺ���");
     //--------------------
     if (Is_Three_A_Childer_State_Transition())
         Childer_Step_Transition(s_childer_done);
@@ -337,7 +337,7 @@ void C_Satic_Distribution_Network_Done(void)
 {
     //---------------------
     //--�����
-    LOG("===���ࣺ����״̬====�˳�����<<<\r\n");
+    LOG("===���ࣺ����״̬====�˳�����<<<");
     //--------------------
     //--�ڲ��л�
     Childer_Step_Transition(s_childer_init);
@@ -358,7 +358,7 @@ void C_Static_Shut_Down_Init(void)
     Update_Childer_Last_State_Transition();
     //---------------------
     //--�����
-    LOG("===���ࣺ����״̬====���뺯��>>>\r\n");
+    LOG("===���ࣺ����״̬====���뺯��>>>");
     //--------------------
     Childer_Step_Transition(s_childer_keep);
 }
@@ -366,7 +366,7 @@ void C_Static_Shut_Down_Keep(void)
 {
     //---------------------
     //--�����
-    LOG("===���ࣺ����״̬====���ֺ���\r\n");
+    LOG("===���ࣺ����״̬====���ֺ���");
     //--------------------
     if (Is_Three_A_Childer_State_Transition())
         Childer_Step_Transition(s_childer_done);
@@ -377,7 +377,7 @@ void C_Satic_Shut_Down_Done(void)
 {
     //---------------------
     //--�����
-    LOG("===���ࣺ����״̬====�˳�����<<<\r\n");
+    LOG("===���ࣺ����״̬====�˳�����<<<");
     //--------------------
     //--�ڲ��л�
     Childer_Step_Transition(s_childer_init);
@@ -400,7 +400,7 @@ void C_Static_Charge_Init(void)
     Update_Childer_Last_State_Transition();
     //---------------------
     //--�����
-    LOG("===���ࣺ���״̬====���뺯��>>>\r\n");
+    LOG("===���ࣺ���״̬====���뺯��>>>");
     //--------------------
     Childer_Step_Transition(s_childer_keep);
 }
@@ -408,7 +408,7 @@ void C_Static_Charge_Keep(void)
 {
     //---------------------
     //--�����
-    LOG("===���ࣺ���״̬====���ֺ���\r\n");
+    LOG("===���ࣺ���״̬====���ֺ���");
     //--------------------
     if (Is_Three_A_Childer_State_Transition())
         Childer_Step_Transition(s_childer_done);
@@ -419,7 +419,7 @@ void C_Satic_Charge_Done(void)
 {
     //---------------------
     //--�����
-    LOG("===���ࣺ���״̬====�˳�����<<<\r\n");
+    LOG("===���ࣺ���״̬====�˳�����<<<");
     //--------------------
     //--�ڲ��л�
     Childer_Step_Transition(s_childer_init);
@@ -441,7 +441,7 @@ void C_Run_Normal_Init(void)
     Update_Childer_Last_State_Transition();
     //---------------------
     //--�����
-    LOG("===���ࣺ����״̬====���뺯��>>>\r\n");
+    LOG("===���ࣺ����״̬====���뺯��>>>");
     //--------------------
     Childer_Step_Transition(s_childer_keep);
 }
@@ -449,7 +449,7 @@ void C_Run_Normal_Keep(void)
 {
     //---------------------
     //--�����
-    LOG("===���ࣺ����״̬====���ֺ���\r\n");
+    LOG("===���ࣺ����״̬====���ֺ���");
     //--------------------
     if (Is_Three_A_Childer_State_Transition())
         Childer_Step_Transition(s_childer_done);
@@ -460,7 +460,7 @@ void C_Run_Normal_Done(void)
 {
     //---------------------
     //--�����
-    LOG("===���ࣺ����״̬====�˳�����<<<\r\n");
+    LOG("===���ࣺ����״̬====�˳�����<<<");
     //--------------------
     //--�ڲ��л�
     Childer_Step_Transition(s_childer_init);
@@ -481,7 +481,7 @@ void C_Run_Dry_Init(void)
     Update_Childer_Last_State_Transition();
     //---------------------
     //--�����
-    LOG("===���ࣺ����״̬====���뺯��>>>\r\n");
+    LOG("===���ࣺ����״̬====���뺯��>>>");
     //--------------------
     Childer_Step_Transition(s_childer_keep);
 }
@@ -489,7 +489,7 @@ void C_Run_Dry_Keep(void)
 {
     //---------------------
     //--�����
-    LOG("===���ࣺ����״̬====���ֺ���\r\n");
+    LOG("===���ࣺ����״̬====���ֺ���");
     //--------------------
     if (Is_Three_A_Childer_State_Transition())
         Childer_Step_Transition(s_childer_done);
@@ -500,7 +500,7 @@ void C_Run_Dry_Done(void)
 {
     //---------------------
     //--�����
-    LOG("===���ࣺ����״̬====�˳�����<<<\r\n");
+    LOG("===���ࣺ����״̬====�˳�����<<<");
     //--------------------
     //--�ڲ��л�
     Childer_Step_Transition(s_childer_init);
@@ -521,7 +521,7 @@ void C_Run_Besiege_Init(void)
     Update_Childer_Last_State_Transition();
     //---------------------
     //--�����
-    LOG("===���ࣺ����״̬====���뺯��>>>\r\n");
+    LOG("===���ࣺ����״̬====���뺯��>>>");
     //--------------------
     Childer_Step_Transition(s_childer_keep);
 }
@@ -529,7 +529,7 @@ void C_Run_Besiege_Keep(void)
 {
     //---------------------
     //--�����
-    LOG("===���ࣺ����״̬====���ֺ���\r\n");
+    LOG("===���ࣺ����״̬====���ֺ���");
     //--------------------
     if (Is_Three_A_Childer_State_Transition())
         Childer_Step_Transition(s_childer_done);
@@ -540,7 +540,7 @@ void C_Run_Besiege_Done(void)
 {
     //---------------------
     //--�����
-    LOG("===���ࣺ����״̬====�˳�����<<<\r\n");
+    LOG("===���ࣺ����״̬====�˳�����<<<");
     //--------------------
     //--�ڲ��л�
     Childer_Step_Transition(s_childer_init);
@@ -561,7 +561,7 @@ void C_Run_Avoid_Obstacles_Init(void)
     Update_Childer_Last_State_Transition();
     //---------------------
     //--�����
-    LOG("===���ࣺ����״̬====���뺯��>>>\r\n");
+    LOG("===���ࣺ����״̬====���뺯��>>>");
     //--------------------
     Childer_Step_Transition(s_childer_keep);
 }
@@ -569,7 +569,7 @@ void C_Run_Avoid_Obstacles_Keep(void)
 {
     //---------------------
     //--�����
-    LOG("===���ࣺ����״̬====���ֺ���\r\n");
+    LOG("===���ࣺ����״̬====���ֺ���");
     //--------------------
     if (Is_Three_A_Childer_State_Transition())
         Childer_Step_Transition(s_childer_done);
@@ -580,7 +580,7 @@ void C_Run_Avoid_Obstacles_Done(void)
 {
     //---------------------
     //--�����
-    LOG("===���ࣺ����״̬====�˳�����<<<\r\n");
+    LOG("===���ࣺ����״̬====�˳�����<<<");
     //--------------------
     //--�ڲ��л�
     Childer_Step_Transition(s_childer_init);

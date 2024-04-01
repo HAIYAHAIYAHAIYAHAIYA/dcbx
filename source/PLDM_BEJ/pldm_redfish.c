@@ -11,13 +11,13 @@ void pldm_redfish_dict_test(void)
     fread(&b, sizeof(u8), 1024, pd);
     fclose(pd);
     pldm_redfish_dict_hdr_t *dicts = (pldm_redfish_dict_hdr_t *)b;
-    LOG("total : %d\n", dicts->total_len);
-    LOG("num : %d\n", dicts->num_of_dict);
+    LOG("total : %d", dicts->total_len);
+    LOG("num : %d", dicts->num_of_dict);
     pldm_redfish_dict_fmt_t *dict_fmt = (pldm_redfish_dict_fmt_t *)&b[dicts->dict_info[0].offset];
-    LOG("%#x\n", dict_fmt->dict_sign);
-    LOG("%d\n", dict_fmt->len);
+    LOG("%#x", dict_fmt->dict_sign);
+    LOG("%d", dict_fmt->len);
     for (u8 i = 0; i < dicts->num_of_dict; i++) {
-        LOG("id : %lld\n", dicts->dict_info[i].resource_id);
-        LOG("off : %d\n", dicts->dict_info[i].offset);
+        LOG("id : %lld", dicts->dict_info[i].resource_id);
+        LOG("off : %d", dicts->dict_info[i].offset);
     }
 }

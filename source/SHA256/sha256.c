@@ -261,7 +261,7 @@ void sha256(const unsigned char *data, u64 len, unsigned char *out) {
         h6 += g;
         h7 += h;
     }
-	//LOG("The ho is %x\n",h0);
+	//LOG("The ho is %x",h0);
     copy_uint32(out, h0);
     copy_uint32(out + 1, h1);
     copy_uint32(out + 2, h2);

@@ -178,7 +178,7 @@ int rsa_test(void)
 		tep = gcd(p, q);
 		if (tep == 0)
 			continue;
-		LOG("t=(q-1)*(p-1)=%d\n", t);
+		LOG("t=(q-1)*(p-1)=%d", t);
 		LOG("请输入一个指数e,使得(e,t)=1\n");
 		scanf("%d", &e);
 		tep = gcd(e, t);
