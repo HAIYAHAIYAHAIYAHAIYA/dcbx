@@ -13,6 +13,7 @@
 #define cm_strncpy          strncpy
 #define cm_strlen           strlen
 #define cm_strcmp           strcmp
+#define cm_sprintf          sprintf
 
 #define MAX_LAN_NUM         2
 

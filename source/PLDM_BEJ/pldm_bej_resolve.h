@@ -12,7 +12,7 @@ typedef struct {
     u8 seq;
     u8 fmt;
     u16 len;
-    u8 sflv_len;
+    u16 sflv_len;
     u8 *val;
 } pldm_bej_sflv_t;
 
@@ -73,8 +73,9 @@ typedef enum {
 
 // void pldm_bej_encode(pldm_cjson_t *root, u8 *dict);
 u16 pldm_bej_decode(u8 *buf, u8 *dict, pldm_redfish_dictionary_entry_t *entry, u8 entry_cnt, cJSON *root);
-pldm_cjson_t *pldm_bej_decode1(u8 *buf, u8 *anno_dict, u8 *dict, pldm_cjson_t *root);
+pldm_cjson_t *pldm_bej_decode1(u8 *buf, u16 buf_len, u8 *anno_dict, u8 *dict, pldm_cjson_t *root);
 u8 *pldm_bej_encode(pldm_cjson_t *root, u8 *bej_buf);
+u8 *pldm_bej_encode1(pldm_cjson_t *root, u8 *bej_buf);
 void pldm_bej_init(void);
 void pldm_bej_get_sflv(u8 *buf, pldm_bej_sflv_t *sflv);
 void pldm_bej_dict_search1(pldm_bej_sflv_t *sflv, u8 *dict);

@@ -2,9 +2,41 @@
 #define __PLDM_REDFISH_H__
 
 #include "main.h"
+#include "pldm_cjson.h"
 
 #define PLDM_REDFISH_DICT_NUM                               (14)
 #define PLDM_REDFISH_DICT_INFO_LEN                          ALIGN((sizeof(pldm_redfish_dict_hdr_t) + PLDM_REDFISH_DICT_NUM * sizeof(pldm_redfish_dict_info_t)), 4)
+
+#define PLDM_REDFISH_DICT_BASE_ADDR                         (0)
+
+#define NETWORK_ADAPTER_SCHEMACLASS                         (BIT(SCHEMACLASS_MAJOR))
+#define NETWORK_INTERFACE_SCHEMACLASS                       (BIT(SCHEMACLASS_MAJOR))
+#define PCIE_DEVICE_SCHEMACLASS                             (BIT(SCHEMACLASS_MAJOR))
+#define PORT_COLLECTION_SCHEMACLASS                         (BIT(SCHEMACLASS_MAJOR) | BIT(SCHEMACLASS_COLLECTION_MEMBER_TYPE))
+#define NETWORK_DEVICE_FUNC_COLLECTION_SCHEMACLASS          (BIT(SCHEMACLASS_MAJOR) | BIT(SCHEMACLASS_COLLECTION_MEMBER_TYPE))
+#define PCIE_FUNC_COLLECTION_SCHEMACLASS                    (BIT(SCHEMACLASS_MAJOR) | BIT(SCHEMACLASS_COLLECTION_MEMBER_TYPE))
+#define PORT_IDENTIFY_SCHEMACLASS                           (BIT(SCHEMACLASS_MAJOR))
+#define NETWORK_DEVICE_FUNC_SCHEMACLASS                     (BIT(SCHEMACLASS_MAJOR))
+#define PCI_FUNC_SCHEMACLASS                                (BIT(SCHEMACLASS_MAJOR))
+#define ETH_INTERFACE_SCHEMACLASS                           (BIT(SCHEMACLASS_MAJOR))
+#define ETH_INTERFACE_COLLECTION_SCHEMACLASS                (BIT(SCHEMACLASS_MAJOR) | BIT(SCHEMACLASS_COLLECTION_MEMBER_TYPE))
+#define ALL_SCHEMA_SCHEMACLASS                              (BIT(SCHEMACLASS_EVENT) | BIT(SCHEMACLASS_ANNOTATION) | BIT(SCHEMACLASS_ERROR))
+
+#define SCHEMA_CLASS(schema_name)                           schema_name##_SCHEMACLASS
+
+#define NETWORK_ADAPTER_ALLOWED_OP                          (BIT(READ) | BIT(HEAD) | BIT(UPDATE) | BIT(REPLACE)) | BIT(ACTION)
+#define NETWORK_INTERFACE_ALLOWED_OP                        (BIT(READ) | BIT(HEAD) | BIT(UPDATE) | BIT(REPLACE))
+#define PCIE_DEVICE_ALLOWED_OP                              (BIT(READ) | BIT(HEAD) | BIT(UPDATE) | BIT(REPLACE))
+#define PORT_COLLECTION_ALLOWED_OP                          (BIT(READ) | BIT(HEAD))
+#define NETWORK_DEVICE_FUNC_COLLECTION_ALLOWED_OP           (BIT(READ) | BIT(HEAD))
+#define PCIE_FUNC_COLLECTION_ALLOWED_OP                     (0)
+#define PORT_IDENTIFY_ALLOWED_OP                            (BIT(READ) | BIT(HEAD) | BIT(UPDATE) | BIT(REPLACE)) | BIT(ACTION)
+#define NETWORK_DEVICE_FUNC_ALLOWED_OP                      (BIT(READ) | BIT(HEAD) | BIT(UPDATE) | BIT(REPLACE))
+#define PCI_FUNC_ALLOWED_OP                                 (BIT(READ) | BIT(HEAD) | BIT(UPDATE) | BIT(REPLACE))
+#define ETH_INTERFACE_ALLOWED_OP                            (BIT(READ) | BIT(HEAD) | BIT(UPDATE) | BIT(REPLACE))
+#define ETH_INTERFACE_COLLECTION_ALLOWED_OP                 (BIT(READ) | BIT(HEAD))
+
+#define SCHEMA_ALLOWED_OP(schema_name)                      schema_name##_ALLOWED_OP
 
 /*  annotation.bin                          2560
     EthernetInterfaceCollection_v1.bin      164
@@ -42,6 +74,27 @@
 typedef u8                                                  schemaclass;
 
 typedef enum {
+    EVENT = 0,
+    REDFISH_PAYLOAD_ANNOTATIONS,
+    REDFISH_ERROR,
+    REGISTRY,
+
+    NETWORK_ADAPTER,
+    PCIE_DEVICE,
+    NETWORK_INTERFACE,
+    PORT_COLLECTION,
+    PCIE_FUNC_COLLECTION,
+    NETWORK_DEVICE_FUNC_COLLECTION,
+    NETWORK_DEVICE_FUNC,
+    PORT_IDENTIFY,
+    PCI_FUNC,
+    ETH_INTERFACE,
+    ETH_INTERFACE_COLLECTION,
+    ALL_SCHEMA,
+    ALL_SCHEMA_IDENTIFY
+} pldm_redfish_schema_identify_t;
+
+typedef enum {
     SCHEMACLASS_MAJOR = 0,
     SCHEMACLASS_EVENT,
     SCHEMACLASS_ANNOTATION,
@@ -51,6 +104,12 @@ typedef enum {
 } pldm_redfish_schemaclass_t;
 
 #pragma pack(1)
+
+typedef struct {
+    u8 schema_class;
+    u8 allowed_op;
+    char uri[2][39];
+} pldm_redfish_schema_info_t;
 
 typedef struct {
     u32 ver;
@@ -81,5 +140,8 @@ typedef struct {
 #pragma pack()
 
 void pldm_redfish_dict_test(void);
+void CM_FLASH_READ(u32 offset, u32 *buf, u32 size);
+u8 pldm_redfish_get_dict_data(u32 resource_id, u8 *dict, u16 len);
+u16 pldm_redfish_get_dict_len(u32 resource_id);
 
 #endif /* __PLDM_REDFISH_H__ */
