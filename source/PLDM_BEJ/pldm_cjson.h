@@ -14,6 +14,7 @@
 #define cm_strlen           strlen
 #define cm_strcmp           strcmp
 #define cm_sprintf          sprintf
+#define cm_snprintf         snprintf
 
 #define MAX_LAN_NUM         2
 

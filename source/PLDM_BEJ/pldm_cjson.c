@@ -231,16 +231,17 @@ void pldm_cjson_printf_root2(pldm_cjson_t *root)
             for (u8 i = 0; i < tmp->sflv.len; i++) {
                 switch (fmt) {
                     case BEJ_INT:
-                        // LOG("%d ", tmp->sflv.val[i]);
+                        printf("%d ", tmp->sflv.val[i]);
                         break;
                     case BEJ_ENUM:
-                        // LOG("0x%x ", tmp->sflv.val[i]);
+                        printf("0x%x ", tmp->sflv.val[i]);
                         break;
                     default:
-                        // LOG("%c", tmp->sflv.val[i]);
+                        printf("%c", tmp->sflv.val[i]);
                         break;
                 }
             }
+            printf("\n");
         }
         tmp = tmp->next;
     }
@@ -951,6 +952,11 @@ static pldm_cjson_schema_fmt_t *pldm_cjson_create_schema(pldm_cjson_t *obj, pldm
 
 pldm_cjson_t *pldm_cjson_create_event_schema(u32 resource_id, u8 *dict, u8 *anno_dict, u8 link_state)
 {
+    char str[16];
+    cm_snprintf(str, 14, "%lld", resource_id);
+    u8 strlen_len = cm_strlen(str);
+    str[strlen_len] = '\0';
+    LOG("strlen : %d, resource_id : %lld", strlen_len, resource_id);
     pldm_cjson_t *root = pldm_cjson_create_obj();
     pldm_cjson_schema_fmt_t fmt[] = {
         /* schema_type | fmt | child_cnt | name | val */
@@ -968,7 +974,7 @@ pldm_cjson_t *pldm_cjson_create_event_schema(u32 resource_id, u8 *dict, u8 *anno
                         {0, BEJ_STR, 0, "", ""},
                     {0, BEJ_STR, 0, "MessageId", "NetworkDevice.1.0.1."},
                     {0, BEJ_SET, 1, "OriginOfCondition", ""},
-                        {0, BEJ_STR, 0, "@odata.id", ""},                     /* Reference to related triggering resource. */
+                        {1, BEJ_STR, 0, "@odata.id", str},                     /* Reference to related triggering resource. */
             {1, BEJ_INT, 0, "Events@odata.count", (char [2]){0x01, 0x00}},
             {0, BEJ_STR, 0, "Id", "1"},
             {0, BEJ_STR, 0, "Name", "Event"},
@@ -987,7 +993,7 @@ pldm_cjson_t *pldm_cjson_create_event_schema(u32 resource_id, u8 *dict, u8 *anno
     // pldm_cjson_delete_node(root);
     root = NULL;
 
-    pldm_cjson_fill_comm_field_in_schema(root, "Event", 0, resource_id, "Event.1_0_2.Event", "etag", EVENT);
+    pldm_cjson_fill_comm_field_in_schema(new_root, "Event", 0, resource_id, "Event.1_0_2.Event", "etag", EVENT);
 
     pldm_redfish_dictionary_format_t *dict_ptr = (pldm_redfish_dictionary_format_t *)dict;
     pldm_cjson_cal_sf_to_root(new_root, anno_dict, dict, &(dict_ptr->entry[0]), dict_ptr->entry_cnt);
@@ -1634,11 +1640,11 @@ void pldm_cjson_bej_test(void)
     u8 buf[1024];
 
     // pldm_cjson_pool_init();
-    u8 ret = pldm_redfish_get_dict_data(PLDM_BASE_NETWORK_ADAPTER_RESOURCE_ID, SCHEMACLASS_MAJOR, \
-    g_needed_dict, pldm_redfish_get_dict_len(PLDM_BASE_NETWORK_ADAPTER_RESOURCE_ID));
+    u8 ret = pldm_redfish_get_dict_data(PLDM_BASE_EVENT_DICT_RESOURCE_ID, SCHEMACLASS_EVENT, \
+    g_needed_dict, pldm_redfish_get_dict_len(PLDM_BASE_EVENT_DICT_RESOURCE_ID));
     if (ret == false) return;
 
-    root = pldm_cjson_create_networkadapter_v1_5_0_schema(dict, annc_dict);
+    root = pldm_cjson_create_event_schema(PLDM_BASE_EVENT_DICT_RESOURCE_ID, dict, annc_dict, 1);
     if (root) {
         pldm_cjson_cal_len_to_root2(root, OTHER_TYPE);
         pldm_cjson_printf_root2(root);
