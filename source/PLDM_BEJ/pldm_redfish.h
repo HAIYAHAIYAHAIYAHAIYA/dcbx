@@ -141,7 +141,7 @@ typedef struct {
 
 void pldm_redfish_dict_test(void);
 void CM_FLASH_READ(u32 offset, u32 *buf, u32 size);
-u8 pldm_redfish_get_dict_data(u32 resource_id, u8 *dict, u16 len);
+u8 pldm_redfish_get_dict_data(u32 resource_id, u8 requested_schemaclass, u8 *dict, u16 len);
 u16 pldm_redfish_get_dict_len(u32 resource_id);
 
 #endif /* __PLDM_REDFISH_H__ */

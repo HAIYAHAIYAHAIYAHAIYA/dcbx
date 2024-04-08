@@ -236,20 +236,24 @@ void pldm_monitor_test(void)
         pdr_init[i]();
         pldm_pde_get_used();
     }
+    LOG("g_event_id : %d", g_event_id);
     g_pldm_monitor_info.terminus_mode = PLDM_ENABLE_ASYNC;
     for (u8 i = 0; i < MAX_LAN_NUM; i++) {
         pldm_link_handle(i, 1);
         pldm_pde_get_used();
     }
+    LOG("g_event_id : %d", g_event_id);
     for (u8 i = 0; i < MAX_LAN_NUM; i++) {
         pldm_link_handle(i, 0);
         pldm_pde_get_used();
     }
+    LOG("g_event_id : %d", g_event_id);
     // pldm_monitor_printf_repo(&(g_pldm_monitor_info.pldm_repo));
     for (u8 i = 0; i < MAX_LAN_NUM; i++) {
         pldm_link_handle(i, 1);
         pldm_pde_get_used();
     }
+    LOG("g_event_id : %d", g_event_id);
     pldm_pdr_delete(&(g_pldm_monitor_info.pldm_repo), 4400);
     pldm_pdr_delete(&(g_pldm_monitor_info.pldm_repo), 4200);
     pldm_pdr_delete(&(g_pldm_monitor_info.pldm_repo), 4300);

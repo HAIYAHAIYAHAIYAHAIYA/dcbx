@@ -1634,7 +1634,7 @@ void pldm_cjson_bej_test(void)
     u8 buf[1024];
 
     // pldm_cjson_pool_init();
-    u8 ret = pldm_redfish_get_dict_data(PLDM_BASE_NETWORK_ADAPTER_RESOURCE_ID, \
+    u8 ret = pldm_redfish_get_dict_data(PLDM_BASE_NETWORK_ADAPTER_RESOURCE_ID, SCHEMACLASS_MAJOR, \
     g_needed_dict, pldm_redfish_get_dict_len(PLDM_BASE_NETWORK_ADAPTER_RESOURCE_ID));
     if (ret == false) return;
 
@@ -1684,7 +1684,7 @@ void pldm_cjson_test(void)
 
     CM_FLASH_READ(PLDM_REDFISH_DICT_BASE_ADDR, (u32 *)g_dict_info, PLDM_REDFISH_DICT_INFO_LEN / sizeof(u32));
 
-    pldm_redfish_get_dict_data(PLDM_BASE_ANNOTATION_DICT_RESOURCE_ID, g_anno_dict, sizeof(g_anno_dict));
+    pldm_redfish_get_dict_data(PLDM_BASE_ANNOTATION_DICT_RESOURCE_ID, SCHEMACLASS_ANNOTATION, g_anno_dict, sizeof(g_anno_dict));
 
     pldm_cjson_pool_init();
     pldm_cjson_bej_test();
