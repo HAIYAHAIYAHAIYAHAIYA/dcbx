@@ -1,6 +1,6 @@
 #include "pldm_bej_resolve.h"
 
-pldm_bej_key_t key, enum_key;
+pldm_bej_key_t gs_key, gs_enum_key;
 u8 *fmt_err = "fmt_err";
 
 u8 bej_buf[] = {
@@ -332,17 +332,17 @@ static void pldm_bej_val_search(pldm_bej_sflv_t *sflv, cJSON *ptr)
     // LOG("\n");
     switch (fmt) {
         case BEJ_INT:
-            cJSON_AddNumberToObject(ptr, key.val, sflv->val[0]);
+            cJSON_AddNumberToObject(ptr, gs_key.val, sflv->val[0]);
             break;
         case BEJ_ENUM:
-            cJSON_AddStringToObject(ptr, key.val, enum_key.val);
+            cJSON_AddStringToObject(ptr, gs_key.val, gs_enum_key.val);
             break;
         case BEJ_BOOLEAN:
-            if (sflv->val[0] != 0) cJSON_AddStringToObject(ptr, key.val, "true");
-            else cJSON_AddStringToObject(ptr, key.val, "false");
+            if (sflv->val[0] != 0) cJSON_AddStringToObject(ptr, gs_key.val, "true");
+            else cJSON_AddStringToObject(ptr, gs_key.val, "false");
             break;
         default :
-            cJSON_AddStringToObject(ptr, key.val, sflv->val);
+            cJSON_AddStringToObject(ptr, gs_key.val, sflv->val);
             // for (u8 i = 0; i < sflv->len; i++) {
             //     LOG("%d %c", i, sflv->val[i]);
             // }
@@ -372,7 +372,7 @@ static void pldm_bej_val_search1(pldm_bej_sflv_t *sflv, cJSON *ptr)
     LOG("\n");
 }
 
-static void pldm_bej_val_search2(u8 *dictionary, pldm_bej_sflv_t *sflv, pldm_cjson_t *ptr)
+static void pldm_bej_val_search2(u8 *dict, pldm_bej_sflv_t *sflv, pldm_cjson_t *ptr)
 {
     u8 fmt = sflv->fmt >> 4;
     pldm_bej_sflv_dat_t tmp;
@@ -380,40 +380,34 @@ static void pldm_bej_val_search2(u8 *dictionary, pldm_bej_sflv_t *sflv, pldm_cjs
     tmp.fmt = sflv->fmt;
     tmp.len = sflv->len;
     switch (fmt) {
-        case BEJ_INT:
-        pldm_cjson_add_item_to_obj(ptr, &tmp, key.val, sflv->val, sflv->len);
-        break;
-        case BEJ_ENUM:
-        // LOG("%s", enum_key.val);
-        pldm_cjson_add_enum_to_obj(ptr, dictionary, &tmp, key.val, enum_key.val);
-        break;
+        // case BEJ_INT:
+        //     pldm_cjson_add_item_to_obj(ptr, &tmp, gs_key.val, (char *)sflv->val, sflv->len);
+        //     break;
+        // case BEJ_ENUM:
+        //     pldm_cjson_add_enum_to_obj(ptr, dictionary, &tmp, gs_key.val, gs_enum_key.val);
+        //     break;
         case BEJ_BOOLEAN:
-        // LOG("seq : %d", tmp.seq);
-        if (sflv->val[0] == 0) {
-            pldm_cjson_add_item_to_obj(ptr, &tmp, key.val, "f", tmp.len);
-        } else {
-            pldm_cjson_add_item_to_obj(ptr, &tmp, key.val, "t", tmp.len);
-        }
-        break;
+            if (sflv->val[0] == 0)
+                pldm_cjson_add_item_to_obj(ptr, &tmp, gs_key.val, "f", sflv->len);
+            else 
+                pldm_cjson_add_item_to_obj(ptr, &tmp, gs_key.val, "t", sflv->len);
+            break;
         default :
-        // for (u8 i = 0; i < sflv->len; i++) {
-        //     LOG("0x%02x ", sflv->val[i]);
-        // }
-        // LOG("\n");
-        // LOG("%d, %s", strlen(sflv->val), sflv->val);
-        pldm_cjson_add_item_to_obj(ptr, &tmp, key.val, sflv->val, sflv->len);
-        break;
+            pldm_cjson_add_item_to_obj(ptr, &tmp, gs_key.val, (char *)sflv->val, sflv->len);
+            break;
     }
 }
 
-void pldm_bej_annotation_dict_search(pldm_bej_sflv_t *sflv, u8 *anno_dict)
+pldm_redfish_dictionary_entry_t *pldm_bej_annotation_dict_search(pldm_bej_sflv_t *sflv, u8 *anno_dict, pldm_redfish_dictionary_entry_t *entry, u8 entry_cnt)
 {
+    if (!anno_dict || !sflv || !entry) return NULL;
     u8 is_find = 0;
-    key.len = 0;
-    key.val = NULL;
+    gs_key.len = 0;
+    gs_key.val = NULL;
+    gs_enum_key.len = 0;
+    gs_enum_key.val = NULL;
 
-    pldm_redfish_dictionary_format_t *dict = (pldm_redfish_dictionary_format_t *)anno_dict;
-    pldm_redfish_dictionary_entry_t *tmp = (pldm_redfish_dictionary_entry_t *)&(dict->entry[0]);
+    pldm_redfish_dictionary_entry_t *tmp = entry;
     // dict->entry[1].sequence_num = 1;
     // LOG("entry cnt : %d", dict->entry_cnt);
     // LOG("need 0x%x, 0x%x, %s", sflv->fmt >> 4, sflv->seq >> 1, sflv->val);
@@ -427,25 +421,38 @@ void pldm_bej_annotation_dict_search(pldm_bej_sflv_t *sflv, u8 *anno_dict)
     // dict->entry[26].sequence_num = 8;
     // dict->entry[27].sequence_num = 6;
 
-    for (u16 k = 0; k < dict->entry_cnt; k++) {
+    for (u16 k = 0; k < entry_cnt; k++) {
         u8 dict_fmt = tmp->format >> 4;
         // LOG("0x%x, 0x%x, %d", dict_fmt, tmp->sequence_num, tmp->name_off);
         if (dict_fmt == sflv->fmt >> 4 && tmp->sequence_num == (sflv->seq >> 1)) {
             // LOG("tmp->name_off : %d", tmp->name_off);
-            key.val = &anno_dict[tmp->name_off];
-            key.len = tmp->name_len;
-            // LOG("key.val %s: ", key.val);
-            // LOG("key.val %d: ", strlen(key.val));
+            if (tmp->name_off) {
+                gs_key.val = &anno_dict[tmp->name_off];
+                gs_key.len = tmp->name_len;
+            } else {
+                gs_key.val = "";
+                gs_key.len = tmp->name_len;
+            }
+            // LOG("gs_key.val : %s", gs_key.val);
+            // LOG("gs_key.len : %d", strlen(gs_key.val));
+            if (dict_fmt == BEJ_ENUM) {
+                pldm_redfish_dictionary_entry_t *enum_ptr = (pldm_redfish_dictionary_entry_t *)&anno_dict[tmp->childpoint_off];
+                enum_ptr += sflv->val[1];
+                gs_enum_key.len = enum_ptr->name_len;
+                gs_enum_key.val = (char *)&anno_dict[enum_ptr->name_off];
+                // LOG("%s ", gs_enum_key.val);
+            }
             is_find = 1;
-            break;
+            return tmp;
         }
         tmp += 1;
     }
     if (!is_find) {
-        LOG("anno dict fmt err: ");
-        key.len = strlen(fmt_err);
-        key.val = fmt_err;
+        LOG("anno dict fmt err: fmt : 0x%02x, seq : 0x%02x, %s, %d", sflv->fmt >> 4, sflv->seq >> 1, &anno_dict[entry->name_off], entry_cnt);
+        gs_key.len = strlen(fmt_err);
+        gs_key.val = fmt_err;
     }
+    return entry;
 }
 
 static pldm_redfish_dictionary_entry_t *pldm_bej_dict_search(pldm_bej_sflv_t *sflv, u8 *dict, pldm_redfish_dictionary_entry_t *entry, u8 entry_cnt)
@@ -453,26 +460,26 @@ static pldm_redfish_dictionary_entry_t *pldm_bej_dict_search(pldm_bej_sflv_t *sf
     if (!dict || !sflv || !entry) return NULL;
     pldm_redfish_dictionary_entry_t *tmp = entry;
     u8 is_find = 0;
-    key.len = 0;
-    key.val = NULL;
-    enum_key.len = 0;
-    enum_key.val = NULL;
+    gs_key.len = 0;
+    gs_key.val = NULL;
+    gs_enum_key.len = 0;
+    gs_enum_key.val = NULL;
     // LOG("need 0x%x, 0x%x", sflv->fmt >> 4, sflv->seq >> 1);
 
     for (u16 k = 0; k < entry_cnt; k++) {
         u8 dict_fmt = tmp->format >> 4;
         // LOG("0x%x, 0x%x", dict_fmt, tmp->sequence_num);
         if (dict_fmt == sflv->fmt >> 4 && tmp->sequence_num == sflv->seq >> 1) {
-            key.val = (char *)&dict[tmp->name_off];
-            key.len = tmp->name_len;
-            // LOG("%s: ", key.val);
+            gs_key.val = (char *)&dict[tmp->name_off];
+            gs_key.len = tmp->name_len;
+            // LOG("%s: ", gs_key.val);
 
             if (dict_fmt == BEJ_ENUM) {
                 pldm_redfish_dictionary_entry_t *enum_ptr = (pldm_redfish_dictionary_entry_t *)&dict[tmp->childpoint_off];
                 enum_ptr += sflv->val[1];
-                enum_key.len = enum_ptr->name_len;
-                enum_key.val = (char *)&dict[enum_ptr->name_off];
-                // LOG("%s ", enum_key.val);
+                gs_enum_key.len = enum_ptr->name_len;
+                gs_enum_key.val = (char *)&dict[enum_ptr->name_off];
+                // LOG("%s ", gs_enum_key.val);
             }
             is_find = 1;
             return tmp;
@@ -481,8 +488,8 @@ static pldm_redfish_dictionary_entry_t *pldm_bej_dict_search(pldm_bej_sflv_t *sf
     }
     if (!is_find) {
         LOG("dict_search fmt err : fmt : seq : %#x, %#x", sflv->fmt >> 4, sflv->seq >>1);
-        key.len = cm_strlen("fmt_err");
-        key.val = "fmt_err";
+        gs_key.len = cm_strlen("fmt_err");
+        gs_key.val = "fmt_err";
     }
 
     return entry;
@@ -491,31 +498,31 @@ static pldm_redfish_dictionary_entry_t *pldm_bej_dict_search(pldm_bej_sflv_t *sf
 void pldm_bej_dict_search1(pldm_bej_sflv_t *sflv, u8 *dict)
 {
     u8 is_find = 0;
-    key.val = NULL;
-    enum_key.val = NULL;
+    gs_key.val = NULL;
+    gs_enum_key.val = NULL;
     pldm_redfish_dictionary_format_t *dict_ptr = (pldm_redfish_dictionary_format_t *)dict;
     for (u8 k = 0; k < dict_ptr->entry_cnt; k++) {
         u8 dict_fmt = dict_ptr->entry[k].format >> 4;
         if (dict_fmt == sflv->fmt >> 4 && dict_ptr->entry[k].sequence_num == sflv->seq >> 1) {
-            key.val = &dict[dict_ptr->entry[k].name_off];
-            key.len = dict_ptr->entry[k].name_len;
-            LOG("%s", key.val);
+            gs_key.val = &dict[dict_ptr->entry[k].name_off];
+            gs_key.len = dict_ptr->entry[k].name_len;
+            LOG("%s", gs_key.val);
             LOG(": ");
             is_find = 1;
             if (dict_fmt == BEJ_ENUM) {
                 pldm_redfish_dictionary_entry_t *enum_ptr = (pldm_redfish_dictionary_entry_t *)&dict[dict_ptr->entry[k].childpoint_off];
                 enum_ptr += sflv->val[1];
-                enum_key.len = enum_ptr->name_len;
-                enum_key.val = &dict[enum_ptr->name_off];
-                LOG("%s", enum_key.val);
+                gs_enum_key.len = enum_ptr->name_len;
+                gs_enum_key.val = &dict[enum_ptr->name_off];
+                LOG("%s", gs_enum_key.val);
 
             }
             break;
         }
     }
     if (!is_find) {
-        key.len = strlen(fmt_err);
-        key.val = fmt_err;
+        gs_key.len = strlen(fmt_err);
+        gs_key.val = fmt_err;
     }
 }
 
@@ -561,24 +568,26 @@ u8 *pldm_bej_encode1(pldm_cjson_t *root, u8 *bej_buf)
     return buf;
 }
 
-static u16 pldm_bej_decode_op(u8 *buf, u8 *anno_dict, u8 *dict, pldm_redfish_dictionary_entry_t *entry, u8 entry_cnt, pldm_cjson_t *root)
+static u16 pldm_bej_decode_op(u8 *buf, u8 *anno_dict, u8 *dict, pldm_redfish_dictionary_entry_t *entry, u16 entry_cnt, pldm_redfish_dictionary_entry_t *anno_entry, u16 anno_entry_cnt, pldm_cjson_t *root)
 {
     if (!buf || !entry || !root || !dict || !anno_dict) return 0;
     pldm_bej_sflv_t sflv = {0, 0, 0, 0, NULL};
     pldm_redfish_dictionary_entry_t *new_entry = entry;
+    pldm_redfish_dictionary_entry_t *new_anno_entry = anno_entry;
     u8 cnt = 0;
     pldm_cjson_t *ptr = root;
     pldm_cjson_t *add_ptr = NULL;
     pldm_bej_get_sflv(buf, &sflv);
     if (sflv.seq & 1)
-        pldm_bej_annotation_dict_search(&sflv, anno_dict);
+        new_anno_entry = pldm_bej_dict_search(&sflv, anno_dict, anno_entry, anno_entry_cnt);
     else
         new_entry = pldm_bej_dict_search(&sflv, dict, entry, entry_cnt);
 
     /* see PropertyUnknown in the Redfish base message registry.(DSP0265) */
-    // if (cm_strcmp(key.val, "fmt_err") == 0) return 0;
+    if (cm_strcmp(gs_key.val, "fmt_err") == 0) return 0;
 
     u8 child_cnt = entry_cnt;
+    u8 anno_child_cnt = anno_entry_cnt;
     u8 fmt = sflv.fmt >> 4;
     if ((fmt == BEJ_SET || fmt == BEJ_ARRAY)) {
         cnt = sflv.val[1];
@@ -587,14 +596,20 @@ static u16 pldm_bej_decode_op(u8 *buf, u8 *anno_dict, u8 *dict, pldm_redfish_dic
         child_cnt = new_entry->child_cnt;
         new_entry = (pldm_redfish_dictionary_entry_t *)&dict[new_entry->childpoint_off];
 
+        if (new_anno_entry->childpoint_off && sflv.seq & 1) {
+            // LOG("seq : 0x%02x, fmt : 0x%02x", sflv.seq >> 1, sflv.fmt >> 4);
+            anno_child_cnt = new_anno_entry->child_cnt;
+            new_anno_entry = (pldm_redfish_dictionary_entry_t *)&anno_dict[new_anno_entry->childpoint_off];
+        }
+
         pldm_bej_sflv_dat_t tmp;
         tmp.seq = sflv.seq;
         tmp.fmt = sflv.fmt;
         tmp.len = sflv.len;
-        add_ptr = pldm_cjson_add_item_to_obj(ptr, &tmp, key.val, "", 0);
+        add_ptr = pldm_cjson_add_item_to_obj(ptr, &tmp, gs_key.val, "", 0);
     }
-    for (u8 i = 0; i < cnt; ++i) {
-        u16 len = pldm_bej_decode_op(sflv.val, anno_dict, dict, new_entry, child_cnt, add_ptr);
+    for (u8 i = 0; i < cnt; i++) {
+        u16 len = pldm_bej_decode_op(sflv.val, anno_dict, dict, new_entry, child_cnt, new_anno_entry, anno_child_cnt, add_ptr);
         sflv.val += len;
     }
     if (!cnt && fmt != BEJ_SET && fmt != BEJ_ARRAY) {
@@ -606,16 +621,15 @@ static u16 pldm_bej_decode_op(u8 *buf, u8 *anno_dict, u8 *dict, pldm_redfish_dic
 pldm_cjson_t *pldm_bej_decode1(u8 *buf, u16 buf_len, u8 *anno_dict, u8 *dict, pldm_cjson_t *root)
 {
     if (!buf || !dict || !anno_dict) return NULL;
-    u8 *tmp = buf;
     root = pldm_cjson_create_obj();
     if (!root) return NULL;
     pldm_redfish_dictionary_format_t *dictionary = (pldm_redfish_dictionary_format_t *)dict;
+    pldm_redfish_dictionary_format_t *anno_dictionary = (pldm_redfish_dictionary_format_t *)anno_dict;
 
     u16 total_len = 0;
     while (total_len < buf_len) {
-        total_len += pldm_bej_decode_op(&buf[total_len], anno_dict, dict, &(dictionary->entry[0]), dictionary->entry_cnt, root);
+        total_len += pldm_bej_decode_op(&buf[total_len], anno_dict, dict, &(dictionary->entry[0]), dictionary->entry_cnt, &(anno_dictionary->entry[0]), anno_dictionary->entry_cnt, root);
     }
-
     LOG("total_len : %d", total_len);
     pldm_cjson_t *new_root = NULL;
     new_root = root->child;
@@ -647,8 +661,8 @@ u16 pldm_bej_decode(u8 *buf, u8 *dict, pldm_redfish_dictionary_entry_t *entry, u
             add_ptr = cJSON_CreateArray();
         }
         if (!add_ptr) return 0;
-        if (key.len)
-            cJSON_AddItemToObject(ptr, key.val, add_ptr);
+        if (gs_key.len)
+            cJSON_AddItemToObject(ptr, gs_key.val, add_ptr);
         else
             cJSON_AddItemToArray(ptr, add_ptr);
     }

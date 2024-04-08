@@ -15,7 +15,7 @@ extern pldm_nic_composite_state_sensor_data_struct_t nic_composite_state_sensors
 extern pldm_controller_composite_state_sensor_data_struct_t controller_composite_state_sensors[5];
 extern pldm_redfish_schema_info_t schema_info[ALL_SCHEMA_IDENTIFY];
 
-void pldm_cjson_cal_sf_to_root(pldm_cjson_t *root, u8 *anno_dict, u8 *dict, pldm_redfish_dictionary_entry_t *entry, u8 entry_cnt);
+void pldm_cjson_cal_sf_to_root(pldm_cjson_t *root, u8 *anno_dict, u8 *dict);
 
 void pldm_cjson_pool_init(void)
 {
@@ -224,9 +224,10 @@ void pldm_cjson_printf_root2(pldm_cjson_t *root)
 {
     pldm_cjson_t *tmp = root;
     while (tmp) {
-        LOG("seq : %#x, fmt : %#x, len : %d, name : %s : ", tmp->sflv.seq >> 1, tmp->sflv.fmt >> 4, tmp->sflv.len, tmp->name);
+        if (cm_strlen(tmp->name)) LOG("seq : %#x, fmt : %#x, len : %d, name : %s : ", tmp->sflv.seq >> 1, tmp->sflv.fmt >> 4, tmp->sflv.len, tmp->name);
         pldm_cjson_printf_root2(tmp->child);
-        if (!tmp->child && tmp->sflv.val) {
+        u8 fmt = tmp->sflv.fmt >> 4;
+        if (!tmp->child && tmp->sflv.val && fmt != BEJ_SET && fmt != BEJ_ARRAY) {
             u8 fmt = tmp->sflv.fmt >> 4;
             for (u8 i = 0; i < tmp->sflv.len; i++) {
                 switch (fmt) {
@@ -443,6 +444,8 @@ pldm_cjson_t *pldm_cjson_add_item_to_obj(pldm_cjson_t *obj, pldm_bej_sflv_dat_t 
         // val = str;
         // break;
     // }
+    if (cm_strcmp("NetworkDeviceFunctions", name) == 0)
+        LOG("name : %s, len : %d, val : %s", name, len, val);
 
     pldm_cjson_t *item = pldm_cjson_create_leaf(len + 1);
     pldm_cjson_add_sflv_attr(item, sflv, name, val, len);
@@ -463,26 +466,26 @@ void pldm_cjson_add_enum_to_obj(pldm_cjson_t *obj, u8 *dictionary, pldm_bej_sflv
     }
     pldm_redfish_dictionary_format_t *dict = (pldm_redfish_dictionary_format_t *)dictionary;
     for (u8 i = 0; i < dict->entry_cnt; i++) {
-            u8 *name = &dictionary[dict->entry[i].name_off];
-            if (strcmp(name, enum_name) == 0) {
-                pldm_redfish_dictionary_entry_t *entry = (pldm_redfish_dictionary_entry_t *)&dictionary[dict->entry[i].childpoint_off];
-                for (u8 j = 0; j < dict->entry[i].child_cnt; j++) {
-                    name = &dictionary[entry->name_off];
-                    if (strcmp(name, enum_val) == 0) {
-                        char str[] = {0x01, 0x00, 0x00};
-                        if (!j) {
-                            str[1] = 0xFF;
-                        } else {
-                            str[1] = j;
-                        }
-                        pldm_cjson_add_item_to_obj(obj, sflv, enum_name, str, strlen(str));
-                        break;
+        u8 *name = &dictionary[dict->entry[i].name_off];
+        if (strcmp(name, enum_name) == 0) {
+            pldm_redfish_dictionary_entry_t *entry = (pldm_redfish_dictionary_entry_t *)&dictionary[dict->entry[i].childpoint_off];
+            for (u8 j = 0; j < dict->entry[i].child_cnt; j++) {
+                name = &dictionary[entry->name_off];
+                if (strcmp(name, enum_val) == 0) {
+                    char str[] = {0x01, 0x00, 0x00};
+                    if (!j) {
+                        str[1] = 0xFF;
+                    } else {
+                        str[1] = j;
                     }
-                    entry++;
+                    pldm_cjson_add_item_to_obj(obj, sflv, enum_name, str, strlen(str));
+                    break;
                 }
-                break;
+                entry++;
             }
+            break;
         }
+    }
 }
 
 void pldm_cjson_fill_dict_hdr(u8 *dictionary)
@@ -936,7 +939,7 @@ static pldm_cjson_schema_fmt_t *pldm_cjson_create_schema(pldm_cjson_t *obj, pldm
     if (buf[0].fmt == BEJ_SET || buf[0].fmt == BEJ_ARRAY) {
         cnt = buf[0].child_cnt;
         // LOG("name : %s", tmp->name);
-        tmp1 = pldm_cjson_add_item_to_obj(tmp, &sflv, buf->key, buf->val, cm_strlen(buf->val));
+        tmp1 = pldm_cjson_add_item_to_obj(tmp, &sflv, buf->key, "", 0);
         buf += 1;
     }
     for (u8 i = 0; i < cnt; i++) {
@@ -995,8 +998,7 @@ pldm_cjson_t *pldm_cjson_create_event_schema(u32 resource_id, u8 *dict, u8 *anno
 
     pldm_cjson_fill_comm_field_in_schema(new_root, "Event", 0, resource_id, "Event.1_0_2.Event", "etag", EVENT);
 
-    pldm_redfish_dictionary_format_t *dict_ptr = (pldm_redfish_dictionary_format_t *)dict;
-    pldm_cjson_cal_sf_to_root(new_root, anno_dict, dict, &(dict_ptr->entry[0]), dict_ptr->entry_cnt);
+    pldm_cjson_cal_sf_to_root(new_root, anno_dict, dict);
     return new_root;
 }
 
@@ -1066,8 +1068,7 @@ pldm_cjson_t *pldm_cjson_create_port_v1_3_1_schema(u8 *dict, u8 *anno_dict)
     pldm_cjson_delete_node(root);
     root = NULL;
     pldm_cjson_fill_comm_field_in_schema(new_root->child, "", 0, PLDM_BASE_PORT_RESOURCE_ID, "Port.1_3_1.Port", "etag", PORT_IDENTIFY);
-    pldm_redfish_dictionary_format_t *dict_ptr = (pldm_redfish_dictionary_format_t *)dict;
-    pldm_cjson_cal_sf_to_root(new_root->child, anno_dict, dict, &(dict_ptr->entry[0]), dict_ptr->entry_cnt);
+    pldm_cjson_cal_sf_to_root(new_root->child, anno_dict, dict);
     return new_root->child;
 }
 
@@ -1094,8 +1095,7 @@ pldm_cjson_t *pldm_cjson_create_portcollection_schema(u8 *dict, u8 *anno_dict)
     pldm_cjson_delete_node(root);
     root = NULL;
     pldm_cjson_fill_comm_field_in_schema(new_root->child, "", 1, PLDM_BASE_PORTS_RESOURCE_ID, "PortCollection.PortCollection", "etag", PORT_COLLECTION);
-    pldm_redfish_dictionary_format_t *dict_ptr = (pldm_redfish_dictionary_format_t *)dict;
-    pldm_cjson_cal_sf_to_root(new_root->child, anno_dict, dict, &(dict_ptr->entry[0]), dict_ptr->entry_cnt);
+    pldm_cjson_cal_sf_to_root(new_root->child, anno_dict, dict);
     return new_root->child;
 }
 
@@ -1133,8 +1133,7 @@ pldm_cjson_t *pldm_cjson_create_networkinterface_v1_2_0_schema(u8 *dict, u8 *ann
     root = NULL;
 
     pldm_cjson_fill_comm_field_in_schema(new_root->child, "", 0, PLDM_BASE_NETWORK_INTERFACE_RESOURCE_ID, "NetworkInterface.1_2_1.NetworkInterface", "etag", NETWORK_INTERFACE);
-    pldm_redfish_dictionary_format_t *dict_ptr = (pldm_redfish_dictionary_format_t *)dict;
-    pldm_cjson_cal_sf_to_root(new_root->child, anno_dict, dict, &(dict_ptr->entry[0]), dict_ptr->entry_cnt);
+    pldm_cjson_cal_sf_to_root(new_root->child, anno_dict, dict);
     return new_root->child;
 }
 
@@ -1201,8 +1200,7 @@ pldm_cjson_t *pldm_cjson_create_networkadapter_v1_5_0_schema(u8 *dict, u8 *anno_
     // pldm_cjson_delete_node(root);
     root = NULL;
     pldm_cjson_fill_comm_field_in_schema(new_root->child, "", 0, PLDM_BASE_NETWORK_ADAPTER_RESOURCE_ID, "NetworkAdapter.1_5_0.NetworkAdapter", "etag", NETWORK_ADAPTER);
-    pldm_redfish_dictionary_format_t *dict_ptr = (pldm_redfish_dictionary_format_t *)dict;
-    pldm_cjson_cal_sf_to_root(new_root->child, anno_dict, dict, &(dict_ptr->entry[0]), dict_ptr->entry_cnt);
+    pldm_cjson_cal_sf_to_root(new_root->child, anno_dict, dict);
     return new_root->child;
 }
 
@@ -1255,10 +1253,10 @@ pldm_cjson_t *pldm_cjson_create_networkdevicefunction_v1_3_3_schema(u8 *dict, u8
                         // {0, BEJ_STR, 0, "Enabled", ""},
                         // {0, BEJ_STR, 0, "Disabled", ""},
                 {0, BEJ_BOOLEAN, 0, "VirtualFunctionsEnabled", "f"},
-                {1, BEJ_SET, 1, "@Redfish.Settings", ""},
-                    {1, BEJ_STR, 0, "SettingsObject", "Points to the next setting = Resource ID +10"},
-                // {0, BEJ_ARRAY, 1, "SupportedApplyTimes", ""},
-                //     {0, BEJ_ENUM, 0, "", (char [3]){0x01, 0x03, 0x00}},
+                {1, BEJ_SET, 2, "@Redfish.Settings", ""},
+                    {1, BEJ_SET, 0, "SettingsObject", "Points to the next setting = Resource ID +10"},
+                    {1, BEJ_ARRAY, 1, "SupportedApplyTimes", ""},
+                        {1, BEJ_ENUM, 0, "", (char [3]){0x01, 0x03, 0x00}},
                         // {0, BEJ_STR, 0, "AtMaintenanceWindowStart", ""},
                         // {0, BEJ_STR, 0, "Immediate", ""},
                         // {0, BEJ_STR, 0, "InMaintenanceWindowOnReset", ""},
@@ -1277,8 +1275,7 @@ pldm_cjson_t *pldm_cjson_create_networkdevicefunction_v1_3_3_schema(u8 *dict, u8
     pldm_cjson_delete_node(root);
     root = NULL;
     pldm_cjson_fill_comm_field_in_schema(new_root->child, "", 0, PLDM_BASE_PORTS_RESOURCE_ID, "PortCollection.1_3_1.PortCollection", "etag", NETWORK_DEVICE_FUNC);
-    pldm_redfish_dictionary_format_t *dict_ptr = (pldm_redfish_dictionary_format_t *)dict;
-    pldm_cjson_cal_sf_to_root(new_root->child, anno_dict, dict, &(dict_ptr->entry[0]), dict_ptr->entry_cnt);
+    pldm_cjson_cal_sf_to_root(new_root->child, anno_dict, dict);
     return new_root->child;
 }
 
@@ -1305,8 +1302,7 @@ pldm_cjson_t *pldm_cjson_create_networkdevicefunctioncollection_schema(u8 *dict,
     pldm_cjson_delete_node(root);
     root = NULL;
     pldm_cjson_fill_comm_field_in_schema(new_root->child, "", 1, PLDM_BASE_NETWORK_DEV_FUNCS_RESOURCE_ID, "NetworkDeviceFunctionCollection.NetworkDeviceFunctionCollection", "etag", NETWORK_DEVICE_FUNC_COLLECTION);
-    pldm_redfish_dictionary_format_t *dict_ptr = (pldm_redfish_dictionary_format_t *)dict;
-    pldm_cjson_cal_sf_to_root(new_root->child, anno_dict, dict, &(dict_ptr->entry[0]), dict_ptr->entry_cnt);
+    pldm_cjson_cal_sf_to_root(new_root->child, anno_dict, dict);
     return new_root->child;
 }
 
@@ -1363,8 +1359,7 @@ pldm_cjson_t *pldm_cjson_create_pciedevice_v1_4_0_schema(u8 *dict, u8 *anno_dict
     pldm_cjson_delete_node(root);
     root = NULL;
     pldm_cjson_fill_comm_field_in_schema(new_root->child, "", 0, PLDM_BASE_PCIE_FUNC_RESOURCE_ID, "PCIeDevice.1_4_0.PCIeDevice", "etag", PCIE_DEVICE);
-    pldm_redfish_dictionary_format_t *dict_ptr = (pldm_redfish_dictionary_format_t *)dict;
-    pldm_cjson_cal_sf_to_root(new_root->child, anno_dict, dict, &(dict_ptr->entry[0]), dict_ptr->entry_cnt);
+    pldm_cjson_cal_sf_to_root(new_root->child, anno_dict, dict);
     return new_root->child;
 }
 
@@ -1391,8 +1386,7 @@ pldm_cjson_t *pldm_cjson_create_pciefunctioncollection_schema(u8 *dict, u8 *anno
     pldm_cjson_delete_node(root);
     root = NULL;
     pldm_cjson_fill_comm_field_in_schema(new_root->child, "", 1, PLDM_BASE_PCIE_FUNCS_RESOURCE_ID, "PCIeFunctionCollection.PCIeFunctionCollection", "etag", PCIE_FUNC_COLLECTION);
-    pldm_redfish_dictionary_format_t *dict_ptr = (pldm_redfish_dictionary_format_t *)dict;
-    pldm_cjson_cal_sf_to_root(new_root->child, anno_dict, dict, &(dict_ptr->entry[0]), dict_ptr->entry_cnt);
+    pldm_cjson_cal_sf_to_root(new_root->child, anno_dict, dict);
     return new_root->child;
 }
 
@@ -1432,8 +1426,7 @@ pldm_cjson_t *pldm_cjson_create_pciefunction_v1_2_3_schema(u8 *dict, u8 *anno_di
     pldm_cjson_delete_node(root);
     root = NULL;
     pldm_cjson_fill_comm_field_in_schema(new_root->child, "", 0, PLDM_BASE_PCIE_FUNC_RESOURCE_ID, "PCIeFunction.1_2_3.PCIeFunction", "etag", PCI_FUNC);
-    pldm_redfish_dictionary_format_t *dict_ptr = (pldm_redfish_dictionary_format_t *)dict;
-    pldm_cjson_cal_sf_to_root(new_root->child, anno_dict, dict, &(dict_ptr->entry[0]), dict_ptr->entry_cnt);
+    pldm_cjson_cal_sf_to_root(new_root->child, anno_dict, dict);
     return new_root->child;
 }
 
@@ -1464,10 +1457,10 @@ pldm_cjson_t *pldm_cjson_create_ethernetinterface_v1_5_1_schema(u8 *dict, u8 *an
                         // {0, BEJ_STR, 0, "Updating", ""},
                         // {0, BEJ_STR, 0, "Enabled", ""},
                         // {0, BEJ_STR, 0, "Disabled", ""},
-                {1, BEJ_SET, 1, "@Redfish.Settings", ""},
-                    {1, BEJ_STR, 0, "SettingsObject", "Points to the next setting = Resource ID +10"},
-                // {0, BEJ_ARRAY, 1, "SupportedApplyTimes", ""},
-                //     {0, BEJ_ENUM, 0, "", (char [3]){0x01, 0x03, 0x00}},
+                {1, BEJ_SET, 2, "@Redfish.Settings", ""},
+                    {1, BEJ_SET, 0, "SettingsObject", "Points to the next setting = Resource ID +10"},
+                    {1, BEJ_ARRAY, 1, "SupportedApplyTimes", ""},
+                        {1, BEJ_ENUM, 0, "", (char [3]){0x01, 0x03, 0x00}},
                         // {0, BEJ_STR, 0, "AtMaintenanceWindowStart", ""},
                         // {0, BEJ_STR, 0, "Immediate", ""},
                         // {0, BEJ_STR, 0, "InMaintenanceWindowOnReset", ""},
@@ -1481,8 +1474,7 @@ pldm_cjson_t *pldm_cjson_create_ethernetinterface_v1_5_1_schema(u8 *dict, u8 *an
     pldm_cjson_delete_node(root);
     root = NULL;
     pldm_cjson_fill_comm_field_in_schema(new_root->child, "", 0, PLDM_BASE_ETH_INTERFACE_RESOURCE_ID, "EthernetInterface.1_5_1.EthernetInterface", "etag", ETH_INTERFACE);
-    pldm_redfish_dictionary_format_t *dict_ptr = (pldm_redfish_dictionary_format_t *)dict;
-    pldm_cjson_cal_sf_to_root(new_root->child, anno_dict, dict, &(dict_ptr->entry[0]), dict_ptr->entry_cnt);
+    pldm_cjson_cal_sf_to_root(new_root->child, anno_dict, dict);
     return new_root->child;
 }
 
@@ -1509,109 +1501,109 @@ pldm_cjson_t *pldm_cjson_create_ethernetinterfacecollection_schema(u8 *dict, u8 
     pldm_cjson_delete_node(root);
     root = NULL;
     pldm_cjson_fill_comm_field_in_schema(new_root->child, "", 1, PLDM_BASE_ETH_INTERFACE_COLLECTION_RESOURCE_ID, "EthernetInterfaceCollection.EthernetInterfaceCollection", "etag", ETH_INTERFACE_COLLECTION);
-    pldm_redfish_dictionary_format_t *dict_ptr = (pldm_redfish_dictionary_format_t *)dict;
-    pldm_cjson_cal_sf_to_root(new_root->child, anno_dict, dict, &(dict_ptr->entry[0]), dict_ptr->entry_cnt);
+    pldm_cjson_cal_sf_to_root(new_root->child, anno_dict, dict);
     return new_root->child;
 }
 
-pldm_redfish_dictionary_entry_t *pldm_cjson_dict_fill_sf(u8 *dict, pldm_redfish_dictionary_entry_t *entry, u8 entry_cnt, pldm_cjson_t *root)
+static pldm_redfish_dictionary_entry_t *pldm_cjson_dict_fill_sf(u8 *dict, pldm_redfish_dictionary_entry_t *entry, u16 entry_cnt, pldm_cjson_t *root, u8 name_idx)
 {
     if (!dict || !entry) return NULL;
     pldm_redfish_dictionary_entry_t *tmp = entry;
-    // LOG("name : %s", root->name);
-    // LOG("%s, %d", &dict[tmp->name_off], entry_cnt);
-    // LOG("need 0x%x, 0x%x, 0x%02x", sflv->fmt >> 4, sflv->seq >> 1, sflv->len);
 
     for (u16 k = 0; k < entry_cnt; k++) {
-        // LOG("0x%x, 0x%x", dict_fmt, tmp->sequence_num);
-        char *name = NULL;
-        if (strlen(root->name)) {
+        char *name = "";
+        if (tmp->name_off) {
             name = (char *)&dict[tmp->name_off];
-        } else {
-            name = "";
         }
-        if (strcmp(name, root->name) == 0) {
-            root->sflv.seq = tmp->sequence_num << 1;
+        if (cm_strcmp(name, &(root->name[name_idx])) == 0) {
+            root->sflv.seq |= (tmp->sequence_num << 1);
             root->sflv.fmt = tmp->format;
-            // LOG("%s, %s", root->name, name);
-            // LOG("%d", tmp->sequence_num);
             return tmp;
         }
         tmp += 1;
     }
-    LOG("dict fmt err : %s", root->name);
+    LOG("fmt err: %s", &(root->name[name_idx]));
     return entry;
 }
 
-void pldm_cjson_anno_dict_fill_sf(u8 *anno_dict, pldm_cjson_t *root, u8 name_idx)
-{
-    pldm_redfish_dictionary_format_t *dict = (pldm_redfish_dictionary_format_t *)anno_dict;
-    pldm_redfish_dictionary_entry_t *tmp = (pldm_redfish_dictionary_entry_t *)&(dict->entry[0]);
-
-    for (u16 k = 0; k < dict->entry_cnt; k++) {
-        if (tmp->name_off) {
-            if (strcmp((char *)&anno_dict[tmp->name_off], &(root->name[name_idx])) == 0) {
-                root->sflv.seq = (tmp->sequence_num << 1) | 1;
-                root->sflv.fmt = tmp->format;
-                return;
-            }
-        }
-        tmp += 1;
-    }
-    LOG("anno fmt err : %s", &(root->name[name_idx]));
-}
-
-void pldm_cjson_cal_sf_to_root(pldm_cjson_t *root, u8 *anno_dict, u8 *dict, pldm_redfish_dictionary_entry_t *entry, u8 entry_cnt)
+static void pldm_cjson_cal_sf_to_root_op(pldm_cjson_t *root, u8 *anno_dict, u8 *dict, pldm_redfish_dictionary_entry_t *entry, u16 entry_cnt, pldm_redfish_dictionary_entry_t *anno_entry, u16 anno_entry_cnt)
 {
     pldm_cjson_t *tmp = root;
     while (tmp) {
         u8 fmt = tmp->sflv.fmt >> 4;
         u8 child_cnt = entry_cnt;
+        u8 anno_child_cnt = anno_entry_cnt;
         pldm_redfish_dictionary_entry_t *new_entry = entry;
-        // tmp->sflv.seq = ((seq++) << 1) | (tmp->sflv.seq & 1);
-        // LOG("%s, %s, %d", &dict[entry->name_off], tmp->name, entry_cnt);
-        // LOG("\nseq : %d, fmt : 0x%02x, len : %d, name : %s : ", tmp->sflv.seq, tmp->sflv.fmt, tmp->sflv.len, tmp->name);
+        pldm_redfish_dictionary_entry_t *new_anno_entry = anno_entry;
+
         if (tmp->sflv.seq & 1) {
-            u8 name_len = strlen(tmp->name) + 1;
+            u8 name_len = cm_strlen(tmp->name) + 1;
             u8 is_find = 0;
             for (u8 j = 0; j < name_len; j++) {
                 if (tmp->name[j] == '@') {
-                    pldm_cjson_anno_dict_fill_sf(anno_dict, tmp, j);
+                    new_anno_entry = pldm_cjson_dict_fill_sf(anno_dict, anno_entry, anno_entry_cnt, tmp, j);
                     is_find = 1;
                     break;
                 }
             }
             if (!is_find)
-                pldm_cjson_anno_dict_fill_sf(anno_dict, tmp, 0);
+                new_anno_entry = pldm_cjson_dict_fill_sf(anno_dict, anno_entry, anno_entry_cnt, tmp, 0);
         } else {
-            new_entry = pldm_cjson_dict_fill_sf(dict, entry, entry_cnt, tmp);
+            new_entry = pldm_cjson_dict_fill_sf(dict, entry, entry_cnt, tmp, 0);
         }
         if (fmt == BEJ_SET || fmt == BEJ_ARRAY) {
             child_cnt = new_entry->child_cnt;
             new_entry = (pldm_redfish_dictionary_entry_t *)&dict[new_entry->childpoint_off];
-            tmp->sflv.len += 2;
+
+            if (new_anno_entry->childpoint_off && tmp->sflv.seq & 1) {
+            // LOG("seq : 0x%02x, fmt : 0x%02x", sflv.seq >> 1, sflv.fmt >> 4);
+            anno_child_cnt = new_anno_entry->child_cnt;
+            new_anno_entry = (pldm_redfish_dictionary_entry_t *)&anno_dict[new_anno_entry->childpoint_off];
         }
-        pldm_cjson_cal_sf_to_root(tmp->child, anno_dict, dict, new_entry, child_cnt);
+        }
+        pldm_cjson_cal_sf_to_root_op(tmp->child, anno_dict, dict, new_entry, child_cnt, new_anno_entry, anno_child_cnt);
         tmp = tmp->next;
     }
 }
 
+void pldm_cjson_cal_sf_to_root(pldm_cjson_t *root, u8 *anno_dict, u8 *dict)
+{
+    pldm_redfish_dictionary_format_t *dict_ptr = (pldm_redfish_dictionary_format_t *)dict;
+    pldm_redfish_dictionary_format_t *anno_dict_ptr = (pldm_redfish_dictionary_format_t *)anno_dict;
+    pldm_cjson_cal_sf_to_root_op(root, anno_dict, dict, &(dict_ptr->entry[0]), dict_ptr->entry_cnt, &(anno_dict_ptr->entry[0]), anno_dict_ptr->entry_cnt);
+}
+
+schema_create g_schemas[] = {
+    pldm_cjson_create_networkadapter_v1_5_0_schema,
+    pldm_cjson_create_pciedevice_v1_4_0_schema,
+    pldm_cjson_create_networkinterface_v1_2_0_schema,
+    pldm_cjson_create_portcollection_schema,
+    pldm_cjson_create_pciefunctioncollection_schema,
+    pldm_cjson_create_networkdevicefunctioncollection_schema,
+    pldm_cjson_create_networkdevicefunction_v1_3_3_schema,
+    pldm_cjson_create_port_v1_3_1_schema,
+    pldm_cjson_create_pciefunction_v1_2_3_schema,
+    pldm_cjson_create_ethernetinterface_v1_5_1_schema,
+    pldm_cjson_create_ethernetinterfacecollection_schema
+};
+
+u32 g_resource_id[] = {
+    PLDM_BASE_NETWORK_ADAPTER_RESOURCE_ID,
+    PLDM_BASE_PCIE_DEV_RESOURCE_ID,
+    PLDM_BASE_NETWORK_INTERFACE_RESOURCE_ID,
+    PLDM_BASE_PORTS_RESOURCE_ID,
+    PLDM_BASE_PCIE_FUNCS_RESOURCE_ID,
+    PLDM_BASE_NETWORK_DEV_FUNCS_RESOURCE_ID,
+    PLDM_BASE_NETWORK_DEV_FUNC_RESOURCE_ID,
+    PLDM_BASE_PORT_RESOURCE_ID,
+    PLDM_BASE_PCIE_FUNC_RESOURCE_ID,
+    PLDM_BASE_ETH_INTERFACE_RESOURCE_ID,
+    PLDM_BASE_ETH_INTERFACE_COLLECTION_RESOURCE_ID,
+};
+
 void pldm_cjson_schema_test(void)
 {
     pldm_cjson_t *root = NULL;
-    schema_create g_schemas[] = {
-        pldm_cjson_create_networkadapter_v1_5_0_schema,
-        pldm_cjson_create_pciedevice_v1_4_0_schema,
-        pldm_cjson_create_networkinterface_v1_2_0_schema,
-        pldm_cjson_create_portcollection_schema,
-        pldm_cjson_create_pciefunctioncollection_schema,
-        pldm_cjson_create_networkdevicefunctioncollection_schema,
-        pldm_cjson_create_networkdevicefunction_v1_3_3_schema,
-        pldm_cjson_create_port_v1_3_1_schema,
-        pldm_cjson_create_pciefunction_v1_2_3_schema,
-        pldm_cjson_create_ethernetinterface_v1_5_1_schema,
-        pldm_cjson_create_ethernetinterfacecollection_schema
-    };
     u8 dict[512];
     u8 anno_dict[512];
     u8 bej_data[1024];
@@ -1639,43 +1631,38 @@ void pldm_cjson_bej_test(void)
     u8 *dict = &g_needed_dict[DICT_FMT_HDR_LEN];
     u8 buf[1024];
 
-    // pldm_cjson_pool_init();
-    u8 ret = pldm_redfish_get_dict_data(PLDM_BASE_EVENT_DICT_RESOURCE_ID, SCHEMACLASS_EVENT, \
-    g_needed_dict, pldm_redfish_get_dict_len(PLDM_BASE_EVENT_DICT_RESOURCE_ID));
-    if (ret == false) return;
+    for (u8 i = 0; i < sizeof(g_resource_id) / sizeof(u32); i++) {
+        if (g_resource_id[i] != PLDM_BASE_NETWORK_ADAPTER_RESOURCE_ID) continue;
+        // pldm_cjson_pool_init();
+        u8 ret = pldm_redfish_get_dict_data(g_resource_id[i], SCHEMACLASS_MAJOR, \
+        g_needed_dict, pldm_redfish_get_dict_len(g_resource_id[i]));
+        if (ret == false) return;
 
-    root = pldm_cjson_create_event_schema(PLDM_BASE_EVENT_DICT_RESOURCE_ID, dict, annc_dict, 1);
-    if (root) {
-        pldm_cjson_cal_len_to_root2(root, OTHER_TYPE);
-        pldm_cjson_printf_root2(root);
+        root = g_schemas[i](dict, annc_dict);
+        if (root) {
+            pldm_cjson_cal_len_to_root2(root, OTHER_TYPE);
+            pldm_cjson_printf_root2(root);
+            LOG("\nencode cnt : %d", i);
+        }
+
+        u8 *ptr = pldm_bej_encode1(root, buf);
+        // for (u16 i = 0; i < (ptr - buf); i++) {
+        //     printf("0x%02x, ", buf[i]);
+        //     if (!((i + 1) % 8)) {
+        //         printf("\n");
+        //     }
+        // }
+        LOG("encode len : %d", ptr - buf);
+        pldm_cjson_pool_init();
+
+        bej_root = pldm_bej_decode1(buf, ptr - buf, annc_dict, dict, bej_root);
+        if (bej_root) {
+            LOG("decode cnt : %d\n", i);
+            // pldm_cjson_cal_len_to_root2(bej_root, OTHER_TYPE);
+            pldm_cjson_printf_root2(bej_root);
+        }
+        pldm_cjson_pool_init();
     }
-
-    u8 *ptr = pldm_bej_encode1(root, buf);
-    // for (u16 i = 0; i < (ptr - buf); i++) {
-    //     printf("0x%02x, ", buf[i]);
-    //     if (!((i + 1) % 8)) {
-    //         printf("\n");
-    //     }
-    // }
-    LOG("\nencode len : %d", ptr - buf);
-    pldm_cjson_pool_init();
-
-    bej_root = pldm_bej_decode1(buf, ptr - buf, annc_dict, dict, bej_root);
-    if (bej_root) {
-        // pldm_cjson_cal_len_to_root2(bej_root, OTHER_TYPE);
-        pldm_cjson_printf_root2(bej_root);
-    }
-
-    // ptr = pldm_bej_encode1(bej_root, buf);
-    // LOG("\nencode len : %d", ptr - buf);
-    // pldm_cjson_pool_init();
-
-    // root = pldm_bej_decode1(buf, ptr - buf, annc_dict, dict, bej_root);
-    // if (root) {
-    //     pldm_cjson_cal_len_to_root2(root, OTHER_TYPE);
-    //     pldm_cjson_printf_root2(root);
-    // }
-    pldm_cjson_pool_init();
 }
 
 void pldm_cjson_test(void)
@@ -1793,7 +1780,7 @@ void pldm_cjson_test(void)
     // FILE *fp;
     // fp = fopen( "dict.txt" , "a" );
     // for (u8 i = 0; i < 2; i++) {
-    //     pldm_redfish_dictionary_format_t *dict_ptr = (pldm_redfish_dictionary_format_t *)dict_test;
+    //     // pldm_redfish_dictionary_format_t *dict_ptr = (pldm_redfish_dictionary_format_t *)dict_test;
     //     fwrite(dict_test, sizeof(u8) , dict_ptr->dictionary_size, fp );
     // }
 
@@ -1845,7 +1832,7 @@ void pldm_cjson_test(void)
     // u8 *ptr = my_json_json_to_bej(root, bej_test);
     // u8 bej_test_len = ptr - bej_test;
     // LOG("%p, %p, %d", bej_test, ptr, bej_test_len);
-    // pldm_redfish_dictionary_format_t *dict_ptr = (pldm_redfish_dictionary_format_t *)dict0;
+    // // pldm_redfish_dictionary_format_t *dict_ptr = (pldm_redfish_dictionary_format_t *)dict0;
     // LOG("total len : %d", pldm_bej_decode1(bej_buf, dict0, &(dict_ptr->entry[0]), dict_ptr->entry_cnt, root));
     // root = create_event_schema(1234, dict, anno_dict);
     // u8 *ptr = pldm_bej_encode(root, bej_buf);
