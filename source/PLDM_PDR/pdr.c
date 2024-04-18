@@ -4,6 +4,7 @@
 #include "pldm_bej_resolve.h"
 #include "pldm_redfish.h"
 #include "main.h"
+#include "utlist.h"
 
 static u32 *pdrs_pool;
 static u32 pdrs_pool_wt;
@@ -126,20 +127,33 @@ void pldm_pde_get_used(void)
     LOG("used space : %d", pdrs_pool_wt);
 }
 
+#if MY_LIST
 void pldm_pdr_init(pldm_pdr_t *repo)
 {
 	repo->record_count = 0;
 	repo->size = 0;
     repo->largest_pdr_size = 0;
     repo->repo_signature = 0;
-    repo->update_time = 0;
+
+    repo->update_time.utc_offset = 0;
+    repo->update_time.utc_resolution = UTC_RSLV_UTCUNSPECIFIED;
+    repo->update_time.time_resolution = T_RSLV_MICROSECOND;
+    repo->update_time.year = 0;
+    repo->update_time.mon = 0;
+    repo->update_time.day = 0;
+    repo->update_time.hour = 0;
+    repo->update_time.min = 0;
+    repo->update_time.sec = 0;
+    cm_memset(repo->update_time.microsecond, 0, sizeof(repo->update_time.microsecond));
+
 	repo->first = NULL;
 	repo->last = NULL;
     repo->is_deleted = NULL;
 }
 
-pldm_pdr_record_t *pldm_find_insert(pldm_pdr_t *repo, u16 record_handle)
+pldm_pdr_record_t *pldm_find_insert(pldm_pdr_t *repo, u32 record_handle)
 {
+    if (!repo || !repo->first || !repo->last) return NULL;
     if (record_handle > repo->last->record_handle) {
         return repo->last;
     }
@@ -155,7 +169,7 @@ pldm_pdr_record_t *pldm_find_insert(pldm_pdr_t *repo, u16 record_handle)
 
 static void pldm_pdr_insert(pldm_pdr_t *repo, pldm_pdr_record_t *insert_pdr)
 {
-    if (!repo || !insert_pdr) {
+    if (!repo || !insert_pdr || !repo->first || !repo->last) {
         return;
     }
 
@@ -182,7 +196,7 @@ L_RET:
     ++repo->record_count;
 }
 
-int pldm_pdr_add(pldm_pdr_t *repo, u8 *pdr_data, u32 pdr_size, u16 record_handle)
+int pldm_pdr_add(pldm_pdr_t *repo, u8 *pdr_data, u32 pdr_size, u32 record_handle)
 {
     if (!repo || !pdr_data || !pdr_size) {
         goto L_RET;
@@ -214,7 +228,7 @@ L_RET:
     return -1;
 }
 
-int pldm_pdr_delete(pldm_pdr_t *repo, u16 record_handle)
+int pldm_pdr_delete(pldm_pdr_t *repo, u32 record_handle)
 {
     if (!repo) {
         return -1;
@@ -232,6 +246,7 @@ int pldm_pdr_delete(pldm_pdr_t *repo, u16 record_handle)
 
             if (delete_pdr == repo->first) repo->first = delete_pdr->next;
             if (delete_pdr == repo->last) repo->last = prev_pdr;
+
             prev_pdr->next = delete_pdr->next;
             delete_pdr->next = NULL;
             if (!(repo->is_deleted)) {
@@ -250,7 +265,24 @@ int pldm_pdr_delete(pldm_pdr_t *repo, u16 record_handle)
     return -1;
 }
 
-pldm_pdr_record_t *pldm_pdr_find(pldm_pdr_t *repo, u16 record_handle)
+pldm_pdr_record_t *pldm_pdr_find(pldm_pdr_t *repo, u32 record_handle)
+{
+    if (!repo || record_handle == PLDM_ERR_RECORD_HANDLE || repo->record_count == 0) {
+        return NULL;
+    }
+
+    /* find in repo->first */
+    pldm_pdr_record_t *find_pdr = repo->first;
+    while (find_pdr) {
+        if (find_pdr->record_handle == record_handle) {
+            return find_pdr;
+        }
+        find_pdr = find_pdr->next;
+    }
+    return NULL;
+}
+
+pldm_pdr_record_t *pldm_pdr_is_exist(pldm_pdr_t *repo, u32 record_handle)
 {
     if (!repo || record_handle == PLDM_ERR_RECORD_HANDLE || repo->record_count == 0) {
         goto L_RET;
@@ -259,19 +291,12 @@ pldm_pdr_record_t *pldm_pdr_find(pldm_pdr_t *repo, u16 record_handle)
     /* find in repo->first */
     pldm_pdr_record_t *find_pdr = repo->first;
 
-    if (record_handle == repo->last->record_handle) {
-        find_pdr = repo->last;
-        goto L_SUC;
-    }
-
     while (find_pdr) {
         if (find_pdr->record_handle == record_handle) {
             goto L_SUC;
         }
         find_pdr = find_pdr->next;
     }
-
-    if (!(repo->is_deleted)) goto L_RET;
     /* find in repo->is_deleted */
     find_pdr = repo->is_deleted;
     pldm_pdr_record_t *prev_pdr = find_pdr;
@@ -297,6 +322,145 @@ L_RET:
 L_SUC:
     return find_pdr;
 }
+#else
+
+pldm_pdr_record_t *pldm_find_insert(pldm_pdr_t *repo, u32 record_handle)
+{
+    if (!repo || !repo->head) return NULL;
+    pldm_pdr_record_t *insert_pos = NULL;
+    LL_FOREACH(repo->head, insert_pos) {
+        if (insert_pos->record_handle > record_handle)
+            return insert_pos;
+    }
+    return NULL;
+}
+
+int pldm_pdr_cmp(pldm_pdr_record_t *out, pldm_pdr_record_t *elt)
+{
+    if (!out || !elt) return -1;
+    if (out->record_handle < elt->record_handle) {
+        return -1;
+    } else if (out->record_handle == elt->record_handle) {
+        return 0;
+    } else {
+        return 1;
+    }
+}
+
+void pldm_pdr_init(pldm_pdr_t *repo)
+{
+    if (!repo) return;
+	repo->record_count = 0;
+	repo->size = 0;
+    repo->largest_pdr_size = 0;
+    repo->repo_signature = 0;
+
+    repo->update_time.utc_offset = 0;
+    repo->update_time.utc_resolution = UTC_RSLV_UTCUNSPECIFIED;
+    repo->update_time.time_resolution = T_RSLV_MICROSECOND;
+    repo->update_time.year = 0;
+    repo->update_time.mon = 0;
+    repo->update_time.day = 0;
+    repo->update_time.hour = 0;
+    repo->update_time.min = 0;
+    repo->update_time.sec = 0;
+    cm_memset(repo->update_time.microsecond, 0, sizeof(repo->update_time.microsecond));
+
+	repo->head = NULL;
+    repo->is_deleted_head = NULL;
+}
+
+int pldm_pdr_add(pldm_pdr_t *repo, u8 *pdr_data, u32 pdr_size, u32 record_handle)
+{
+    if (!repo || !pdr_data) goto L_RET;
+
+    pldm_pdr_record_t *add_pdr = (pldm_pdr_record_t *)pdr_malloc(sizeof(pldm_pdr_record_t));
+    if (!add_pdr) goto L_RET;
+
+    add_pdr->data = pdr_data;
+    add_pdr->record_handle = record_handle;
+    add_pdr->size = pdr_size;
+
+
+    pldm_pdr_record_t * insert_pos = pldm_find_insert(repo, record_handle);
+    if (insert_pos)
+        LL_PREPEND_ELEM(repo->head, insert_pos, add_pdr);
+    else
+        LL_APPEND(repo->head, add_pdr);
+
+    ++repo->record_count;
+    repo->size += add_pdr->size;
+    repo->largest_pdr_size = ALIGN(MAX(repo->largest_pdr_size, pdr_size), 64);
+
+L_RET:
+    return -1;
+}
+
+int pldm_pdr_delete(pldm_pdr_t *repo, u32 record_handle)
+{
+    if (!repo || !repo->head) return -1;
+    pldm_pdr_record_t *out = NULL;
+    pldm_pdr_record_t elt;
+    elt.record_handle = record_handle;
+    LL_SEARCH(repo->head, out, &elt, pldm_pdr_cmp);
+    if (out) {
+        LL_DELETE(repo->head, out);
+        // LL_SORT(repo->head, pldm_pdr_cmp);
+        LL_APPEND(repo->is_deleted_head, out);
+        // LL_SORT(repo->is_deleted_head, pldm_pdr_cmp);
+        repo->size -= out->size;
+        --repo->record_count;
+    }
+    return out ? 0 : -1;
+}
+
+pldm_pdr_record_t *pldm_pdr_find(pldm_pdr_t *repo, u32 record_handle)
+{
+    if (!repo || record_handle == PLDM_ERR_RECORD_HANDLE || repo->record_count == 0) {
+        return NULL;
+    }
+
+    pldm_pdr_record_t *out = NULL;
+    pldm_pdr_record_t elt;
+    elt.record_handle = record_handle;
+    if (repo->head) {
+        LL_SEARCH(repo->head, out, &elt, pldm_pdr_cmp);
+    }
+    return out ? out : NULL;
+}
+
+pldm_pdr_record_t *pldm_pdr_is_exist(pldm_pdr_t *repo, u32 record_handle)
+{
+    if (!repo || record_handle == PLDM_ERR_RECORD_HANDLE) {
+        return NULL;
+    }
+
+    pldm_pdr_record_t *out = NULL;
+    pldm_pdr_record_t elt;
+    elt.record_handle = record_handle;
+    if (repo->head) {
+        LL_SEARCH(repo->head, out, &elt, pldm_pdr_cmp);
+        if (out) return out;
+    }
+
+    if (repo->is_deleted_head) {
+        LL_SEARCH(repo->is_deleted_head, out, &elt, pldm_pdr_cmp);
+        if (out) {
+            LL_DELETE(repo->is_deleted_head, out);
+            pldm_pdr_record_t * insert_pos = pldm_find_insert(repo, record_handle);
+            if (insert_pos)
+                LL_PREPEND_ELEM(repo->head, insert_pos, out);
+            else
+                LL_APPEND(repo->head, out);
+            repo->size += out->size;
+            ++repo->record_count;
+            pldm_pdr_chg_event_generate(g_pldm_monitor_info.pldm_event_rbuf, PLDM_REPO_CHG_FORMAT_ID_PDR_HANDLE, PLDM_REPO_CHG_RECORDS_ADDED, out->record_handle);
+        }
+    }
+    return out;
+}
+
+#endif
 
 static void temp_sensor_monitor_handle(u16 sensor_id, u32 *pdr_addr)
 {
@@ -310,6 +474,7 @@ static void temp_sensor_monitor_handle(u16 sensor_id, u32 *pdr_addr)
 
 static int fill_common_thermal_sensor_pdr(void *buf, u16 sensor_id, u16 entity_type, u8 sensor_datasize)
 {
+    if (!buf) return FAILURE;
     pldm_numeric_sensor_pdr_t *thermal_pdr = (pldm_numeric_sensor_pdr_t *)buf;
 
     u32 record_handle = sensor_id_convert_to_record_handle(sensor_id);
@@ -377,6 +542,7 @@ static int fill_common_thermal_sensor_pdr(void *buf, u16 sensor_id, u16 entity_t
 
 static int fill_common_pluggable_module_power_sensor_pdr(void *buf, u16 sensor_id, u16 entity_type, u8 sensor_datasize)
 {
+    if (!buf) return FAILURE;
     pldm_numeric_sensor_pdr_t *pluggable_power_pdr = (pldm_numeric_sensor_pdr_t *)buf;
 
     u32 record_handle = sensor_id_convert_to_record_handle(sensor_id);
@@ -436,6 +602,7 @@ static int fill_common_pluggable_module_power_sensor_pdr(void *buf, u16 sensor_i
 
 static int fill_common_link_speed_sensor_pdr(void *buf, u16 sensor_id, u16 entity_type, u8 sensor_datasize)
 {
+    if (!buf) return FAILURE;
     pldm_link_speed_sensor_pdr_t *link_speed_pdr = (pldm_link_speed_sensor_pdr_t *)buf;
 
     u32 record_handle = sensor_id_convert_to_record_handle(sensor_id);
@@ -625,6 +792,7 @@ static u8 possible_states_generate(u8 sensor_type)
 
 static void pldm_add_state_sensor_pdr(u8 subsensor_count, u8 sensor_num, u16 entity_type, u16 entity_container_id, pldm_state_data_struct_t *datastruct, u8 is_plug_sensor)
 {
+	if (!datastruct) return;
     pldm_composite_state_sensor_pdr_t *composite_state_sensor_pdr = NULL;
     pldm_entity_t composite_state_sensor;
     pldm_composite_sensor_attr_t add_sensor;
@@ -636,7 +804,7 @@ static void pldm_add_state_sensor_pdr(u8 subsensor_count, u8 sensor_num, u16 ent
 
         u32 record_handle = sensor_id_convert_to_record_handle(datastruct->sensor_id + i);
         if (record_handle == PLDM_ERR_RECORD_HANDLE) continue;
-        pldm_pdr_record_t *is_exist = pldm_pdr_find(&(g_pldm_monitor_info.pldm_repo), record_handle);
+        pldm_pdr_record_t *is_exist = pldm_pdr_is_exist(&(g_pldm_monitor_info.pldm_repo), record_handle);
         if (is_exist) continue;
 
         composite_state_sensor_pdr = composite_state_pdr_create_sensor(&composite_state_sensor, datastruct->sensor_id + i, subsensor_count);
@@ -655,6 +823,7 @@ static void pldm_add_state_sensor_pdr(u8 subsensor_count, u8 sensor_num, u16 ent
 
 static void pldm_add_numeric_sensor_pdr(u8 data_size, pldm_data_struct_t *sensor_datastruct, fill_common_sensor_pdr fill_common_func)
 {
+    if (!sensor_datastruct) return;
     u32 record_handle = PLDM_ERR_RECORD_HANDLE;
 
     if (sensor_datastruct->op_state == PLDM_OP_ENABLE) {
@@ -662,7 +831,7 @@ static void pldm_add_numeric_sensor_pdr(u8 data_size, pldm_data_struct_t *sensor
 
         record_handle = sensor_id_convert_to_record_handle(sensor_id);
         if (record_handle == PLDM_ERR_RECORD_HANDLE) return;
-        pldm_pdr_record_t *is_exist = pldm_pdr_find(&(g_pldm_monitor_info.pldm_repo), record_handle);
+        pldm_pdr_record_t *is_exist = pldm_pdr_is_exist(&(g_pldm_monitor_info.pldm_repo), record_handle);
         if (is_exist) return;
 
         void *buf = pdr_malloc(data_size);
@@ -670,9 +839,9 @@ static void pldm_add_numeric_sensor_pdr(u8 data_size, pldm_data_struct_t *sensor
             LOG("no more space for malloc!, %s", __FUNCTION__);
             return;
         }
-
-        fill_common_func(buf, sensor_datastruct->sensor_id, sensor_datastruct->entity_type, \
-        sensor_datastruct->sensor_data_size);
+        if (fill_common_func)
+                fill_common_func(buf, sensor_datastruct->sensor_id, sensor_datastruct->entity_type, \
+            sensor_datastruct->sensor_data_size);
 
         if (is_temp_sensor(sensor_id) != -1) {
             temp_sensor_monitor_handle(sensor_id, (u32 *)buf);
@@ -689,6 +858,7 @@ static void pldm_add_numeric_sensor_pdr(u8 data_size, pldm_data_struct_t *sensor
 
 static void pldm_delete_numeric_sensor_pdr(pldm_data_struct_t *sensor_datastruct)
 {
+    if (!sensor_datastruct) return;
     u32 record_handle = PLDM_ERR_RECORD_HANDLE;
     if (sensor_datastruct->op_state == PLDM_OP_UNAVAILABLE) {
 
@@ -716,7 +886,7 @@ static void pldm_add_assoc_pdr(pldm_entity_t *container, pldm_entity_t *containe
     if (!container || !contained) return;
     pldm_pdr_entity_assoc_t *assoc_pdr = NULL;
 
-    pldm_pdr_record_t *is_exist = pldm_pdr_find(&(g_pldm_monitor_info.pldm_repo), record_handle);
+    pldm_pdr_record_t *is_exist = pldm_pdr_is_exist(&(g_pldm_monitor_info.pldm_repo), record_handle);
     if (is_exist) return;
 
     assoc_pdr = assoc_pdr_create_container(container, record_handle, container_id, contained_cnt, assoc_type);
@@ -735,6 +905,7 @@ static void pldm_delete_assoc_pdr(u32 assoc_record_handle)
     int ret = -1;
     ret = pldm_pdr_delete(&(g_pldm_monitor_info.pldm_repo), assoc_record_handle);
     if (ret != 0) {
+        LOG("%s, ERR RECORD HDL : %d", __FUNCTION__, assoc_record_handle);
         return;
     }
     pldm_pdr_chg_event_generate(g_pldm_monitor_info.pldm_event_rbuf, PLDM_REPO_CHG_FORMAT_ID_PDR_HANDLE, PLDM_REPO_CHG_RECORDS_DELETED, assoc_record_handle);
@@ -742,6 +913,7 @@ static void pldm_delete_assoc_pdr(u32 assoc_record_handle)
 
 static void pldm_modify_state_datastruct(u8 present_state, pldm_state_data_struct_t *datastruct)
 {
+    if (!datastruct) return;
     datastruct->previous_state = datastruct->present_state;
     datastruct->present_state = present_state;
     if (datastruct->previous_state != present_state) {
@@ -754,6 +926,7 @@ static void pldm_modify_state_datastruct(u8 present_state, pldm_state_data_struc
 
 static u8 *pldm_redfish_resource_pdr_fill_first_part(u8 *first_part_pdr, u8 malloc_len, u32 record_handle, u32 resource_id, u8 resource_flg, u32 containing_resource_id, char *proposed_containing_resource_name)
 {
+    if (!first_part_pdr || !proposed_containing_resource_name) return NULL;
     pldm_redfish_resource_pdr_first_part_t *first_part = (pldm_redfish_resource_pdr_first_part_t *)first_part_pdr;
     u8 proposed_containing_resource_name_len = cm_strlen(proposed_containing_resource_name) + 1;
     first_part->hdr.record_handle = record_handle;
@@ -777,6 +950,7 @@ static u8 *pldm_redfish_resource_pdr_fill_first_part(u8 *first_part_pdr, u8 mall
 
 static u8 *pldm_redfish_resource_pdr_fill_middle0_part(u8 *middle0_part_pdr, char *sub_uri)
 {
+    if (!middle0_part_pdr || !sub_uri) return NULL;
     pldm_redfish_resource_pdr_middle0_part_t *middle0_part = (pldm_redfish_resource_pdr_middle0_part_t *)middle0_part_pdr;
     u8 sub_uri_len = cm_strlen(sub_uri) + 1;
     middle0_part->suburi_byte_len = sub_uri_len;
@@ -787,6 +961,7 @@ static u8 *pldm_redfish_resource_pdr_fill_middle0_part(u8 *middle0_part_pdr, cha
 
 static u8 *pldm_redfish_resource_pdr_fill_middle1_part(u8 *middle1_part_pdr, u16 add_resource_id_cnt, pldm_redfish_add_info_t *resource_info, char *add_suburi)
 {
+    if (!middle1_part_pdr || !resource_info || !add_suburi) return NULL;
     pldm_redfish_resource_pdr_middle1_part_t *middle1_part = (pldm_redfish_resource_pdr_middle1_part_t *)middle1_part_pdr;
     middle1_part->add_resource_id_cnt = add_resource_id_cnt;
     pldm_redfish_add_resource_info_t *ptr = (pldm_redfish_add_resource_info_t *)(middle1_part->add_resource_info);
@@ -807,6 +982,7 @@ static u8 *pldm_redfish_resource_pdr_fill_middle1_part(u8 *middle1_part_pdr, u16
 
 static u8 *pldm_redfish_resource_pdr_fill_middle2_part(u8 *middle2_part_pdr, u32 resource_id, u32 major_schema_ver, char *major_schema_name)
 {
+    if (!middle2_part_pdr || !major_schema_name) return NULL;
     pldm_redfish_resource_pdr_middle2_part_t *middle2_part = (pldm_redfish_resource_pdr_middle2_part_t *)middle2_part_pdr;
     u8 major_schema_name_len = cm_strlen(major_schema_name) + 1;
     middle2_part->major_schema_ver = major_schema_ver;
@@ -830,13 +1006,14 @@ static u8 *pldm_redfish_resource_pdr_fill_middle2_part(u8 *middle2_part_pdr, u32
 
 static void pldm_redfish_resource_pdr_fill_end_part(u8 *end_part_pdr, u16 oem_cnt)
 {
+    if (!end_part_pdr) return;
     pldm_redfish_resource_pdr_end_part_t *end_part = (pldm_redfish_resource_pdr_end_part_t *)end_part_pdr;
     end_part->oem_cnt = oem_cnt;    /* currently not support oem. */
 }
 
 static void pldm_redfish_add_network_adapter_pdr(void)
 {
-    pldm_pdr_record_t *is_exist = pldm_pdr_find(&(g_pldm_monitor_info.pldm_repo), PLDM_NETWORK_ADAPTER_PDR_HANDLE);
+    pldm_pdr_record_t *is_exist = pldm_pdr_is_exist(&(g_pldm_monitor_info.pldm_repo), PLDM_NETWORK_ADAPTER_PDR_HANDLE);
     if (is_exist) return;
 
     char *proposed_containing_resource_name = "NetworkAdapterCollection.NetworkAdapterCollection";
@@ -865,7 +1042,7 @@ static void pldm_redfish_add_network_adapter_pdr(void)
 
 static void pldm_redfish_add_network_interface_pdr(void)
 {
-    pldm_pdr_record_t *is_exist = pldm_pdr_find(&(g_pldm_monitor_info.pldm_repo), PLDM_NETWORK_INTERFACE_PDR_HANDLE);
+    pldm_pdr_record_t *is_exist = pldm_pdr_is_exist(&(g_pldm_monitor_info.pldm_repo), PLDM_NETWORK_INTERFACE_PDR_HANDLE);
     if (is_exist) return;
 
     char *proposed_containing_resource_name = "NetworkInterfaceCollection.NetworkInterfaceCollection";
@@ -893,7 +1070,7 @@ static void pldm_redfish_add_network_interface_pdr(void)
 
 static void pldm_redfish_add_ports_pdr(void)
 {
-    pldm_pdr_record_t *is_exist = pldm_pdr_find(&(g_pldm_monitor_info.pldm_repo), PLDM_PORTS_PDR_HANDLE);
+    pldm_pdr_record_t *is_exist = pldm_pdr_is_exist(&(g_pldm_monitor_info.pldm_repo), PLDM_PORTS_PDR_HANDLE);
     if (is_exist) return;
 
     char *proposed_containing_resource_name = "";
@@ -922,7 +1099,7 @@ static void pldm_redfish_add_ports_pdr(void)
 
 static void pldm_redfish_add_network_dev_funcs_pdr(void)
 {
-    pldm_pdr_record_t *is_exist = pldm_pdr_find(&(g_pldm_monitor_info.pldm_repo), PLDM_NETWORK_DEV_FUNCS_PDR_HANDLE);
+    pldm_pdr_record_t *is_exist = pldm_pdr_is_exist(&(g_pldm_monitor_info.pldm_repo), PLDM_NETWORK_DEV_FUNCS_PDR_HANDLE);
     if (is_exist) return;
 
     char *proposed_containing_resource_name = "";
@@ -950,7 +1127,7 @@ static void pldm_redfish_add_network_dev_funcs_pdr(void)
 
 static void pldm_redfish_add_port_pdr(void)
 {
-    pldm_pdr_record_t *is_exist = pldm_pdr_find(&(g_pldm_monitor_info.pldm_repo), PLDM_PORT_PDR_HANDLE);
+    pldm_pdr_record_t *is_exist = pldm_pdr_is_exist(&(g_pldm_monitor_info.pldm_repo), PLDM_PORT_PDR_HANDLE);
     if (is_exist) return;
 
     char *proposed_containing_resource_name = "";
@@ -989,7 +1166,7 @@ static void pldm_redfish_add_port_pdr(void)
 
 static void pldm_redfish_add_network_dev_func_pdr(void)
 {
-    pldm_pdr_record_t *is_exist = pldm_pdr_find(&(g_pldm_monitor_info.pldm_repo), PLDM_NETWORK_DEV_FUNC_PDR_HANDLE);
+    pldm_pdr_record_t *is_exist = pldm_pdr_is_exist(&(g_pldm_monitor_info.pldm_repo), PLDM_NETWORK_DEV_FUNC_PDR_HANDLE);
     if (is_exist) return;
 
     char *proposed_containing_resource_name = "";
@@ -1033,7 +1210,7 @@ static void pldm_redfish_add_network_dev_func_pdr(void)
 
 static void pldm_redfish_add_pcie_funcs_pdr(void)
 {
-    pldm_pdr_record_t *is_exist = pldm_pdr_find(&(g_pldm_monitor_info.pldm_repo), PLDM_PCIE_FUNCS_PDR_HANDLE);
+    pldm_pdr_record_t *is_exist = pldm_pdr_is_exist(&(g_pldm_monitor_info.pldm_repo), PLDM_PCIE_FUNCS_PDR_HANDLE);
     if (is_exist) return;
 
     char *proposed_containing_resource_name = "";
@@ -1061,7 +1238,7 @@ static void pldm_redfish_add_pcie_funcs_pdr(void)
 
 static void pldm_redfish_add_pcie_func_pdr(void)
 {
-    pldm_pdr_record_t *is_exist = pldm_pdr_find(&(g_pldm_monitor_info.pldm_repo), PLDM_PCIE_FUNC_PDR_HANDLE);
+    pldm_pdr_record_t *is_exist = pldm_pdr_is_exist(&(g_pldm_monitor_info.pldm_repo), PLDM_PCIE_FUNC_PDR_HANDLE);
     if (is_exist) return;
 
     char *proposed_containing_resource_name = "";
@@ -1102,7 +1279,7 @@ static void pldm_redfish_add_pcie_func_pdr(void)
 
 static void pldm_redfish_add_eth_interface_collection_pdr(void)
 {
-    pldm_pdr_record_t *is_exist = pldm_pdr_find(&(g_pldm_monitor_info.pldm_repo), PLDM_ETH_INTERFACE_COLLECTION_PDR_HANDLE);
+    pldm_pdr_record_t *is_exist = pldm_pdr_is_exist(&(g_pldm_monitor_info.pldm_repo), PLDM_ETH_INTERFACE_COLLECTION_PDR_HANDLE);
     if (is_exist) return;
 
     char *proposed_containing_resource_name = "System";
@@ -1130,7 +1307,7 @@ static void pldm_redfish_add_eth_interface_collection_pdr(void)
 
 static void pldm_redfish_add_eth_interface_pdr(void)
 {
-    pldm_pdr_record_t *is_exist = pldm_pdr_find(&(g_pldm_monitor_info.pldm_repo), PLDM_ETH_INTERFACE_PDR_HANDLE);
+    pldm_pdr_record_t *is_exist = pldm_pdr_is_exist(&(g_pldm_monitor_info.pldm_repo), PLDM_ETH_INTERFACE_PDR_HANDLE);
     if (is_exist) return;
 
     char *proposed_containing_resource_name = "";
@@ -1176,6 +1353,7 @@ static void pldm_redfish_add_eth_interface_pdr(void)
 
 static u8 *pldm_redfish_action_pdr_fill_first_part(u8 *first_part_pdr, u8 malloc_len, u32 record_handle, u32 resource_id, u8 action_pdr_idx, u16 related_resource_cnt, u32 *related_resource_id)
 {
+    if (!first_part_pdr || !related_resource_id) return NULL;
     pldm_redfish_action_pdr_first_part_t *first_part = (pldm_redfish_action_pdr_first_part_t *)first_part_pdr;
     first_part->hdr.record_handle = record_handle;
     first_part->hdr.version = PLDM_EVENT_FORMAT_VERSION;
@@ -1195,6 +1373,7 @@ static u8 *pldm_redfish_action_pdr_fill_first_part(u8 *first_part_pdr, u8 malloc
 
 static void pldm_redfish_action_pdr_fill_end_part(u8 *end_part_pdr, u8 action_cnt, char *action_name, char *action_path)
 {
+    if (!end_part_pdr || !action_name) return;
     pldm_redfish_action_pdr_end_part_t *end_part = (pldm_redfish_action_pdr_end_part_t *)end_part_pdr;
     end_part->action_cnt = action_cnt;
     pldm_redfish_action_info_t *ptr = (pldm_redfish_action_info_t *)(end_part->action_info);
@@ -1217,7 +1396,7 @@ static void pldm_redfish_action_pdr_fill_end_part(u8 *end_part_pdr, u8 action_cn
 
 static void pldm_redfish_add_reset_settings_to_default_pdr(void)
 {
-    pldm_pdr_record_t *is_exist = pldm_pdr_find(&(g_pldm_monitor_info.pldm_repo), PLDM_RESET_SET2DEFAULE_PDR_HANDLE);
+    pldm_pdr_record_t *is_exist = pldm_pdr_is_exist(&(g_pldm_monitor_info.pldm_repo), PLDM_RESET_SET2DEFAULE_PDR_HANDLE);
     if (is_exist) return;
 
     char *action_name = "ResetSettingsToDefault";
@@ -1240,7 +1419,7 @@ static void pldm_redfish_add_reset_settings_to_default_pdr(void)
 
 static void pldm_redfish_add_port_reset_pdr(void)
 {
-    pldm_pdr_record_t *is_exist = pldm_pdr_find(&(g_pldm_monitor_info.pldm_repo), PLDM_PORT_RESET_PDR_HANDLE);
+    pldm_pdr_record_t *is_exist = pldm_pdr_is_exist(&(g_pldm_monitor_info.pldm_repo), PLDM_PORT_RESET_PDR_HANDLE);
     if (is_exist) return;
 
     char *action_name = "#Port.Reset";
@@ -1282,7 +1461,7 @@ void pldm_redfish_pdr_init(void)
 
 void pldm_terminus_locator_pdr_init(void)
 {
-    pldm_pdr_record_t *is_exist = pldm_pdr_find(&(g_pldm_monitor_info.pldm_repo), PLDM_TERMINUS_LOCATOR_PDR_HANDLE);
+    pldm_pdr_record_t *is_exist = pldm_pdr_is_exist(&(g_pldm_monitor_info.pldm_repo), PLDM_TERMINUS_LOCATOR_PDR_HANDLE);
     if (is_exist) return;
 
 	pldm_terminus_locator_pdr_t *terminus_locator_pdr = (pldm_terminus_locator_pdr_t *)pdr_malloc(sizeof(pldm_terminus_locator_pdr_t));
@@ -1449,7 +1628,7 @@ static void pldm_add_pluggable_module_assoc_pdr(u8 port)
     pldm_pdr_entity_assoc_t *container_assoc_pdr = NULL;
     pldm_entity_t contained;
 
-    container_assoc_pdr = (pldm_pdr_entity_assoc_t *)pldm_pdr_find(&(g_pldm_monitor_info.pldm_repo), PLDM_BASE_CONNECTOR_ASSOC_PDR_HANDLE + port);
+    container_assoc_pdr = (pldm_pdr_entity_assoc_t *)pldm_pdr_is_exist(&(g_pldm_monitor_info.pldm_repo), PLDM_BASE_CONNECTOR_ASSOC_PDR_HANDLE + port);
 
     if (!container_assoc_pdr) {
         LOG("Not find assoc pdr. record handle : %d", PLDM_BASE_CONNECTOR_ASSOC_PDR_HANDLE + port);
@@ -1468,7 +1647,7 @@ static void pldm_add_comm_chan_assoc_pdr(u8 port)
     pldm_pdr_entity_assoc_t *container_assoc_pdr = NULL;
     pldm_entity_t contained[2];
 
-    container_assoc_pdr = (pldm_pdr_entity_assoc_t *)pldm_pdr_find(&(g_pldm_monitor_info.pldm_repo), PLDM_BASE_PLUG_ASSOC_PDR_HANDLE + port);
+    container_assoc_pdr = (pldm_pdr_entity_assoc_t *)pldm_pdr_is_exist(&(g_pldm_monitor_info.pldm_repo), PLDM_BASE_PLUG_ASSOC_PDR_HANDLE + port);
 
     if (!container_assoc_pdr) {
         LOG("Not find assoc pdr. record handle : %d", PLDM_BASE_PLUG_ASSOC_PDR_HANDLE + port);
@@ -1505,7 +1684,7 @@ static void pldm_delete_comm_chan_assoc_pdr(u8 port)
 
 void terminus_locator_pdr_chg(void)
 {
-    pldm_terminus_locator_pdr_t *terminus_locator_pdr = (pldm_terminus_locator_pdr_t *)pldm_pdr_find(&(g_pldm_monitor_info.pldm_repo), PLDM_TERMINUS_LOCATOR_PDR_HANDLE);
+    pldm_terminus_locator_pdr_t *terminus_locator_pdr = (pldm_terminus_locator_pdr_t *)pldm_pdr_is_exist(&(g_pldm_monitor_info.pldm_repo), PLDM_TERMINUS_LOCATOR_PDR_HANDLE);
     // if ((g_pldm_monitor_info.tid != terminus_locator_pdr->tid) || (g_mctp_ctrl_info[0].dev_eid != terminus_locator_pdr->eid)) {
         g_pldm_monitor_info.repo_state = PLDM_REPO_UPDATE_IN_PROGRESS;
         terminus_locator_pdr->tid = g_pldm_monitor_info.tid;

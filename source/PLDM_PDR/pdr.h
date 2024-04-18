@@ -6,6 +6,7 @@
 #define PDR_MIN_SIZE                    (1)
 #define PDR_POOL_SIZE                   (9 * 512)
 #define NOT_FIELD                       (0xFF)
+#define MY_LIST                         (0)
 
 typedef float real32_t;
 
@@ -151,6 +152,30 @@ typedef enum {
     DISEN_SENSOR,
 } pldm_sensor_init_t;
 
+typedef enum {
+    UTC_RSLV_UTCUNSPECIFIED = 0,
+    UTC_RSLV_MINUTE,
+    UTC_RSLV_MINUTE_10,
+    UTC_RSLV_HOUR
+} pldm_time_resolution_t;
+
+typedef enum {
+    T_RSLV_MICROSECOND = 0,
+    T_RSLV_MICROSECOND_10,
+    T_RSLV_MICROSECOND_100,
+    T_RSLV_MILLISECOND,
+    T_RSLV_MILLISECOND_10,
+    T_RSLV_MILLISECOND_100,
+    T_RSLV_SECOND,
+    T_RSLV_SECOND_10,
+    T_RSLV_MINUTE,
+    T_RSLV_MINUTE_10,
+    T_RSLV_HOUR,
+    T_RSLV_DAY,
+    T_RSLV_MONTH,
+    T_RSLV_YEAR
+} pldm_utc_resolution_t;
+
 #pragma pack(1)
 /* pdr list struct */
 typedef struct pldm_pdr_record {
@@ -161,15 +186,41 @@ typedef struct pldm_pdr_record {
 } pldm_pdr_record_t;
 
 typedef struct {
+    u16 utc_offset;
+    u8 microsecond[3];
+    u8 sec;
+    u8 min;
+    u8 hour;
+    u8 day;
+    u8 mon;
+    u16 year;
+    u8 time_resolution      : 4;
+    u8 utc_resolution       : 4;
+} pldm_timestamp104_t;
+
+#if MY_LIST
+typedef struct {
 	u32 record_count;
 	u32 size;
     u32 largest_pdr_size;
-    u32 update_time;
     u32 repo_signature;
+    pldm_timestamp104_t update_time;
 	pldm_pdr_record_t *first;
 	pldm_pdr_record_t *last;
     pldm_pdr_record_t *is_deleted;              /* all delete pdr is in here */
 } pldm_pdr_t;
+
+#else
+typedef struct {
+	u32 record_count;
+	u32 size;
+    u32 largest_pdr_size;
+    pldm_timestamp104_t update_time;
+    u32 repo_signature;
+	pldm_pdr_record_t *head;
+    pldm_pdr_record_t *is_deleted_head;              /* all delete pdr is in here */
+} pldm_pdr_t;
+#endif
 
 typedef struct {
     u8 num;
@@ -425,10 +476,11 @@ void *pdr_malloc(int size);
 void pldm_pde_get_used(void);
 
 void pldm_pdr_init(pldm_pdr_t *repo);
-pldm_pdr_record_t *pldm_find_insert(pldm_pdr_t *repo, u16 record_handle);
-int pldm_pdr_add(pldm_pdr_t *repo, u8 *pdr_data, u32 pdr_size, u16 record_handle);
-int pldm_pdr_delete(pldm_pdr_t *repo, u16 record_handle);
-pldm_pdr_record_t *pldm_pdr_find(pldm_pdr_t *repo, u16 record_handle);
+pldm_pdr_record_t *pldm_find_insert(pldm_pdr_t *repo, u32 record_handle);
+int pldm_pdr_add(pldm_pdr_t *repo, u8 *pdr_data, u32 pdr_size, u32 record_handle);
+int pldm_pdr_delete(pldm_pdr_t *repo, u32 record_handle);
+pldm_pdr_record_t *pldm_pdr_find(pldm_pdr_t *repo, u32 record_handle);
+pldm_pdr_record_t *pldm_pdr_is_exist(pldm_pdr_t *repo, u32 record_handle);
 
 void pldm_redfish_pdr_init(void);
 void pldm_terminus_locator_pdr_init(void);
