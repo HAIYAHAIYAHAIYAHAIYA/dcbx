@@ -35,6 +35,26 @@ u8 crc8_pldm_1(u8 crc8, u8 *data, u16 len)
     return crc8;
 }
 
+#define PLDM_POLY 0xEDB88320UL
+// u32 crc = 0xFFFFFFFFUL;
+u32 crc32_pldm_section(u32 init_crc, u8 *data, u32 len)
+{
+    for (size_t i = 0; i < len; i++) {
+        init_crc ^= data[i];        // 把当前字节与 crc 的低 8 位进行异或操作
+
+        // 处理当前字节的 8 位，每次处理一位
+        for (int j = 0; j < 8; j++) {
+            if (init_crc & 1) {      // 如果 crc 的最低位为 1，则右移并与多项式除数进行异或操作
+                init_crc = (init_crc >> 1) ^ PLDM_POLY;
+            } else {            // 否则，只右移一个比特位
+                init_crc >>= 1;
+            }
+        }
+    }
+
+    return ~init_crc;                // 取反操作得到最终结果
+}
+
 // u32 crc32_pldm(u8 *data, u32 len)   /* CRC-32-MPEG-2 */
 // {
 //     u32 crc = 0xFFFFFFFF;

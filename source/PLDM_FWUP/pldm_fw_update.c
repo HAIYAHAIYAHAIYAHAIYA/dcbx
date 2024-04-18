@@ -27,14 +27,13 @@ void pldm_fwup_analyze_pkg(void)
     FILE *pd = NULL;
     u8 b[9000];
     // pd = fopen("upgrade_pldm_fwup_slot.img", "rb");
-    pd = fopen("upgrade_pldm_fwup_slot.bin", "rb");
+    pd = fopen("upgrade_pldm_fwup_slot.img", "rb");
     fread(&b, sizeof(u8), 1024, pd);
     fclose(pd);
     pldm_fwup_pkt_hdr_t *pkt_hdr = (pldm_fwup_pkt_hdr_t *)b;
     for (u8 i = 0; i < 16; i++) {
         LOG("%02x", pkt_hdr->uuid[i]);
     }
-    LOG("\n");
     LOG("pkt_hdr_fmt_reversion : %d", pkt_hdr->pkt_hdr_fmt_reversion);
     LOG("pkt_hdr_size : %d", pkt_hdr->pkt_hdr_size);
     LOG("year : %d", pkt_hdr->pkt_release_datetime.year);
@@ -52,7 +51,6 @@ void pldm_fwup_analyze_pkg(void)
     for (u8 i = 0; i < pkt_hdr->pkt_ver_str_len; i++) {
         LOG("%c", pkt_hdr->pkt_ver_str[i]);
     }
-    LOG("\n");
 
     pldm_fwup_fw_dev_indentification_area_t *fw_dev_area = (pldm_fwup_fw_dev_indentification_area_t *)&(pkt_hdr->pkt_ver_str[pkt_hdr->pkt_ver_str_len]);
     LOG("dev_id_record_cnt : %d", fw_dev_area->dev_id_record_cnt);
@@ -71,16 +69,14 @@ void pldm_fwup_analyze_pkg(void)
         LOG("add_type : %d", ptr->add_type);
         LOG("add_len : %d", ptr->add_len);
         for (u8 j = 0; j < ptr->add_len; j++) {
-            LOG("%x ", ptr->add_data[j]);
+            LOG("%x", ptr->add_data[j]);
         }
-        LOG("\n");
         ptr = (pldm_add_descriptor_t *)&(ptr->add_data[ptr->add_len]);
     }
     pldm_fwup_fw_dev_id_records_end_part_t *fw_records_end_ptr = (pldm_fwup_fw_dev_id_records_end_part_t *)ptr;
     for (u8 i = 0; i < fw_records_first_ptr->fw_dev_pkt_data_len; i++) {
         LOG("%#x ", fw_records_end_ptr->fw_dev_pkt_data[i]);
     }
-    LOG("\n");
 
     pldm_fwup_comp_img_info_area_t *comp_img_area = (pldm_fwup_comp_img_info_area_t *)&(fw_records_end_ptr->fw_dev_pkt_data[fw_records_first_ptr->fw_dev_pkt_data_len]);
     LOG("comp_img_cnt : %d", comp_img_area->comp_img_cnt);
@@ -90,15 +86,14 @@ void pldm_fwup_analyze_pkg(void)
         LOG("comp_identifier : %d", comp_first_part->comp_identifier);
         LOG("comp_comparison_stamp : %#x", comp_first_part->comp_comparison_stamp);
         LOG("comp_options : %d", comp_first_part->comp_options);
-        LOG("req_comp_acti_method : %d", comp_first_part->req_comp_acti_method);
+        LOG("req_comp_acti_method : %#x", comp_first_part->req_comp_acti_method);
         LOG("comp_local_offset : %d", comp_first_part->comp_local_offset);
         LOG("comp_size : %d", comp_first_part->comp_size);
         LOG("comp_ver_str_type : %d", comp_first_part->comp_ver_str_type);
         LOG("comp_ver_str_len : %d", comp_first_part->comp_ver_str_len);
         for (u8 j = 0; j < comp_first_part->comp_ver_str_len; j++) {
-            LOG("%x ", comp_first_part->comp_ver_str[j] - '0');            /* ascii */
+            LOG("%c", comp_first_part->comp_ver_str[j]);            /* ascii */
         }
-        LOG("\n");
         // pldm_fwup_comp_img_info_end_part_t *comp_end_part = (pldm_fwup_comp_img_info_end_part_t *)&(comp_first_part->comp_ver_str[comp_first_part->comp_ver_str_len]);
         // LOG("comp_opaque_data_len : %d", comp_end_part->comp_opaque_data_len);
         comp_first_part = (pldm_fwup_comp_img_info_first_part_t *)&(comp_first_part->comp_ver_str[comp_first_part->comp_ver_str_len]);
