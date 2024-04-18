@@ -487,7 +487,7 @@ static pldm_redfish_dictionary_entry_t *pldm_bej_dict_search(pldm_bej_sflv_t *sf
         tmp += 1;
     }
     if (!is_find) {
-        LOG("dict_search fmt err : fmt : seq : %#x, %#x", sflv->fmt >> 4, sflv->seq >>1);
+        LOG("dict_search fmt err : fmt : seq : %#x, %#x, %d", sflv->fmt >> 4, sflv->seq >> 1, sflv->seq & 1);
         gs_key.len = cm_strlen("fmt_err");
         gs_key.val = "fmt_err";
     }

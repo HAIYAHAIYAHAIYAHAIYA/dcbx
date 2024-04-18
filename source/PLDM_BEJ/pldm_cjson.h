@@ -72,7 +72,7 @@ typedef enum {
     OTHER_TYPE
 } pldm_redfish_dev_feature_support_t;
 
-typedef pldm_cjson_t *(*schema_create)(u8 *dict, u8 *anno_dict);
+typedef pldm_cjson_t *(*schema_create)(void);
 
 void pldm_cjson_test(void);
 
