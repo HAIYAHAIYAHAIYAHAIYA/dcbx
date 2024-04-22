@@ -2,8 +2,16 @@
 #define __PLDM_FW_UPDATE_H__
 #include "type.h"
 
-#pragma pack(1)
+typedef enum {
+    PLDM_UD_TYPE_UNKNOW = 0,
+    PLDM_UD_TYPE_ASCII,
+    PLDM_UD_TYPE_UTF_8,
+    PLDM_UD_TYPE_UTF_16,
+    PLDM_UD_TYPE_UTF_16LE,
+    PLDM_UD_TYPE_UTF_16BE
+} pldm_fwup_str_type_val_t;
 
+#pragma pack(1)
 typedef struct {
     u16 utc_offset;
     u8 microsecond[3];

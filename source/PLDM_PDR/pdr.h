@@ -15,6 +15,7 @@ typedef enum {
     NUMERIC_SENSOR_PDR = 2,
     STATE_SENSOR_PDR = 4,
     ENTITY_ASSOC_PDR = 15,
+    FRU_RECORD_SET_PDR = 20,
     REDFISH_RESOURCE_PDR = 22,
     REDFISH_ACTION_PDR = 24
 } pldm_pdr_type_t;
@@ -186,7 +187,7 @@ typedef struct pldm_pdr_record {
 } pldm_pdr_record_t;
 
 typedef struct {
-    u16 utc_offset;
+    s16 utc_offset;
     u8 microsecond[3];
     u8 sec;
     u8 min;
@@ -250,6 +251,15 @@ typedef struct {
 	u16 entity_instance_num;
 	u16 entity_container_id;
 } pldm_entity_t;
+
+typedef struct {
+    pldm_pdr_hdr_t hdr;
+    u16 pldm_terminus_handle;
+    u8 fru_record_terminus_identifier;
+    u16 entity_type;
+    u16 entity_instance_num;
+    u16 container_id;
+} pldm_fru_record_set_pdr_t;
 
 typedef struct {
     u8 hysteresis;
@@ -482,6 +492,7 @@ int pldm_pdr_delete(pldm_pdr_t *repo, u32 record_handle);
 pldm_pdr_record_t *pldm_pdr_find(pldm_pdr_t *repo, u32 record_handle);
 pldm_pdr_record_t *pldm_pdr_is_exist(pldm_pdr_t *repo, u32 record_handle);
 
+void pldm_fru_pdr_init(void);
 void pldm_redfish_pdr_init(void);
 void pldm_terminus_locator_pdr_init(void);
 void pldm_assoc_pdr_init(void);

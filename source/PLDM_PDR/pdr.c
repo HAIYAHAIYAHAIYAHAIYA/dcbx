@@ -3,6 +3,7 @@
 #include "pldm_monitor_event_rbuf.h"
 #include "pldm_bej_resolve.h"
 #include "pldm_redfish.h"
+#include "pldm_fru_data.h"
 #include "main.h"
 #include "utlist.h"
 
@@ -324,17 +325,6 @@ L_SUC:
 }
 #else
 
-pldm_pdr_record_t *pldm_find_insert(pldm_pdr_t *repo, u32 record_handle)
-{
-    if (!repo || !repo->head) return NULL;
-    pldm_pdr_record_t *insert_pos = NULL;
-    LL_FOREACH(repo->head, insert_pos) {
-        if (insert_pos->record_handle > record_handle)
-            return insert_pos;
-    }
-    return NULL;
-}
-
 int pldm_pdr_cmp(pldm_pdr_record_t *out, pldm_pdr_record_t *elt)
 {
     if (!out || !elt) return -1;
@@ -381,12 +371,7 @@ int pldm_pdr_add(pldm_pdr_t *repo, u8 *pdr_data, u32 pdr_size, u32 record_handle
     add_pdr->record_handle = record_handle;
     add_pdr->size = pdr_size;
 
-
-    pldm_pdr_record_t * insert_pos = pldm_find_insert(repo, record_handle);
-    if (insert_pos)
-        LL_PREPEND_ELEM(repo->head, insert_pos, add_pdr);
-    else
-        LL_APPEND(repo->head, add_pdr);
+    LL_INSERT_INORDER(repo->head, add_pdr, pldm_pdr_cmp);
 
     ++repo->record_count;
     repo->size += add_pdr->size;
@@ -405,9 +390,7 @@ int pldm_pdr_delete(pldm_pdr_t *repo, u32 record_handle)
     LL_SEARCH(repo->head, out, &elt, pldm_pdr_cmp);
     if (out) {
         LL_DELETE(repo->head, out);
-        // LL_SORT(repo->head, pldm_pdr_cmp);
         LL_APPEND(repo->is_deleted_head, out);
-        // LL_SORT(repo->is_deleted_head, pldm_pdr_cmp);
         repo->size -= out->size;
         --repo->record_count;
     }
@@ -447,11 +430,7 @@ pldm_pdr_record_t *pldm_pdr_is_exist(pldm_pdr_t *repo, u32 record_handle)
         LL_SEARCH(repo->is_deleted_head, out, &elt, pldm_pdr_cmp);
         if (out) {
             LL_DELETE(repo->is_deleted_head, out);
-            pldm_pdr_record_t * insert_pos = pldm_find_insert(repo, record_handle);
-            if (insert_pos)
-                LL_PREPEND_ELEM(repo->head, insert_pos, out);
-            else
-                LL_APPEND(repo->head, out);
+            LL_INSERT_INORDER(repo->head, out, pldm_pdr_cmp);
             repo->size += out->size;
             ++repo->record_count;
             pldm_pdr_chg_event_generate(g_pldm_monitor_info.pldm_event_rbuf, PLDM_REPO_CHG_FORMAT_ID_PDR_HANDLE, PLDM_REPO_CHG_RECORDS_ADDED, out->record_handle);
@@ -1441,6 +1420,46 @@ static void pldm_redfish_add_port_reset_pdr(void)
     0, MAX_LAN_NUM, related_resource_id);
     pldm_redfish_action_pdr_fill_end_part(next_part, 1, action_name, action_path);
     pldm_pdr_add(&(g_pldm_monitor_info.pldm_repo), buf, malloc_len, PLDM_PORT_RESET_PDR_HANDLE);
+}
+
+static int pldm_fru_add_fru_record_set_pdr(pldm_fru_record_set_pdr_t *fru_record_set_pdr)
+{
+    if (!fru_record_set_pdr) return FAILURE;
+    fru_record_set_pdr->hdr.record_handle = PLDM_FRU_RECORD_SET_PDR_HANDLE;
+    fru_record_set_pdr->hdr.version = PLDM_EVENT_FORMAT_VERSION;
+    fru_record_set_pdr->hdr.type = FRU_RECORD_SET_PDR;
+    fru_record_set_pdr->hdr.record_change_num = 0;                /* no changes expected in Terminus Locator PDR */
+    fru_record_set_pdr->hdr.length = sizeof(pldm_fru_record_set_pdr_t) - sizeof(pldm_pdr_hdr_t);
+
+    pldm_pdr_record_t *is_find = pldm_pdr_find(&(g_pldm_monitor_info.pldm_repo), PLDM_BASE_NIC_ASSOC_PDR_HANDLE);
+    if (!is_find) return FAILURE;
+
+    pldm_pdr_entity_assoc_t *assoc_pdr = (pldm_pdr_entity_assoc_t *)(is_find->data);
+
+    fru_record_set_pdr->pldm_terminus_handle = PLDM_TERMINUS_HANDLE;
+    fru_record_set_pdr->fru_record_terminus_identifier = FRU_GENERAL_SET_ID;
+    fru_record_set_pdr->entity_type = assoc_pdr->container.entity_type;
+    fru_record_set_pdr->entity_instance_num = assoc_pdr->container.entity_instance_num;
+    fru_record_set_pdr->container_id = assoc_pdr->container_id;
+    return SUCCESS;
+}
+
+void pldm_fru_pdr_init(void)
+{
+    pldm_pdr_record_t *is_exist = pldm_pdr_is_exist(&(g_pldm_monitor_info.pldm_repo), PLDM_FRU_RECORD_SET_PDR_HANDLE);
+    if (is_exist) return;
+    pldm_fru_record_set_pdr_t *fru_record_set_pdr = (pldm_fru_record_set_pdr_t *)pdr_malloc(sizeof(pldm_fru_record_set_pdr_t));
+    if (!fru_record_set_pdr) {
+        LOG("no more space for malloc!, %s", __FUNCTION__);
+        return;
+    }
+
+    int ret = pldm_fru_add_fru_record_set_pdr(fru_record_set_pdr);
+    if (ret == FAILURE) {
+        LOG("fill_terminus_locator_pdr err, %s", __FUNCTION__);
+        return;
+    }
+    pldm_pdr_add(&(g_pldm_monitor_info.pldm_repo), (u8 *)fru_record_set_pdr, sizeof(pldm_fru_record_set_pdr_t), fru_record_set_pdr->hdr.record_handle);
 }
 
 void pldm_redfish_pdr_init(void)

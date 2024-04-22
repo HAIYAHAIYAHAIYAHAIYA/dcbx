@@ -94,8 +94,11 @@ void pldm_monitor_printf_repo(pldm_pdr_t *repo)
 {
     LOG("record_count : %d", repo->record_count);
     LOG("size : %d", repo->size);
+    char *str = "2019-05-04-18";
+    cm_memcpy(&(repo->update_time), str, 13);
     LOG("largest pdr size : %d", repo->largest_pdr_size);
-    LOG("update_time : %d", repo->update_time);
+    LOG("time : %s", __TIME__);
+    LOG("update_time : %s", &(repo->update_time));
     LOG("repo_signature : %d", repo->repo_signature);
     u16 sum_size = 0;
     u8 cnt = 0;
@@ -243,6 +246,7 @@ void pldm_monitor_test(void)
         pldm_numeric_sensor_pdr_init,
         pldm_state_sensor_pdr_init,
         pldm_redfish_pdr_init,
+        pldm_fru_pdr_init,
     };
     start = clock(); 
     for (u8 i = 0; i < sizeof(pdr_init) / sizeof(pdr_init_func); i++) {
@@ -268,12 +272,12 @@ void pldm_monitor_test(void)
 
     // pldm_monitor_printf_repo(&(g_pldm_monitor_info.pldm_repo));
 
-    pldm_pdr_record_t *del_elt = NULL;
+    // pldm_pdr_record_t *del_elt = NULL;
 
-    LL_FOREACH(g_pldm_monitor_info.pldm_repo.head, del_elt) {
-        pldm_pdr_delete(&(g_pldm_monitor_info.pldm_repo), del_elt->record_handle);
-        del_elt = g_pldm_monitor_info.pldm_repo.head;
-    }
+    // LL_FOREACH(g_pldm_monitor_info.pldm_repo.head, del_elt) {
+    //     pldm_pdr_delete(&(g_pldm_monitor_info.pldm_repo), del_elt->record_handle);
+    //     del_elt = g_pldm_monitor_info.pldm_repo.head;
+    // }
     // pldm_pdr_delete(&(g_pldm_monitor_info.pldm_repo), 2);
 
     pldm_pdr_delete(&(g_pldm_monitor_info.pldm_repo), 1);
@@ -283,16 +287,14 @@ void pldm_monitor_test(void)
     pldm_pdr_delete(&(g_pldm_monitor_info.pldm_repo), 4200);
     pldm_pdr_delete(&(g_pldm_monitor_info.pldm_repo), 4300);
 
-
-
     // pldm_monitor_printf_repo(&(g_pldm_monitor_info.pldm_repo));
 
-    pldm_pdr_is_exist(&(g_pldm_monitor_info.pldm_repo), 1);
-    pldm_pdr_is_exist(&(g_pldm_monitor_info.pldm_repo), 3);
     pldm_pdr_is_exist(&(g_pldm_monitor_info.pldm_repo), 2);
     pldm_pdr_is_exist(&(g_pldm_monitor_info.pldm_repo), 4400);
     pldm_pdr_is_exist(&(g_pldm_monitor_info.pldm_repo), 4200);
     pldm_pdr_is_exist(&(g_pldm_monitor_info.pldm_repo), 4300);
+    pldm_pdr_is_exist(&(g_pldm_monitor_info.pldm_repo), 1);
+    pldm_pdr_is_exist(&(g_pldm_monitor_info.pldm_repo), 3);
 
     pldm_monitor_printf_repo(&(g_pldm_monitor_info.pldm_repo));
     // LOG("last : %d", g_pldm_monitor_info.pldm_repo.last->record_handle);
