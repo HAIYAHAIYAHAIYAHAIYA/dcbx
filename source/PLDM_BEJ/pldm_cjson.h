@@ -3,7 +3,7 @@
 
 #include "type.h"
 
-#define MY_CJSON_POLL_SIZE   (3 * 1024)
+#define MY_CJSON_POLL_SIZE   (10 * 1024)
 
 #define ALIGN(dat, align)    (((dat) + (align) - 1) & (~((align) - 1)))
 
@@ -40,8 +40,8 @@ typedef struct {
     u8 seq;
     u8 fmt;
     u16 len;
-    u8 val[0];
-} pldm_bej_sflv_dat_t;
+    char *val;
+}  pldm_bej_sflv_dat_t;
 
 typedef struct pldm_cjson {
     struct pldm_cjson *next;
@@ -84,5 +84,7 @@ void pldm_cjson_printf_dict(u8 *dictionary);
 
 pldm_cjson_t *pldm_cjson_add_item_to_obj(pldm_cjson_t *obj, pldm_bej_sflv_dat_t *sflv, char *name, char *val, u8 len);
 void pldm_cjson_add_enum_to_obj(pldm_cjson_t *obj, u8 *dictionary, pldm_bej_sflv_dat_t *sflv, char *enum_name, char *enum_val);
+
+void pldm_cjson_printf_root2(pldm_cjson_t *root);
 
 #endif /* __PLDM_CJSON_H__ */

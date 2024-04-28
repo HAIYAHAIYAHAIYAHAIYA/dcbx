@@ -2,8 +2,6 @@
 #define __PLDM_BEJ_RESOLVE_H__
 
 #include "main.h"
-#include "type.h"
-#include "CJSON.h"
 #include "pldm_cjson.h"
 
 #pragma pack(1)
@@ -20,6 +18,11 @@ typedef struct {
     u8 len;         /* max len is 0xFF */
     u8 data[0];     /* LSB -> MSB */
 } pldm_bej_nnint_t;
+
+typedef struct {
+    u8 len;
+    char *val;
+} pldm_bej_key_t;
 
 typedef struct {
     u8 format;
@@ -47,11 +50,6 @@ typedef struct {
     u8 copyright[0];
 } pldm_redfish_dictionary_copyright_t;
 
-typedef struct {
-    u8 len;
-    u8 *val;
-} pldm_bej_key_t;
-
 #pragma pack()
 
 typedef enum {
@@ -71,13 +69,8 @@ typedef enum {
     BEJ_RESOURCE_LINK_EXPANSION = 0xF,
 } pldm_bej_fmt_t;
 
-// void pldm_bej_encode(pldm_cjson_t *root, u8 *dict);
-u16 pldm_bej_decode(u8 *buf, u8 *dict, pldm_redfish_dictionary_entry_t *entry, u8 entry_cnt, cJSON *root);
-pldm_cjson_t *pldm_bej_decode1(u8 *buf, u16 buf_len, u8 *anno_dict, u8 *dict, pldm_cjson_t *root);
-u8 *pldm_bej_encode(pldm_cjson_t *root, u8 *bej_buf);
-u8 *pldm_bej_encode1(pldm_cjson_t *root, u8 *bej_buf);
 void pldm_bej_init(void);
-void pldm_bej_get_sflv(u8 *buf, pldm_bej_sflv_t *sflv);
-void pldm_bej_dict_search1(pldm_bej_sflv_t *sflv, u8 *dict);
+u8 *pldm_bej_encode(pldm_cjson_t *root, u8 *bej_buf);
+pldm_cjson_t *pldm_bej_decode(u8 *buf, u16 buf_len, u8 *anno_dict, u8 *dict, pldm_cjson_t *root);
 
 #endif /* __PLDM_BEJ_RESOLVE_H__ */

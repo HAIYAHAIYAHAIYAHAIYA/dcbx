@@ -5,7 +5,9 @@
 #include "pldm_cjson.h"
 
 #define PLDM_REDFISH_DICT_NUM                               (14)
+#define PLDM_REDFISH_RESOURCE_NUM                           (4 * MAX_LAN_NUM + 7)   /* refer to pldm redfish resource id cnt */
 #define PLDM_REDFISH_DICT_INFO_LEN                          ALIGN((sizeof(pldm_redfish_dict_hdr_t) + PLDM_REDFISH_DICT_NUM * sizeof(pldm_redfish_dict_info_t)), 4)
+#define PLDM_REDFISH_DEV_MAXIMUM_XFER_CHUNKSIZE_BYTES       (2048)
 
 #define PLDM_REDFISH_DICT_BASE_ADDR                         (0)
 
@@ -136,6 +138,20 @@ typedef struct {
     u16 num_of_dict;
     pldm_redfish_dict_info_t dict_info[0];
 } pldm_redfish_dict_hdr_t;
+
+typedef struct {
+    u8 is_bej;
+    u8 is_etag;
+    u16 len;
+    u8 etag[8];
+    u8 data[530];           /* max 522 bytes */
+} pldm_redfish_bej_t;
+
+typedef struct {
+    u16 len;
+    u8 data[PLDM_REDFISH_DEV_MAXIMUM_XFER_CHUNKSIZE_BYTES];
+} pldm_payload_dat_t;
+
 
 #pragma pack()
 

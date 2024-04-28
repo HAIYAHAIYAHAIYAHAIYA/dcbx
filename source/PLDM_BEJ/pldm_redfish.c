@@ -5,6 +5,8 @@ u8 g_dict_info[PLDM_REDFISH_DICT_INFO_LEN];
 u8 g_anno_dict[PLDM_REDFISH_ANNO_DICT_LEN];
 u8 g_needed_dict[PLDM_REDFISH_PORT_DICT_LEN];
 
+pldm_redfish_bej_t g_resourse_bej[PLDM_REDFISH_RESOURCE_NUM];
+
 pldm_redfish_schema_info_t schema_info[ALL_SCHEMA_IDENTIFY] = {
     [EVENT]                             = {SCHEMACLASS_EVENT,                               BIT(READ),                                          {"Event.json"}},
     [REDFISH_PAYLOAD_ANNOTATIONS]       = {SCHEMACLASS_ANNOTATION,                          BIT(READ),                                          {"redfish-payload-annotations.v1_0_2.json"}},
@@ -24,7 +26,7 @@ pldm_redfish_schema_info_t schema_info[ALL_SCHEMA_IDENTIFY] = {
     // [ALL_SCHEMA]                        = {SCHEMA_CLASS(ALL_SCHEMA),                        SCHEMA_ALLOWED_OP(PCIE_FUNC_COLLECTION),            {"Event.json", "redfish-payload-annotations.v1_0_2.json", "v1/redfish-error.v1_0_0.json"}}
 };
 
-static u32 pldm_redfish_resource_id_to_base(u32 resource_id)
+u32 pldm_redfish_resource_id_to_base(u32 resource_id)
 {
     if (resource_id >= PLDM_BASE_PORT_RESOURCE_ID && resource_id <= PLDM_MAX_ETH_INTERFACE_RESOURCE_ID_1) {
         if (((resource_id <= PLDM_MAX_PORT_RESOURCE_ID) && (resource_id >= PLDM_BASE_PORT_RESOURCE_ID)) || \
@@ -41,6 +43,53 @@ static u32 pldm_redfish_resource_id_to_base(u32 resource_id)
         }
     }
     return resource_id;
+}
+
+u8 resource_id_to_resource_identity(u32 resource_id)
+{
+    u8 resource_identity = 0xFF;
+    if (resource_id == PLDM_BASE_REGISTER_DICT_RESOURCE_ID) {
+        resource_identity = ALL_SCHEMA;
+    } else if (resource_id < 100) {
+        switch (resource_id) {
+            case PLDM_BASE_NETWORK_ADAPTER_RESOURCE_ID:
+                resource_identity = NETWORK_ADAPTER;
+                break;
+            case PLDM_BASE_PCIE_DEV_RESOURCE_ID:
+                resource_identity = PCIE_DEVICE;
+                break;
+            case PLDM_BASE_NETWORK_INTERFACE_RESOURCE_ID:
+                resource_identity = NETWORK_INTERFACE;
+                break;
+            case PLDM_BASE_PORTS_RESOURCE_ID:
+                resource_identity = PORT_COLLECTION;
+                break;
+            case PLDM_BASE_NETWORK_DEV_FUNCS_RESOURCE_ID:
+                resource_identity = NETWORK_DEVICE_FUNC_COLLECTION;
+                break;
+            case PLDM_BASE_PCIE_FUNCS_RESOURCE_ID:
+                resource_identity = PCIE_FUNC_COLLECTION;
+                break;
+            case PLDM_BASE_ETH_INTERFACE_COLLECTION_RESOURCE_ID:
+                resource_identity = ETH_INTERFACE_COLLECTION;
+                break;
+            default:
+                break;
+        }
+    } else if (((resource_id <= PLDM_MAX_PORT_RESOURCE_ID) && (resource_id >= PLDM_BASE_PORT_RESOURCE_ID)) || \
+                ((resource_id <= PLDM_MAX_PORT_RESOURCE_ID_1) && (resource_id >= PLDM_BASE_PORT_RESOURCE_ID_1))) {
+        resource_identity = PORT_IDENTIFY;
+    } else if (((resource_id <= PLDM_MAX_NETWORK_DEV_FUNC_RESOURCE_ID) && (resource_id >= PLDM_BASE_NETWORK_DEV_FUNC_RESOURCE_ID)) || \
+                ((resource_id <= PLDM_MAX_NETWORK_DEV_FUNC_RESOURCE_ID_1) && (resource_id >= PLDM_BASE_NETWORK_DEV_FUNC_RESOURCE_ID_1))) {
+        resource_identity = NETWORK_DEVICE_FUNC;
+    } else if ((resource_id <= PLDM_MAX_PCIE_FUNC_RESOURCE_ID) && (resource_id >= PLDM_BASE_PCIE_FUNC_RESOURCE_ID)) {
+        resource_identity = PCI_FUNC;
+    } else if (((resource_id <= PLDM_MAX_ETH_INTERFACE_RESOURCE_ID) && (resource_id >= PLDM_BASE_ETH_INTERFACE_RESOURCE_ID)) || \
+                ((resource_id <= PLDM_MAX_ETH_INTERFACE_RESOURCE_ID_1) && (resource_id >= PLDM_BASE_ETH_INTERFACE_RESOURCE_ID_1))) {
+        resource_identity = ETH_INTERFACE;
+    }
+
+    return resource_identity;
 }
 
 u16 pldm_redfish_get_dict_len(u32 resource_id)
