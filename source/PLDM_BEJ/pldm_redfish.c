@@ -166,7 +166,7 @@ u8 pldm_redfish_get_dict_data(u32 resource_id, u8 requested_schemaclass, u8 *dic
     if (dict_addr) {
         CM_FLASH_READ(PLDM_REDFISH_DICT_BASE_ADDR + dict_addr, (u32 *)dict, len / sizeof(u32));
     } else {
-        LOG("not found dict data");
+        LOG("not found dict data : %d", resource_id);
         return false;
     }
     return true;

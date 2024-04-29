@@ -111,9 +111,9 @@ static pldm_redfish_dictionary_entry_t *pldm_bej_dict_search(pldm_bej_sflv_t *sf
     pldm_redfish_dictionary_entry_t *tmp = entry;
     u8 is_find = 0;
     gs_key.len = 0;
-    gs_key.val = NULL;
+    gs_key.val = "";
     gs_enum_key.len = 0;
-    gs_enum_key.val = NULL;
+    gs_enum_key.val = "";
     // LOG("need 0x%x, 0x%x, 0x%02x", sflv->fmt >> 4, sflv->seq >> 1, sflv->len);
 
     for (u16 k = 0; k < entry_cnt; k++) {
@@ -197,7 +197,7 @@ u8 *pldm_bej_encode(pldm_cjson_t *root, u8 *bej_buf)
     return buf;
 }
 
-static u16 pldm_bej_decode_op(u8 *buf, u8 *anno_dict, u8 *dict, pldm_redfish_dictionary_entry_t *entry, u16 entry_cnt, pldm_redfish_dictionary_entry_t *anno_entry, u16 anno_entry_cnt, pldm_cjson_t *root)
+static u16 pldm_bej_decode_op(u8 *buf, u8 *anno_dict, u8 *dict, pldm_redfish_dictionary_entry_t *entry, u16 entry_cnt, pldm_redfish_dictionary_entry_t *anno_entry, u16 anno_entry_cnt, pldm_cjson_t *root, u8 is_full_schema)
 {
     if (!buf || !entry || !root || !dict || !anno_dict) return 0;
     pldm_bej_sflv_t sflv = {0, 0, 0, 0, NULL};
@@ -206,11 +206,15 @@ static u16 pldm_bej_decode_op(u8 *buf, u8 *anno_dict, u8 *dict, pldm_redfish_dic
     u8 cnt = 0;
     pldm_cjson_t *ptr = root;
     pldm_cjson_t *add_ptr = NULL;
+    gs_key.val = "";
+    gs_enum_key.val = "";
     pldm_bej_get_sflv(buf, &sflv);
-    if (sflv.seq & 1)
-        new_anno_entry = pldm_bej_dict_search(&sflv, anno_dict, anno_entry, anno_entry_cnt);
-    else
-        new_entry = pldm_bej_dict_search(&sflv, dict, entry, entry_cnt);
+    if (is_full_schema) {
+        if (sflv.seq & 1)
+            new_anno_entry = pldm_bej_dict_search(&sflv, anno_dict, anno_entry, anno_entry_cnt);
+        else
+            new_entry = pldm_bej_dict_search(&sflv, dict, entry, entry_cnt);
+    }
 
     /* see PropertyUnknown in the Redfish base message registry.(DSP0265) */
     if (cm_strcmp(gs_key.val, "fmt_err") == 0) return 0;
@@ -222,12 +226,14 @@ static u16 pldm_bej_decode_op(u8 *buf, u8 *anno_dict, u8 *dict, pldm_redfish_dic
         cnt = sflv.val[1];
         sflv.val = &(sflv.val[2]);
 
-        child_cnt = new_entry->child_cnt;
-        new_entry = (pldm_redfish_dictionary_entry_t *)&dict[new_entry->childpoint_off];
+        if (is_full_schema) {
+            child_cnt = new_entry->child_cnt;
+            new_entry = (pldm_redfish_dictionary_entry_t *)&dict[new_entry->childpoint_off];
 
-        if (new_anno_entry->childpoint_off && sflv.seq & 1) {
-            anno_child_cnt = new_anno_entry->child_cnt;
-            new_anno_entry = (pldm_redfish_dictionary_entry_t *)&anno_dict[new_anno_entry->childpoint_off];
+            if (new_anno_entry->childpoint_off && sflv.seq & 1) {
+                anno_child_cnt = new_anno_entry->child_cnt;
+                new_anno_entry = (pldm_redfish_dictionary_entry_t *)&anno_dict[new_anno_entry->childpoint_off];
+            }
         }
 
         pldm_bej_sflv_dat_t tmp;
@@ -237,7 +243,7 @@ static u16 pldm_bej_decode_op(u8 *buf, u8 *anno_dict, u8 *dict, pldm_redfish_dic
         add_ptr = pldm_cjson_add_item_to_obj(ptr, &tmp, gs_key.val, "", 0);
     }
     for (u8 i = 0; i < cnt; i++) {
-        u16 len = pldm_bej_decode_op(sflv.val, anno_dict, dict, new_entry, child_cnt, new_anno_entry, anno_child_cnt, add_ptr);
+        u16 len = pldm_bej_decode_op(sflv.val, anno_dict, dict, new_entry, child_cnt, new_anno_entry, anno_child_cnt, add_ptr, is_full_schema);
         sflv.val += len;
     }
     if (!cnt && fmt != BEJ_SET && fmt != BEJ_ARRAY) {
@@ -246,7 +252,7 @@ static u16 pldm_bej_decode_op(u8 *buf, u8 *anno_dict, u8 *dict, pldm_redfish_dic
     return sflv.sflv_len;
 }
 
-pldm_cjson_t *pldm_bej_decode(u8 *buf, u16 buf_len, u8 *anno_dict, u8 *dict, pldm_cjson_t *root)
+pldm_cjson_t *pldm_bej_decode(u8 *buf, u16 buf_len, u8 *anno_dict, u8 *dict, pldm_cjson_t *root, u8 is_full_schema)
 {
     if (!buf || !dict || !anno_dict) return NULL;
     root = pldm_cjson_create_obj();
@@ -255,7 +261,7 @@ pldm_cjson_t *pldm_bej_decode(u8 *buf, u16 buf_len, u8 *anno_dict, u8 *dict, pld
     pldm_redfish_dictionary_format_t *anno_dictionary = (pldm_redfish_dictionary_format_t *)anno_dict;
     u16 total_len = 0;
     while (total_len < buf_len) {
-        total_len += pldm_bej_decode_op(&buf[total_len], anno_dict, dict, &(dictionary->entry[0]), dictionary->entry_cnt, &(anno_dictionary->entry[0]), anno_dictionary->entry_cnt, root);
+        total_len += pldm_bej_decode_op(&buf[total_len], anno_dict, dict, &(dictionary->entry[0]), dictionary->entry_cnt, &(anno_dictionary->entry[0]), anno_dictionary->entry_cnt, root, is_full_schema);
     }
     LOG("decode len : %d", total_len);
     pldm_cjson_t *new_root = NULL;
@@ -265,4 +271,73 @@ pldm_cjson_t *pldm_bej_decode(u8 *buf, u16 buf_len, u8 *anno_dict, u8 *dict, pld
     root = NULL;
     // pldm_cjson_cal_len_to_root(new_root, OTHER_TYPE);
     return new_root;
+}
+
+static u8 gs_finded = 0;
+static u8 gs_is_match = 1;
+static pldm_cjson_t *gs_match_node = NULL;
+
+void pldm_bej_full_match(pldm_cjson_t *schema_node, pldm_cjson_t *bej_root)
+{
+    pldm_cjson_t *schema_ptr = schema_node;
+    pldm_cjson_t *bej_ptr = bej_root;
+
+    while (bej_ptr && schema_ptr) {
+        pldm_cjson_t *tmp = NULL;
+        u8 find = 0;
+        for (tmp = schema_ptr; tmp; tmp = tmp->next) {
+            u8 schema_seq = tmp->sflv.seq;
+            u8 schema_fmt = tmp->sflv.fmt;
+            u8 bej_seq = bej_ptr->sflv.seq;
+            u8 bej_fmt = bej_ptr->sflv.fmt;
+            if (schema_seq == bej_seq && schema_fmt == bej_fmt) {
+                bej_ptr->name = tmp->name;
+                bej_ptr->name[cm_strlen(tmp->name)] = '\0';
+                // LOG("tmp->name : %s", bej_ptr->name);
+                find = 1;
+                break;
+            }
+        }
+        if (!find) {
+            gs_is_match = 0;
+            return;
+        }
+        pldm_bej_full_match(tmp->child, bej_ptr->child);
+        bej_ptr = bej_ptr->next;
+    }
+    if (!bej_ptr && gs_is_match == 1)
+        gs_is_match = 1;
+    else
+        gs_is_match = 0;
+}
+
+void pldm_bej_fill_name(pldm_cjson_t *schema_root, pldm_cjson_t *bej_root)
+{
+    pldm_cjson_t *schema_ptr = schema_root;
+    gs_match_node = NULL;
+    while (schema_ptr) {
+        for (pldm_cjson_t *tmp = bej_root; tmp; tmp = tmp->next) {
+            u8 schema_seq = schema_ptr->sflv.seq;
+            u8 schema_fmt = schema_ptr->sflv.fmt;
+            u8 bej_seq = tmp->sflv.seq;
+            u8 bej_fmt = tmp->sflv.fmt;
+            if (schema_seq == bej_seq && schema_fmt == bej_fmt) {
+                gs_is_match = 1;
+                pldm_bej_full_match(schema_ptr, bej_root);
+                if (gs_is_match) {
+                    gs_finded = 1;
+                    gs_match_node = schema_ptr;
+                    LOG("match name : %s", schema_ptr->name);
+                }
+            }
+        }
+        if (gs_finded) break;
+        pldm_bej_fill_name(schema_ptr->child, bej_root);
+        schema_ptr = schema_ptr->next;
+    }
+}
+
+pldm_cjson_t *pldm_bej_get_match_node(void)
+{
+    return gs_match_node;
 }

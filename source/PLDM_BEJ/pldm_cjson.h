@@ -3,7 +3,7 @@
 
 #include "type.h"
 
-#define MY_CJSON_POLL_SIZE   (10 * 1024)
+#define MY_CJSON_POLL_SIZE   (6000)              /* max 5798 */
 
 #define ALIGN(dat, align)    (((dat) + (align) - 1) & (~((align) - 1)))
 
@@ -16,7 +16,7 @@
 #define cm_sprintf          sprintf
 #define cm_snprintf         snprintf
 
-#define MAX_LAN_NUM         2
+#define MAX_LAN_NUM         4
 
 /* resource id */
 #define PLDM_BASE_NETWORK_ADAPTER_RESOURCE_ID         (1)
@@ -46,7 +46,7 @@ typedef struct {
 typedef struct pldm_cjson {
     struct pldm_cjson *next;
     struct pldm_cjson *child;
-    u8 *name;
+    char *name;
     pldm_bej_sflv_dat_t sflv;
 } pldm_cjson_t;
 
@@ -72,7 +72,7 @@ typedef enum {
     OTHER_TYPE
 } pldm_redfish_dev_feature_support_t;
 
-typedef pldm_cjson_t *(*schema_create)(void);
+typedef pldm_cjson_t *(*schema_create)(u32 resource_id);
 
 void pldm_cjson_test(void);
 
