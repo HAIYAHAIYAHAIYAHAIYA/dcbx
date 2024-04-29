@@ -9,6 +9,7 @@
 #include "pldm_redfish.h"
 #include "pldm_fw_update.h"
 #include "pldm_monitor.h"
+#include "pldm_fru_data.h"
 #include "pdr.h"
 #include "main.h"
 
@@ -196,10 +197,11 @@ int main(int argc, char * argv [])
     // for (u8 i = 0; i < 8; i++) {
     //     LOG("%02x ", b[i]);
     // }
-    // pldm_cjson_test();
+    pldm_cjson_test();
     // pldm_redfish_dict_test();
     // pldm_fwup_verify_pkt_data_test();
-    pldm_monitor_test();
+    // pldm_monitor_test();
+    // pldm_fru_data_test();
 	return 0;
 }
 

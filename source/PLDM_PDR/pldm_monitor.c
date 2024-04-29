@@ -248,7 +248,7 @@ void pldm_monitor_test(void)
         pldm_redfish_pdr_init,
         pldm_fru_pdr_init,
     };
-    start = clock(); 
+    start = clock();
     for (u8 i = 0; i < sizeof(pdr_init) / sizeof(pdr_init_func); i++) {
         pdr_init[i]();
         // pldm_pde_get_used();
