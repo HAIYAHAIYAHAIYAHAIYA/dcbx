@@ -4,7 +4,7 @@
 #include "type.h"
 
 #define PLDM_FRU_DATA_CMD               (0x02 + 1)
-#define PLDM_FRU_TABLE_BUF_LEN          (1024)          /* 4 LAN for 922 bytes, 2 LAN for 540 bytes */
+#define PLDM_FRU_TABLE_BUF_LEN          (MAX_LAN_NUM == 2 ? 536 : 906)              /* 4 LAN for 906 bytes, 2 LAN for 536 bytes */
 #define WXKJ                            0x57584B4A
 
 typedef enum {
