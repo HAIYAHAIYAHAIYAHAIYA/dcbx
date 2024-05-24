@@ -25,9 +25,9 @@ u8 str_to_acsll(u8 *s_inchar, u8 s_len, u8 *a_outtxt)
 void pldm_fwup_analyze_pkg(void)
 {
     FILE *pd = NULL;
-    u8 b[9000];
+    u8 b[1024];
     // pd = fopen("upgrade_pldm_fwup_slot.img", "rb");
-    pd = fopen("upgrade_pldm_fwup_slot.img", "rb");
+    pd = fopen("upgrade_my_img.img", "rb");
     fread(&b, sizeof(u8), 1024, pd);
     fclose(pd);
     pldm_fwup_pkt_hdr_t *pkt_hdr = (pldm_fwup_pkt_hdr_t *)b;
@@ -103,6 +103,13 @@ void pldm_fwup_analyze_pkg(void)
     LOG("pkt_hdr_crc32 : %#x", crc32->pkt_hdr_crc32);
     LOG("check result : %s", cal_crc32 == crc32->pkt_hdr_crc32 ? "success" : "false");
     // LOG("%s", (u8 *)comp_first_part + sizeof(u32));
+
+    LOG("img len : %d, %d", pkt_hdr->pkt_hdr_size, comp_first_part->comp_size);
+    for (int i = 0; i < pkt_hdr->pkt_hdr_size + 1; i++) {
+        printf("0x%02x, ", b[i]);
+        if (!((i + 1) % 8))
+            printf("\n");
+    }
 }
 
 void pldm_fwup_verify_pkt_data_test(void)

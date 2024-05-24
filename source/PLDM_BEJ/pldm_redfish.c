@@ -186,10 +186,11 @@ void pldm_redfish_dict_test(void)
     LOG("total : %d", dicts->total_len);
     LOG("num : %d", dicts->num_of_dict);
     pldm_redfish_dict_fmt_t *dict_fmt = (pldm_redfish_dict_fmt_t *)&b[dicts->dict_info[0].offset];
-    LOG("%#x", dict_fmt->dict_sign);
-    LOG("%d", dict_fmt->len);
+    LOG("dict_fmt->dict_sign : %#x", dict_fmt->dict_sign);
+    LOG("dict_fmt->len : %d", dict_fmt->len);
     for (u8 i = 0; i < dicts->num_of_dict; i++) {
         LOG("id : %lld", dicts->dict_info[i].resource_id);
         LOG("off : %d", dicts->dict_info[i].offset);
+        LOG("schema_class : %#x", dicts->dict_info[i].schema_class);
     }
 }

@@ -112,8 +112,8 @@ void pldm_monitor_printf_repo(pldm_pdr_t *repo)
         cnt++;
         pldm_pdr_hdr_t *hdr = (pldm_pdr_hdr_t *)(pdr->data);
         LOG("pdr size : %04d, record handle : %04d, type : %d", pdr->size, pdr->record_handle, hdr->type);
-        repo->repo_signature = 0xFFFFFFFF;
-        repo->repo_signature = crc32_pldm_1(repo->repo_signature, pdr->data, pdr->size);
+        repo->repo_signature = 0;
+        repo->repo_signature = crc32_pldm_1(repo->repo_signature ^ 0xFFFFFFFFUL, pdr->data, pdr->size);
         sum_size += pdr->size;
         pdr = pdr->next;
     }
