@@ -108,6 +108,11 @@ void pdrs_pool_init(u32 *addr)
         __FUNCTION__, addr, PDR_POOL_SIZE);
 }
 
+void pdrs_pool_reinit(void)
+{
+    pdrs_pool_wt = 0;
+}
+
 void *pdr_malloc(int size)
 {
     size = ALIGN(size, PDR_MIN_SIZE);
@@ -123,9 +128,10 @@ void *pdr_malloc(int size)
     return pt;
 }
 
-void pldm_pde_get_used(void)
+u32 pldm_pdr_get_used(void)
 {
     LOG("used space : %d", pdrs_pool_wt);
+    return pdrs_pool_wt;
 }
 
 #if MY_LIST
@@ -1478,8 +1484,8 @@ void pldm_redfish_pdr_init(void)
     pldm_redfish_add_port_reset_pdr();
 }
 
-void pldm_terminus_locator_pdr_init(void)
 {
+void pldm_terminus_locator_pdr_init(void)
     pldm_pdr_record_t *is_exist = pldm_pdr_is_exist(&(g_pldm_monitor_info.pldm_repo), PLDM_TERMINUS_LOCATOR_PDR_HANDLE);
     if (is_exist) return;
 

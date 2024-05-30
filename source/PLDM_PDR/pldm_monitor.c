@@ -235,6 +235,45 @@ void pldm_monitor_init(void)
 
 typedef void (*pdr_init_func)(void);
 
+void pldm_monitor_gen_static_pdr_data(pldm_pdr_t *repo)
+{
+    pldm_pdr_record_t *pdr = NULL;
+    FILE *fp = NULL;
+    u16 sum_size = 0;
+    u8 cnt = 0;
+    fp = fopen("static_pdr_resource.bin", "w+");
+    fseek(fp, sizeof(u16) + sizeof(u8), SEEK_SET);
+    #if MY_LIST
+    pdr = repo->first;
+#else
+    pdr = repo->head;
+#endif
+    while (pdr) {
+        cnt++;
+        fwrite(pdr->data, pdr->size, sizeof(u8), fp);
+        sum_size += pdr->size;
+        pdr = pdr->next;
+    }
+    LOG("sum size : %d, %d", sum_size, cnt);
+    fseek(fp, 0, SEEK_SET);
+    fwrite(&sum_size, sizeof(u16), sizeof(u8), fp);
+    fwrite(&cnt, sizeof(u8), sizeof(u8), fp);
+    fclose(fp);
+}
+
+void pldm_monitor_create_static_pdr(pldm_pdr_t *repo)
+{
+    pldm_pdr_record_t *pdr = NULL;
+    FILE *fp = NULL;
+    fp = fopen("static_pdr_resource.bin", "r+");
+    u16 sum_size = 0;
+    u8 cnt = 0;
+    fread(&sum_size, sizeof(u16), sizeof(u8), fp);
+    fread(&cnt, sizeof(u8), sizeof(u8), fp);
+    LOG("sum size : %d, %d", sum_size, cnt);
+    fclose(fp);
+}
+
 void pldm_monitor_test(void)
 {
     pldm_monitor_init();
@@ -251,24 +290,31 @@ void pldm_monitor_test(void)
     start = clock();
     for (u8 i = 0; i < sizeof(pdr_init) / sizeof(pdr_init_func); i++) {
         pdr_init[i]();
-        // pldm_pde_get_used();
+        // pldm_pdr_get_used();
     }
-    g_pldm_monitor_info.terminus_mode = PLDM_ENABLE_ASYNC;
-    for (u32 j = 0; j < 5; j++) {
-        for (u8 i = 0; i < MAX_LAN_NUM; i++) {
-            pldm_link_handle(i, 1);
-            // pldm_pde_get_used();
-        }
-        // LOG("g_event_id : %d", g_event_id);
-        for (u8 i = 0; i < MAX_LAN_NUM; i++) {
-            pldm_link_handle(i, 0);
-            // pldm_pde_get_used();
-        }
-        // LOG("g_event_id : %d", g_event_id);
-    }
-    end = clock();
-    cost = end - start;
-    LOG("time diff %f",cost);   /* uint is ms */
+    LOG("\nORI REPO");
+    pldm_monitor_printf_repo(&(g_pldm_monitor_info.pldm_repo));
+    LOG("\nRD REPO");
+    pldm_monitor_gen_static_pdr_data(&(g_pldm_monitor_info.pldm_repo));
+    pdrs_pool_reinit();
+    pldm_monitor_create_static_pdr(&(g_pldm_monitor_info.pldm_repo));
+
+    // g_pldm_monitor_info.terminus_mode = PLDM_ENABLE_ASYNC;
+    // for (u32 j = 0; j < 5; j++) {
+    //     for (u8 i = 0; i < MAX_LAN_NUM; i++) {
+    //         pldm_link_handle(i, 1);
+    //         // pldm_pdr_get_used();
+    //     }
+    //     // LOG("g_event_id : %d", g_event_id);
+    //     for (u8 i = 0; i < MAX_LAN_NUM; i++) {
+    //         pldm_link_handle(i, 0);
+    //         // pldm_pdr_get_used();
+    //     }
+    //     // LOG("g_event_id : %d", g_event_id);
+    // }
+    // end = clock();
+    // cost = end - start;
+    // LOG("time diff %f",cost);   /* uint is ms */
 
     // pldm_monitor_printf_repo(&(g_pldm_monitor_info.pldm_repo));
 
@@ -280,23 +326,23 @@ void pldm_monitor_test(void)
     // }
     // pldm_pdr_delete(&(g_pldm_monitor_info.pldm_repo), 2);
 
-    pldm_pdr_delete(&(g_pldm_monitor_info.pldm_repo), 1);
-    pldm_pdr_delete(&(g_pldm_monitor_info.pldm_repo), 3);
-    pldm_pdr_delete(&(g_pldm_monitor_info.pldm_repo), 2);
-    pldm_pdr_delete(&(g_pldm_monitor_info.pldm_repo), 4400);
-    pldm_pdr_delete(&(g_pldm_monitor_info.pldm_repo), 4200);
-    pldm_pdr_delete(&(g_pldm_monitor_info.pldm_repo), 4300);
+    // pldm_pdr_delete(&(g_pldm_monitor_info.pldm_repo), 1);
+    // pldm_pdr_delete(&(g_pldm_monitor_info.pldm_repo), 3);
+    // pldm_pdr_delete(&(g_pldm_monitor_info.pldm_repo), 2);
+    // pldm_pdr_delete(&(g_pldm_monitor_info.pldm_repo), 4400);
+    // pldm_pdr_delete(&(g_pldm_monitor_info.pldm_repo), 4200);
+    // pldm_pdr_delete(&(g_pldm_monitor_info.pldm_repo), 4300);
 
     // pldm_monitor_printf_repo(&(g_pldm_monitor_info.pldm_repo));
 
-    pldm_pdr_is_exist(&(g_pldm_monitor_info.pldm_repo), 2);
-    pldm_pdr_is_exist(&(g_pldm_monitor_info.pldm_repo), 4400);
-    pldm_pdr_is_exist(&(g_pldm_monitor_info.pldm_repo), 4200);
-    pldm_pdr_is_exist(&(g_pldm_monitor_info.pldm_repo), 4300);
-    pldm_pdr_is_exist(&(g_pldm_monitor_info.pldm_repo), 1);
-    pldm_pdr_is_exist(&(g_pldm_monitor_info.pldm_repo), 3);
+    // pldm_pdr_is_exist(&(g_pldm_monitor_info.pldm_repo), 2);
+    // pldm_pdr_is_exist(&(g_pldm_monitor_info.pldm_repo), 4400);
+    // pldm_pdr_is_exist(&(g_pldm_monitor_info.pldm_repo), 4200);
+    // pldm_pdr_is_exist(&(g_pldm_monitor_info.pldm_repo), 4300);
+    // pldm_pdr_is_exist(&(g_pldm_monitor_info.pldm_repo), 1);
+    // pldm_pdr_is_exist(&(g_pldm_monitor_info.pldm_repo), 3);
 
-    pldm_monitor_printf_repo(&(g_pldm_monitor_info.pldm_repo));
+    // pldm_monitor_printf_repo(&(g_pldm_monitor_info.pldm_repo));
     // LOG("last : %d", g_pldm_monitor_info.pldm_repo.last->record_handle);
     // LOG("first : %d", g_pldm_monitor_info.pldm_repo.first->record_handle);
     // pldm_monitor_printf_event_rbuf(g_pldm_monitor_info.pldm_event_rbuf);

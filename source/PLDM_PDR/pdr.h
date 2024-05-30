@@ -482,8 +482,9 @@ typedef void (*pldm_monitor_handle)(u8 port);
 typedef int (*fill_common_sensor_pdr)(void *buf, u16 sensor_id, u16 entity_type, u8 data_size);
 
 void pdrs_pool_init(u32 *addr);
+void pdrs_pool_reinit(void);
 void *pdr_malloc(int size);
-void pldm_pde_get_used(void);
+u32 pldm_pdr_get_used(void);
 
 void pldm_pdr_init(pldm_pdr_t *repo);
 pldm_pdr_record_t *pldm_find_insert(pldm_pdr_t *repo, u32 record_handle);
