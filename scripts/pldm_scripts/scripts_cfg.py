@@ -1,6 +1,6 @@
 from my_module.my_module import *
 
-AMBER = 1
+AMBER = 0
 AMLITE = 0
 
 if AMBER:
