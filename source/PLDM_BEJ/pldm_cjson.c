@@ -226,18 +226,17 @@ void pldm_cjson_printf_root2(pldm_cjson_t *root)
 {
     pldm_cjson_t *tmp = root;
     while (tmp) {
-        LOG("seq : 0x%02x, fmt : 0x%02x, len : %3d, name : %s : ", tmp->sflv.seq, tmp->sflv.fmt, tmp->sflv.len, tmp->name);
+        if (tmp->name) LOG("seq : 0x%02x, fmt : 0x%02x, len : %d, name : %s : ", tmp->sflv.seq, tmp->sflv.fmt, tmp->sflv.len, tmp->name);
         pldm_cjson_printf_root2(tmp->child);
-        u8 fmt = tmp->sflv.fmt >> 4;
-        if (!tmp->child && tmp->sflv.val && fmt != BEJ_SET && fmt != BEJ_ARRAY) {
+        if (!tmp->child && tmp->sflv.val) {
             u8 fmt = tmp->sflv.fmt >> 4;
             for (u8 i = 0; i < tmp->sflv.len; i++) {
                 switch (fmt) {
                     case BEJ_INT:
-                        printf("%d ", (u8)(tmp->sflv.val[i]));
+                        printf("%d ", tmp->sflv.val[i]);
                         break;
                     case BEJ_ENUM:
-                        printf("0x%02x ", tmp->sflv.val[i]);
+                        printf("0x%x ", tmp->sflv.val[i]);
                         break;
                     default:
                         printf("%c", tmp->sflv.val[i]);
@@ -261,12 +260,12 @@ u16 pldm_cjson_cal_len_to_root2(pldm_cjson_t *root, u8 op_type)
         {
             tmp->sflv.len += 2;
         }
-        tmp->sflv.len += pldm_cjson_cal_len_to_root2(tmp->child, op_type);
+        if (fmt != BEJ_ENUM) tmp->sflv.len += pldm_cjson_cal_len_to_root2(tmp->child, op_type);
         if (op_type != HEAD) {
-            if (!(tmp->child) && fmt != BEJ_SET && fmt != BEJ_ARRAY) {
-                // if (tmp->name) LOG("seq : %#x, fmt : 0x%02x, len : %d, name : %s : ", tmp->sflv.seq, tmp->sflv.fmt, tmp->sflv.len, tmp->name);
+            if (fmt != BEJ_SET && fmt != BEJ_ARRAY) {
                 tmp->sflv.len = cm_strlen(tmp->sflv.val);
                 if (!(tmp->sflv.seq & 1) && fmt == BEJ_STR) tmp->sflv.len += 1;     /* major schema */
+                // if (tmp->name) LOG("seq : %#x, fmt : 0x%02x, len : %d, name : %s : ", tmp->sflv.seq, tmp->sflv.fmt, tmp->sflv.len, tmp->name);
             }
         }
         len += tmp->sflv.len + 5;      /* sfl len */
@@ -944,8 +943,9 @@ void pldm_cjson_update_etag(pldm_cjson_t *root)
     LOG("etag : %#x", etag);
 }
 
-void pldm_cjson_fill_comm_field_in_schema(pldm_cjson_t *root, u8 is_collection, u32 id, char *type, u8 resource_identify)
+static void pldm_cjson_fill_comm_field_in_schema(pldm_cjson_t *root, u8 is_collection, u32 id, char *type, u8 resource_identify)
 {
+    if (!root || !type || resource_identify > 14) return;
     char str[16];
     char uri[128];
     char *schema_uri_prefix = "https://redfish.dmtf.org/schemas/";
@@ -987,6 +987,7 @@ void pldm_cjson_fill_comm_field_in_schema(pldm_cjson_t *root, u8 is_collection, 
     } else {
         LOG("all state sensor uninitialized, the operation fails.");
     }
+    /* 0 : Critical, 1 : OK, 2 : Warning */
     char enum_str[3];
     enum_str[0] = 0x01;
     enum_str[1] = 0x01;
@@ -1018,10 +1019,20 @@ void pldm_cjson_fill_comm_field_in_schema(pldm_cjson_t *root, u8 is_collection, 
             pldm_cjson_add_item_to_obj(root, &sflv, key[i], val[i], cm_strlen(val[i]));
         } else {
             sflv.seq = 0;
-            sflv.fmt = BEJ_SET << 4;
-            pldm_cjson_t *tmp = pldm_cjson_add_item_to_obj(root, &sflv, key[i], "", 0);
-            sflv.fmt = BEJ_ENUM << 4;
-            pldm_cjson_add_item_to_obj(tmp, &sflv, "HealthRollup", val[i], 2);
+            pldm_bej_sflv_dat_t f_sflv;
+            f_sflv.fmt = BEJ_SET << 4;
+            f_sflv.seq = 0 << 1;
+            is_find = NULL;
+            pldm_cjson_find_name(root, key[i]);
+            if (is_find) {
+                sflv.fmt = BEJ_ENUM << 4;
+                pldm_cjson_add_item_to_obj(is_find, &sflv, "HealthRollup", val[i], 2);
+            } else {
+                sflv.fmt = BEJ_SET << 4;
+                pldm_cjson_t *tmp = pldm_cjson_add_item_to_obj(root, &sflv, key[i], "", 0);
+                sflv.fmt = BEJ_ENUM << 4;
+                pldm_cjson_add_item_to_obj(tmp, &sflv, "HealthRollup", val[i], 2);
+            }
         }
     }
 }
@@ -1029,7 +1040,7 @@ void pldm_cjson_fill_comm_field_in_schema(pldm_cjson_t *root, u8 is_collection, 
 /* recursion */
 static pldm_cjson_schema_fmt_t *pldm_cjson_create_schema_recursion(pldm_cjson_t *obj, pldm_cjson_schema_fmt_t *fmt)
 {
-    if (!obj || !fmt)  return NULL;
+    if (!obj || !fmt) return NULL;
     pldm_bej_sflv_dat_t sflv;
     pldm_cjson_t *tmp = obj;
     pldm_cjson_t *tmp1 = NULL;
@@ -1038,17 +1049,20 @@ static pldm_cjson_schema_fmt_t *pldm_cjson_create_schema_recursion(pldm_cjson_t 
     sflv.seq = buf[0].schema_type;
     sflv.fmt = buf[0].fmt << 4;
     // LOG("fmt : %d, cnt : %d\n", buf[0].fmt, buf[0].child_cnt);
-    if (buf[0].fmt == BEJ_SET || buf[0].fmt == BEJ_ARRAY) {
+    if (buf[0].fmt == BEJ_SET || buf[0].fmt == BEJ_ARRAY || buf[0].fmt == BEJ_ENUM) {
         cnt = buf[0].child_cnt;
         // LOG("name : %s\n", tmp->name);
-        tmp1 = pldm_cjson_add_item_to_obj(tmp, &sflv, buf->key, "", 0);
+        if (buf[0].fmt == BEJ_ENUM)
+            tmp1 = pldm_cjson_add_item_to_obj(tmp, &sflv, buf->key, buf->val, cm_strlen(buf->val));
+        else
+            tmp1 = pldm_cjson_add_item_to_obj(tmp, &sflv, buf->key, "", 0);
         buf += 1;
     }
     for (u8 i = 0; i < cnt; i++) {
         buf = pldm_cjson_create_schema_recursion(tmp1, buf);
         // LOG("cnt %d\n", len);
     }
-    if (!cnt && BEJ_SET != sflv.fmt >> 4 && BEJ_ARRAY != sflv.fmt >> 4) {
+    if (!cnt && BEJ_SET != sflv.fmt >> 4 && BEJ_ARRAY != sflv.fmt >> 4 && BEJ_ENUM != sflv.fmt >> 4) {
         pldm_cjson_add_item_to_obj(tmp, &sflv, buf->key, buf->val, cm_strlen(buf->val));
         buf += 1;
     }
@@ -1159,18 +1173,18 @@ static pldm_cjson_t *pldm_cjson_create_port_v1_3_1_schema(u32 resource_id)
                         {0, BEJ_STR, 0, "title", "#Port.Reset"},
                 {0, BEJ_REAL, 0, "CurrentSpeedGbps", (char [3]){0x01, 0x20, 0x00}},
                 {0, BEJ_SET, 3, "Ethernet", ""},
-                    {0, BEJ_ENUM, 0, "FlowControlConfiguration", (char [3]){0x01, 0x01, 0x00}},
-                        // {0, BEJ_STR, 0, "TX", ""},
-                        // {0, BEJ_STR, 0, "RX", ""},
-                        // {0, BEJ_STR, 0, "TX_RX", ""},
-                    {0, BEJ_ENUM, 0, "FlowControlStatus", (char [3]){0x01, 0x01, 0x00}},
-                        // {0, BEJ_STR, 0, "TX", ""},
-                        // {0, BEJ_STR, 0, "RX", ""},
-                        // {0, BEJ_STR, 0, "TX_RX", ""},
+                    {0, BEJ_ENUM, 3, "FlowControlConfiguration", (char [3]){0x01, 0x01, 0x00}},
+                        {0, BEJ_STR, 0, "TX", ""},
+                        {0, BEJ_STR, 0, "RX", ""},
+                        {0, BEJ_STR, 0, "TX_RX", ""},
+                    {0, BEJ_ENUM, 3, "FlowControlStatus", (char [3]){0x01, 0x01, 0x00}},
+                        {0, BEJ_STR, 0, "TX", ""},
+                        {0, BEJ_STR, 0, "RX", ""},
+                        {0, BEJ_STR, 0, "TX_RX", ""},
                     {0, BEJ_ARRAY, 1, "SupportedEthernetCapabilities", ""},
-                        {0, BEJ_ENUM, 0, "", (char [3]){0x01, 0x01, 0x00}},
-                            // {0, BEJ_STR, 0, "WakeOnLAN", ""},
-                            // {0, BEJ_STR, 0, "EEE", ""},
+                        {0, BEJ_ENUM, 2, "", (char [3]){0x01, 0x01, 0x00}},
+                            {0, BEJ_STR, 0, "WakeOnLAN", ""},
+                            {0, BEJ_STR, 0, "EEE", ""},
                 {0, BEJ_STR, 0, "Id", "Resource offset"},
                 {0, BEJ_BOOLEAN, 0, "InterfaceEnabled", "t"},
                 {0, BEJ_ARRAY, 1, "LinkConfiguration", ""},
@@ -1180,29 +1194,29 @@ static pldm_cjson_t *pldm_cjson_create_port_v1_3_1_schema(u32 resource_id)
                         {0, BEJ_ARRAY, 2, "CapableLinkSpeedGbps", (char [3]){0x01, 0x20, 0x00}},
                             {0, BEJ_REAL, 0, "", "Gbs"},
                             {0, BEJ_REAL, 0, "", "Gbs"},
-                {0, BEJ_ENUM, 0, "LinkNetworkTechnology", (char [3]){0x01, 'U', 0x00}},
-                    // {0, BEJ_STR, 0, "Ethernet", ""},
-                    // {0, BEJ_STR, 0, "InfiniBand", ""},
-                    // {0, BEJ_STR, 0, "FibreChannel", ""},
-                    // {0, BEJ_STR, 0, "GenZ", ""},
-                {0, BEJ_ENUM, 0, "LinkState", (char [3]){0x01, 'U', 0x00}},
-                    // {0, BEJ_STR, 0, "Enabled", ""},
-                    // {0, BEJ_STR, 0, "Disabled", ""},
-                {0, BEJ_ENUM, 0, "LinkStatus", (char [3]){0x01, 0x01, 0x00}},
-                    // {0, BEJ_STR, 0, "LinkUp", ""},
-                    // {0, BEJ_STR, 0, "Starting", ""},
-                    // {0, BEJ_STR, 0, "Training", ""},
-                    // {0, BEJ_STR, 0, "LinkDown", ""},
-                    // {0, BEJ_STR, 0, "NoLink", ""},
+                {0, BEJ_ENUM, 4, "LinkNetworkTechnology", (char [3]){0x01, 'U', 0x00}},
+                    {0, BEJ_STR, 0, "Ethernet", ""},
+                    {0, BEJ_STR, 0, "InfiniBand", ""},
+                    {0, BEJ_STR, 0, "FibreChannel", ""},
+                    {0, BEJ_STR, 0, "GenZ", ""},
+                {0, BEJ_ENUM, 2, "LinkState", (char [3]){0x01, 'U', 0x00}},
+                    {0, BEJ_STR, 0, "Enabled", ""},
+                    {0, BEJ_STR, 0, "Disabled", ""},
+                {0, BEJ_ENUM, 5, "LinkStatus", (char [3]){0x01, 0x01, 0x00}},
+                    {0, BEJ_STR, 0, "LinkUp", ""},
+                    {0, BEJ_STR, 0, "Starting", ""},
+                    {0, BEJ_STR, 0, "Training", ""},
+                    {0, BEJ_STR, 0, "LinkDown", ""},
+                    {0, BEJ_STR, 0, "NoLink", ""},
                 {0, BEJ_INT, 0, "LinkTransitionIndicator", (char [3]){0x01, 0x01, 0x00}},
                 {0, BEJ_INT, 0, "MaxFrameSize", "?"},
                 {0, BEJ_REAL, 0, "MaxSpeedGbps", (char [3]){0x01, 50, 0x00}},
                 {0, BEJ_STR, 0, "Name", "AM_Port"},
                 {0, BEJ_SET, 1, "Status", ""},
-                    {0, BEJ_ENUM, 0, "State", (char [3]){0x01, 0x01, 0x00}},
-                    // {0, BEJ_STR, 0, "Absent", ""},
-                    // {0, BEJ_STR, 0, "Enabled", ""},
-                    // {0, BEJ_STR, 0, "Disabled", ""},
+                    {0, BEJ_ENUM, 3, "State", (char [3]){0x01, 0x01, 0x00}},
+                        {0, BEJ_STR, 0, "Absent", ""},
+                        {0, BEJ_STR, 0, "Enabled", ""},
+                        {0, BEJ_STR, 0, "Disabled", ""},
     };
     pldm_cjson_create_schema_recursion(root, fmt);
     pldm_cjson_t *new_root = NULL;
@@ -1225,7 +1239,7 @@ static pldm_cjson_t *pldm_cjson_create_portcollection_schema(u32 resource_id)
         {0, BEJ_SET, 1, "", ""},
             {0, BEJ_SET, 3, "PortCollection", ""},
                 {0, BEJ_STR, 0, "Name", "Ports"},
-                {1, BEJ_INT, 0, "Members@odata.count", (char [2]){MAX_LAN_NUM, 0x00}},
+                {1, BEJ_INT, 0, "@odata.count", (char [2]){MAX_LAN_NUM, 0x00}},
                 {0, BEJ_ARRAY, 2, "Members", ""},
                     {0, BEJ_SET, 1, "", ""},
                         {1, BEJ_STR, 0, "@odata.id", "%I100"},
@@ -1262,12 +1276,12 @@ static pldm_cjson_t *pldm_cjson_create_networkinterface_v1_2_0_schema(u32 resour
                 {0, BEJ_SET, 0, "Ports", ""},
                     // {0, BEJ_STR, 0, "", (char [2]){PLDM_BASE_PORTS_RESOURCE_ID, 0x00}},
                 {0, BEJ_SET, 1, "Status", ""},
-                    {0, BEJ_ENUM, 0, "State", (char [3]){0x01, 0x01, 0x00}},
-                        // {0, BEJ_STR, 0, "StandbyOffline", ""},
-                        // {0, BEJ_STR, 0, "Starting", ""},
-                        // {0, BEJ_STR, 0, "Updating", ""},
-                        // {0, BEJ_STR, 0, "Enabled", ""},
-                        // {0, BEJ_STR, 0, "Disabled", ""},
+                    {0, BEJ_ENUM, 5, "State", (char [3]){0x01, 0x01, 0x00}},
+                        {0, BEJ_STR, 0, "StandbyOffline", ""},
+                        {0, BEJ_STR, 0, "Starting", ""},
+                        {0, BEJ_STR, 0, "Updating", ""},
+                        {0, BEJ_STR, 0, "Enabled", ""},
+                        {0, BEJ_STR, 0, "Disabled", ""},
                 {0, BEJ_STR, 0, "Id", "%I5"}                        /* PLDM_BASE_NETWORK_INTERFACE_RESOURCE_ID */
     };
     pldm_cjson_create_schema_recursion(root, fmt);
@@ -1277,73 +1291,6 @@ static pldm_cjson_t *pldm_cjson_create_networkinterface_v1_2_0_schema(u32 resour
     // pldm_cjson_delete_node(root);
     root = NULL;
     pldm_cjson_fill_comm_field_in_schema(new_root->child, 0, PLDM_BASE_NETWORK_INTERFACE_RESOURCE_ID, "NetworkInterface.1_2_1.NetworkInterface", NETWORK_INTERFACE);
-    // pldm_cjson_cal_sf_to_root(new_root->child, anno_dict, dict);
-    return new_root->child;
-}
-
-pldm_cjson_t *pldm_cjson_create_networkadapter_v1_5_0_schema_update(u32 resource_id)
-{
-    pldm_cjson_t *root = pldm_cjson_create_obj();
-    if (!root) return NULL;
-    pldm_cjson_schema_fmt_t fmt[] = {
-        {0, BEJ_SET, 1, "", ""},
-            {0, BEJ_SET, 2, "NetworkAdapter", ""},
-                {0, BEJ_SET, 1, "Actions", ""},
-                    {0, BEJ_SET, 1, "#NetworkAdapter.ResetSettingsToDefault", ""},
-                        {0, BEJ_STR, 0, "target", "?"},
-                {0, BEJ_ARRAY, 1, "Controllers", ""},
-                    {0, BEJ_SET, 4, "", ""},
-                        {0, BEJ_SET, 4, "ControllerCapabilities", ""},
-                            {0, BEJ_SET, 1, "DataCenterBridging", ""},
-                                {0, BEJ_BOOLEAN, 0, "Capable", "t"},
-                            {0, BEJ_INT, 0, "NetworkDeviceFunctionCount", (char [2]){MAX_LAN_NUM, 0x00}},
-                            {0, BEJ_INT, 0, "NetworkPortCount", (char [2]){MAX_LAN_NUM, 0x00}},
-                            {0, BEJ_SET, 2, "VirtualizationOffload", ""},
-                                {0, BEJ_SET, 1, "SRIOV", ""},
-                                    {0, BEJ_BOOLEAN, 0, "SRIOVVEPACapable", "t"},
-                                {0, BEJ_SET, 3, "VirtualFunction", ""},
-                                    {0, BEJ_INT, 0, "DeviceMaxCount", (char [3]){0x00, 0x1, 0x00}},
-                                    {0, BEJ_INT, 0, "MinAssignmentGroupSize", (char [2]){0x01, 0x00}},
-                                    {0, BEJ_INT, 0, "NetworkPortMaxCount", (char [3]){0x00, 0x1, 0x00}},
-                        {0, BEJ_STR, 0, "FirmwarePackageVersion", "1.1.1?"},
-                        {0, BEJ_SET, 1, "Links", ""},
-                            {0, BEJ_ARRAY, 1, "NetworkDeviceFunctions", ""},
-                                {0, BEJ_SET, 0, "", (char [2]){PLDM_BASE_NETWORK_DEV_FUNCS_RESOURCE_ID, 0x00}},
-                        {0, BEJ_SET, 4, "PCIeInterface", ""},
-                            {0, BEJ_INT, 0, "LanesInUse", "?"},
-                            {0, BEJ_INT, 0, "MaxLanes", ""},
-                            {0, BEJ_ENUM, 0, "MaxPCIeType", (char [3]){0x01, 0x01, 0x00}},  /* Maximum Link Speed? */
-                            {0, BEJ_ENUM, 0, "PCIeType", (char [3]){0x01, 0x01, 0x00}},
-                                // {0, BEJ_STR, 0, "Gen1", ""},
-                                // {0, BEJ_STR, 0, "Gen2", ""},
-                                // {0, BEJ_STR, 0, "Gen3", ""},
-                                // {0, BEJ_STR, 0, "Gen4", ""},
-                // {0, BEJ_STR, 0, "Manufacturer", "WXKJ"},
-                // {0, BEJ_STR, 0, "Model", "AMBER"},
-                // {0, BEJ_STR, 0, "Name", "AM Network Adapter"},
-                // {0, BEJ_SET, 0, "NetworkDeviceFunctions", "NetworkDeviceFunctionCollection"},
-                // {0, BEJ_SET, 0, "NetworkPorts", "NetworkPortCollection"},
-                // {0, BEJ_INT, 0, "PartNumber", "Part Number (PN) is 11 byte value maintained in VPD.?"},
-                // {0, BEJ_STR, 0, "SKU", "AMBER"},
-                // {0, BEJ_INT, 0, "SerialNumber", "Read from GLPCI_SERH/L.?"},
-                // {0, BEJ_SET, 1, "Status", ""},
-                //     {0, BEJ_ENUM, 5, "State", (char [3]){0x01, 0x01, 0x00}},
-                //         // {0, BEJ_STR, 0, "StandbyOffline", ""},
-                //         // {0, BEJ_STR, 0, "Starting", ""},
-                //         // {0, BEJ_STR, 0, "Updating", ""},
-                //         // {0, BEJ_STR, 0, "Enabled", ""},
-                //         // {0, BEJ_STR, 0, "Disabled", ""},
-                // {0, BEJ_STR, 0, "Id", "%I1"},                   /* PLDM_BASE_NETWORK_ADAPTER_RESOURCE_ID */
-                // {0, BEJ_ARRAY, 1, "ControllerLinks", ""},
-                //     {1, BEJ_INT, 0, "PCIeDevices@odata.count", (char [2]){MAX_LAN_NUM, 0x00}},
-    };
-    pldm_cjson_create_schema_recursion(root, fmt);
-    pldm_cjson_t *new_root = NULL;
-    new_root = root->child;
-    root->child = NULL;
-    // pldm_cjson_delete_node(root);
-    root = NULL;
-    pldm_cjson_fill_comm_field_in_schema(new_root->child, 0, PLDM_BASE_NETWORK_ADAPTER_RESOURCE_ID, "NetworkAdapter.1_5_0.NetworkAdapter", NETWORK_ADAPTER);
     // pldm_cjson_cal_sf_to_root(new_root->child, anno_dict, dict);
     return new_root->child;
 }
@@ -1379,13 +1326,17 @@ static pldm_cjson_t *pldm_cjson_create_networkadapter_v1_5_0_schema(u32 resource
                                 {0, BEJ_SET, 0, "", (char [2]){PLDM_BASE_NETWORK_DEV_FUNCS_RESOURCE_ID, 0x00}},
                         {0, BEJ_SET, 4, "PCIeInterface", ""},
                             {0, BEJ_INT, 0, "LanesInUse", "?"},
-                            {0, BEJ_INT, 0, "MaxLanes", ""},
-                            {0, BEJ_ENUM, 0, "MaxPCIeType", (char [3]){0x01, 0x01, 0x00}},  /* Maximum Link Speed? */
-                            {0, BEJ_ENUM, 0, "PCIeType", (char [3]){0x01, 0x01, 0x00}},
-                                // {0, BEJ_STR, 0, "Gen1", ""},
-                                // {0, BEJ_STR, 0, "Gen2", ""},
-                                // {0, BEJ_STR, 0, "Gen3", ""},
-                                // {0, BEJ_STR, 0, "Gen4", ""},
+                            {0, BEJ_INT, 0, "MaxLanes", "?"},
+                            {0, BEJ_ENUM, 4, "MaxPCIeType", (char [3]){0x01, 0x01, 0x00}},  /* Maximum Link Speed? */
+                                {0, BEJ_STR, 0, "Gen1", ""},
+                                {0, BEJ_STR, 0, "Gen2", ""},
+                                {0, BEJ_STR, 0, "Gen3", ""},
+                                {0, BEJ_STR, 0, "Gen4", ""},
+                            {0, BEJ_ENUM, 4, "PCIeType", (char [3]){0x01, 0x01, 0x00}},
+                                {0, BEJ_STR, 0, "Gen1", ""},
+                                {0, BEJ_STR, 0, "Gen2", ""},
+                                {0, BEJ_STR, 0, "Gen3", ""},
+                                {0, BEJ_STR, 0, "Gen4", ""},
                 {0, BEJ_STR, 0, "Manufacturer", "WXKJ"},
                 {0, BEJ_STR, 0, "Model", "AMBER"},
                 {0, BEJ_STR, 0, "Name", "AM Network Adapter"},
@@ -1396,14 +1347,14 @@ static pldm_cjson_t *pldm_cjson_create_networkadapter_v1_5_0_schema(u32 resource
                 {0, BEJ_STR, 0, "SerialNumber", "Read from GLPCI_SERH/L.?"},
                 {0, BEJ_SET, 1, "Status", ""},
                     {0, BEJ_ENUM, 5, "State", (char [3]){0x01, 0x01, 0x00}},
-                        // {0, BEJ_STR, 0, "StandbyOffline", ""},
-                        // {0, BEJ_STR, 0, "Starting", ""},
-                        // {0, BEJ_STR, 0, "Updating", ""},
-                        // {0, BEJ_STR, 0, "Enabled", ""},
-                        // {0, BEJ_STR, 0, "Disabled", ""},
+                        {0, BEJ_STR, 0, "StandbyOffline", ""},
+                        {0, BEJ_STR, 0, "Starting", ""},
+                        {0, BEJ_STR, 0, "Updating", ""},
+                        {0, BEJ_STR, 0, "Enabled", ""},
+                        {0, BEJ_STR, 0, "Disabled", ""},
                 {0, BEJ_STR, 0, "Id", "%I1"},                   /* PLDM_BASE_NETWORK_ADAPTER_RESOURCE_ID */
                 // {0, BEJ_ARRAY, 1, "ControllerLinks", ""},
-                //     {1, BEJ_INT, 0, "PCIeDevices@odata.count", (char [2]){MAX_LAN_NUM, 0x00}},
+                //     {1, BEJ_INT, 0, "@odata.count", (char [2]){MAX_LAN_NUM, 0x00}},
     };
     pldm_cjson_create_schema_recursion(root, fmt);
     pldm_cjson_t *new_root = NULL;
@@ -1429,13 +1380,13 @@ static pldm_cjson_t *pldm_cjson_create_networkdevicefunction_v1_3_3_schema(u32 r
                     {0, BEJ_SET, 0, "", ""},
                         // {0, BEJ_STR, 0, "", (char [2]){PLDM_BASE_PORT_RESOURCE_ID, 0x00}},
                         // {0, BEJ_STR, 0, "", (char [2]){PLDM_BASE_PORT_RESOURCE_ID + 1, 0x00}},
-                {1, BEJ_INT, 0, "AssignablePhysicalPorts@odata.count", (char [2]){MAX_LAN_NUM, 0x00}},
-                {0, BEJ_ENUM, 0, "BootMode", (char [3]){0x01, 0x01, 0x00}},
-                    // {0, BEJ_STR, 0, "Disabled", ""},
-                    // {0, BEJ_STR, 0, "PXE", ""},
-                    // {0, BEJ_STR, 0, "iSCSI", ""},
-                    // {0, BEJ_STR, 0, "FibreChannel", ""},
-                    // {0, BEJ_STR, 0, "FibreChannelOverEthernet", ""},
+                {1, BEJ_INT, 0, "@odata.count", (char [2]){MAX_LAN_NUM, 0x00}},
+                {0, BEJ_ENUM, 5, "BootMode", (char [3]){0x01, 0x01, 0x00}},
+                    {0, BEJ_STR, 0, "Disabled", ""},
+                    {0, BEJ_STR, 0, "PXE", ""},
+                    {0, BEJ_STR, 0, "iSCSI", ""},
+                    {0, BEJ_STR, 0, "FibreChannel", ""},
+                    {0, BEJ_STR, 0, "FibreChannelOverEthernet", ""},
                 {0, BEJ_BOOLEAN, 0, "DeviceEnabled", "t"},
                 {0, BEJ_SET, 5, "Ethernet", ""},
                     {0, BEJ_STR, 0, "MACAddress", "11:22:33:44:55:66"},
@@ -1446,34 +1397,34 @@ static pldm_cjson_t *pldm_cjson_create_networkdevicefunction_v1_3_3_schema(u32 r
                 {0, BEJ_INT, 0, "MaxVirtualFunctions", ""},
                 {0, BEJ_STR, 0, "Name", "NetworkDeviceFunction Current Settings?"},
                 {0, BEJ_ARRAY, 1, "NetDevFuncCapabilities", ""},
-                    {0, BEJ_ENUM, 0, "", (char [3]){0x01, 0x01, 0x00}},
-                        // {0, BEJ_STR, 0, "Disabled", ""},
-                        // {0, BEJ_STR, 0, "Ethernet", ""},
-                        // {0, BEJ_STR, 0, "FibreChannel", ""},
-                        // {0, BEJ_STR, 0, "iSCSI", ""},
-                        // {0, BEJ_STR, 0, "FibreChannelOverEthernet", ""},
-                {0, BEJ_ENUM, 0, "NetDevFuncType", (char [3]){0x01, 0x01, 0x00}},
-                    // {0, BEJ_STR, 0, "Disabled", ""},
-                    // {0, BEJ_STR, 0, "Ethernet", ""},
-                    // {0, BEJ_STR, 0, "FibreChannel", ""},
-                    // {0, BEJ_STR, 0, "iSCSI", ""},
-                    // {0, BEJ_STR, 0, "FibreChannelOverEthernet", ""},
+                    {0, BEJ_ENUM, 5, "", (char [3]){0x01, 0x01, 0x00}},
+                        {0, BEJ_STR, 0, "Disabled", ""},
+                        {0, BEJ_STR, 0, "Ethernet", ""},
+                        {0, BEJ_STR, 0, "FibreChannel", ""},
+                        {0, BEJ_STR, 0, "iSCSI", ""},
+                        {0, BEJ_STR, 0, "FibreChannelOverEthernet", ""},
+                {0, BEJ_ENUM, 5, "NetDevFuncType", (char [3]){0x01, 0x01, 0x00}},
+                    {0, BEJ_STR, 0, "Disabled", ""},
+                    {0, BEJ_STR, 0, "Ethernet", ""},
+                    {0, BEJ_STR, 0, "FibreChannel", ""},
+                    {0, BEJ_STR, 0, "iSCSI", ""},
+                    {0, BEJ_STR, 0, "FibreChannelOverEthernet", ""},
                 {0, BEJ_SET, 1, "Status", ""},
-                    {0, BEJ_ENUM, 0, "State", (char [3]){0x01, 0x01, 0x00}},
-                        // {0, BEJ_STR, 0, "StandbyOffline", ""},
-                        // {0, BEJ_STR, 0, "Starting", ""},
-                        // {0, BEJ_STR, 0, "Updating", ""},
-                        // {0, BEJ_STR, 0, "Enabled", ""},
-                        // {0, BEJ_STR, 0, "Disabled", ""},
+                    {0, BEJ_ENUM, 5, "State", (char [3]){0x01, 0x01, 0x00}},
+                        {0, BEJ_STR, 0, "StandbyOffline", ""},
+                        {0, BEJ_STR, 0, "Starting", ""},
+                        {0, BEJ_STR, 0, "Updating", ""},
+                        {0, BEJ_STR, 0, "Enabled", ""},
+                        {0, BEJ_STR, 0, "Disabled", ""},
                 {0, BEJ_BOOLEAN, 0, "VirtualFunctionsEnabled", "f"},
                 {1, BEJ_SET, 2, "@Redfish.Settings", ""},
                     {1, BEJ_SET, 0, "SettingsObject", "Points to the next setting = Resource ID +10"},
                     {1, BEJ_ARRAY, 1, "SupportedApplyTimes", ""},
-                        {1, BEJ_ENUM, 0, "", (char [3]){0x01, 0x03, 0x00}},
-                        // {0, BEJ_STR, 0, "AtMaintenanceWindowStart", ""},
-                        // {0, BEJ_STR, 0, "Immediate", ""},
-                        // {0, BEJ_STR, 0, "InMaintenanceWindowOnReset", ""},
-                        // {0, BEJ_STR, 0, "OnReset", ""},
+                        {1, BEJ_ENUM, 4, "", (char [3]){0x01, 0x03, 0x00}},
+                            {1, BEJ_STR, 0, "AtMaintenanceWindowStart", ""},
+                            {1, BEJ_STR, 0, "Immediate", ""},
+                            {1, BEJ_STR, 0, "InMaintenanceWindowOnReset", ""},
+                            {1, BEJ_STR, 0, "OnReset", ""},
                 {0, BEJ_STR, 0, "Id", "Resource Offset"},
                 {0, BEJ_SET, 2, "Links", ""},
                     {0, BEJ_SET, 0, "PCIeFunction", ""},
@@ -1502,7 +1453,7 @@ static pldm_cjson_t *pldm_cjson_create_networkdevicefunctioncollection_schema(u3
         {0, BEJ_SET, 1, "", ""},
             {0, BEJ_SET, 3, "NetworkDeviceFunctionCollection", ""},
                 {0, BEJ_STR, 0, "Name", "NetworkDeviceFunctions"},
-                {1, BEJ_INT, 0, "Members@odata.count", (char [2]){MAX_LAN_NUM, 0x00}},
+                {1, BEJ_INT, 0, "@odata.count", (char [2]){MAX_LAN_NUM, 0x00}},
                 {0, BEJ_ARRAY, 2, "Members", ""},
                     {0, BEJ_SET, 1, "", ""},
                         {1, BEJ_STR, 0, "@odata.id", "%I200"},
@@ -1530,10 +1481,10 @@ static pldm_cjson_t *pldm_cjson_create_pciedevice_v1_4_0_schema(u32 resource_id)
         {0, BEJ_SET, 1, "", ""},
             {0, BEJ_SET, 13, "PCIeDevice", ""},
                 {0, BEJ_STR, 0, "AssetTag", ""},
-                {0, BEJ_ENUM, 0, "DeviceType", (char [3]){0x01, 0x01, 0x00}},  /* Config space of function 0 - Header type register */
-                    // {0, BEJ_STR, 0, "SingleFunction", ""},
-                    // {0, BEJ_STR, 0, "MultiFunction", ""},
-                    // {0, BEJ_STR, 0, "Simulated", ""},
+                {0, BEJ_ENUM, 3, "DeviceType", (char [3]){0x01, 0x01, 0x00}},  /* Config space of function 0 - Header type register */
+                    {0, BEJ_STR, 0, "SingleFunction", ""},
+                    {0, BEJ_STR, 0, "MultiFunction", ""},
+                    {0, BEJ_STR, 0, "Simulated", ""},
                 {0, BEJ_STR, 0, "FirmwareVersion", "1.1.1?"},
                 {0, BEJ_STR, 0, "Manufacturer", "WXKJ"},
                 {0, BEJ_STR, 0, "Model", "AMBER"},
@@ -1541,28 +1492,28 @@ static pldm_cjson_t *pldm_cjson_create_pciedevice_v1_4_0_schema(u32 resource_id)
                 {0, BEJ_SET, 4, "PCIeInterface", ""},
                     {0, BEJ_INT, 0, "LanesInUse", ""},                         /* Negotiated Link Width */
                     {0, BEJ_INT, 0, "MaxLanes", ""},                           /* Maximum Link Width */
-                    {0, BEJ_ENUM, 0, "MaxPCIeType", (char [3]){0x01, 0x01, 0x00}}, /* Maximum Link Speed */
-                        // {0, BEJ_STR, 0, "Gen1", ""},
-                        // {0, BEJ_STR, 0, "Gen2", ""},
-                        // {0, BEJ_STR, 0, "Gen3", ""},
-                        // {0, BEJ_STR, 0, "Gen4", ""},
-                        // {0, BEJ_STR, 0, "Gen5", ""},
-                    {0, BEJ_ENUM, 0, "PCIeType", (char [3]){0x01, 0x01, 0x00}},    /* Current Link Speed */
-                        // {0, BEJ_STR, 0, "Gen1", ""},
-                        // {0, BEJ_STR, 0, "Gen2", ""},
-                        // {0, BEJ_STR, 0, "Gen3", ""},
-                        // {0, BEJ_STR, 0, "Gen4", ""},
-                        // {0, BEJ_STR, 0, "Gen5", ""},
+                    {0, BEJ_ENUM, 5, "MaxPCIeType", (char [3]){0x01, 0x01, 0x00}}, /* Maximum Link Speed */
+                        {0, BEJ_STR, 0, "Gen1", ""},
+                        {0, BEJ_STR, 0, "Gen2", ""},
+                        {0, BEJ_STR, 0, "Gen3", ""},
+                        {0, BEJ_STR, 0, "Gen4", ""},
+                        {0, BEJ_STR, 0, "Gen5", ""},
+                    {0, BEJ_ENUM, 5, "PCIeType", (char [3]){0x01, 0x01, 0x00}},    /* Current Link Speed */
+                        {0, BEJ_STR, 0, "Gen1", ""},
+                        {0, BEJ_STR, 0, "Gen2", ""},
+                        {0, BEJ_STR, 0, "Gen3", ""},
+                        {0, BEJ_STR, 0, "Gen4", ""},
+                        {0, BEJ_STR, 0, "Gen5", ""},
                 {0, BEJ_STR, 0, "PartNumber", ""},
                 {0, BEJ_STR, 0, "SKU", "AMBER"},
                 {0, BEJ_STR, 0, "SerialNumber", "11:22:33:FF:FF:44:55:66"},
                 {0, BEJ_SET, 1, "Status", ""},
-                    {0, BEJ_ENUM, 0, "State", (char [3]){0x01, 0x01, 0x00}},
-                        // {0, BEJ_STR, 0, "StandbyOffline", ""},
-                        // {0, BEJ_STR, 0, "Starting", ""},
-                        // {0, BEJ_STR, 0, "Updating", ""},
-                        // {0, BEJ_STR, 0, "Enabled", ""},
-                        // {0, BEJ_STR, 0, "Disabled", ""},
+                    {0, BEJ_ENUM, 5, "State", (char [3]){0x01, 0x01, 0x00}},
+                        {0, BEJ_STR, 0, "StandbyOffline", ""},
+                        {0, BEJ_STR, 0, "Starting", ""},
+                        {0, BEJ_STR, 0, "Updating", ""},
+                        {0, BEJ_STR, 0, "Enabled", ""},
+                        {0, BEJ_STR, 0, "Disabled", ""},
                 {0, BEJ_SET, 0, "PCIeFunctions", ""},
                     // {0, BEJ_STR, 0, "", (char [2]){PLDM_BASE_PCIE_FUNCS_RESOURCE_ID, 0x00}},
                 {0, BEJ_STR, 0, "Id", ""},
@@ -1588,7 +1539,7 @@ static pldm_cjson_t *pldm_cjson_create_pciefunctioncollection_schema(u32 resourc
         {0, BEJ_SET, 1, "", ""},
             {0, BEJ_SET, 3, "PCIeDeviceCollection", ""},
                 {0, BEJ_STR, 0, "Name", "PCIeFunctions"},
-                {1, BEJ_INT, 0, "Members@odata.count", (char [2]){MAX_LAN_NUM, 0x00}},
+                {1, BEJ_INT, 0, "@odata.count", (char [2]){MAX_LAN_NUM, 0x00}},
                 {0, BEJ_ARRAY, 2, "Members", ""},
                     {0, BEJ_SET, 1, "", ""},
                         {1, BEJ_STR, 0, "@odata.id", "%I300"},
@@ -1616,21 +1567,21 @@ static pldm_cjson_t *pldm_cjson_create_pciefunction_v1_2_3_schema(u32 resource_i
         {0, BEJ_SET, 1, "", ""},
             {0, BEJ_SET, 11, "PCIeFunction", ""},
                 {0, BEJ_STR, 0, "ClassCode", "0x020000"},                  /* EthernetController */
-                {0, BEJ_ENUM, 0, "DeviceClass", (char [3]){0x01, 'U', 0x00}},
-                    // {0, BEJ_STR, 0, "NetworkController", ""},
+                {0, BEJ_ENUM, 1, "DeviceClass", (char [3]){0x01, 'U', 0x00}},
+                    {0, BEJ_STR, 0, "NetworkController", ""},
                 {0, BEJ_STR, 0, "DeviceId", ""},
-                {0, BEJ_ENUM, 0, "FunctionType", (char [3]){0x01, 'U', 0x00}},
-                    // {0, BEJ_STR, 0, "Physical", ""},
-                    // {0, BEJ_STR, 0, "Virtual", ""},
+                {0, BEJ_ENUM, 2, "FunctionType", (char [3]){0x01, 'U', 0x00}},
+                    {0, BEJ_STR, 0, "Physical", ""},
+                    {0, BEJ_STR, 0, "Virtual", ""},
                 {0, BEJ_STR, 0, "Name", "AMBER"},
                 {0, BEJ_STR, 0, "RevisionId", ""},                         /* GLPCI_DREVID XOR GLPCI_REVID */
                 {0, BEJ_SET, 1, "Status", ""},
-                    {0, BEJ_ENUM, 0, "State", (char [3]){0x01, 0x01, 0x00}},
-                        // {0, BEJ_STR, 0, "StandbyOffline", ""},
-                        // {0, BEJ_STR, 0, "Starting", ""},
-                        // {0, BEJ_STR, 0, "Updating", ""},
-                        // {0, BEJ_STR, 0, "Enabled", ""},
-                        // {0, BEJ_STR, 0, "Disabled", ""},
+                    {0, BEJ_ENUM, 5, "State", (char [3]){0x01, 0x01, 0x00}},
+                        {0, BEJ_STR, 0, "StandbyOffline", ""},
+                        {0, BEJ_STR, 0, "Starting", ""},
+                        {0, BEJ_STR, 0, "Updating", ""},
+                        {0, BEJ_STR, 0, "Enabled", ""},
+                        {0, BEJ_STR, 0, "Disabled", ""},
                 {0, BEJ_STR, 0, "SubsystemId", ""},                        /* PFPCI_SUBSYSID.PF_SUBSYS_ID */
                 {0, BEJ_STR, 0, "SubsystemVendorId", ""},                  /* GLPCI_SUBVENID */
                 {0, BEJ_STR, 0, "VendorId", ""},                           /* GLPCI_VENDORID.VENDOR_D */
@@ -1658,10 +1609,10 @@ static pldm_cjson_t *pldm_cjson_create_ethernetinterface_v1_5_1_schema(u32 resou
             {0, BEJ_SET, 12, "EthernetInterface", ""},
                 {0, BEJ_BOOLEAN, 0, "FullDuplex", "t"},
                 {0, BEJ_BOOLEAN, 0, "InterfaceEnabled", ""},               /* PRTGEN_STATUS.PORT_VALID */
-                {0, BEJ_ENUM, 0, "LinkStatus", ""},
-                    // {0, BEJ_STR, 0, "LinkDown", ""},
-                    // {0, BEJ_STR, 0, "LinkUp", ""},
-                    // {0, BEJ_STR, 0, "NoLink", ""},
+                {0, BEJ_ENUM, 3, "LinkStatus", ""},
+                    {0, BEJ_STR, 0, "LinkDown", ""},
+                    {0, BEJ_STR, 0, "LinkUp", ""},
+                    {0, BEJ_STR, 0, "NoLink", ""},
                 {0, BEJ_STR, 0, "MACAddress", "11:22:33:44:55:66"},
                 {0, BEJ_INT, 0, "MTUSize", (char [3]){0xEE, 0x25, 0x00}},
                 {0, BEJ_STR, 0, "Name", "AM Ethernet Interface Current Settings"},
@@ -1669,20 +1620,20 @@ static pldm_cjson_t *pldm_cjson_create_ethernetinterface_v1_5_1_schema(u32 resou
                 {0, BEJ_STR, 0, "PermanentMACAddress", ""},
                 {0, BEJ_INT, 0, "SpeedMbps", ""},
                 {0, BEJ_SET, 1, "Status", ""},
-                    {0, BEJ_ENUM, 0, "State", (char [3]){0x01, 0x03, 0x00}},
-                        // {0, BEJ_STR, 0, "StandbyOffline", ""},
-                        // {0, BEJ_STR, 0, "Starting", ""},
-                        // {0, BEJ_STR, 0, "Updating", ""},
-                        // {0, BEJ_STR, 0, "Enabled", ""},
-                        // {0, BEJ_STR, 0, "Disabled", ""},
+                    {0, BEJ_ENUM, 5, "State", (char [3]){0x01, 0x03, 0x00}},
+                        {0, BEJ_STR, 0, "StandbyOffline", ""},
+                        {0, BEJ_STR, 0, "Starting", ""},
+                        {0, BEJ_STR, 0, "Updating", ""},
+                        {0, BEJ_STR, 0, "Enabled", ""},
+                        {0, BEJ_STR, 0, "Disabled", ""},
                 {1, BEJ_SET, 2, "@Redfish.Settings", ""},
                     {1, BEJ_SET, 0, "SettingsObject", "Points to the next setting = Resource ID +10"},
                     {1, BEJ_ARRAY, 1, "SupportedApplyTimes", ""},
-                        {1, BEJ_ENUM, 0, "", (char [3]){0x01, 0x03, 0x00}},
-                        // {0, BEJ_STR, 0, "AtMaintenanceWindowStart", ""},
-                        // {0, BEJ_STR, 0, "Immediate", ""},
-                        // {0, BEJ_STR, 0, "InMaintenanceWindowOnReset", ""},
-                        // {0, BEJ_STR, 0, "OnReset", ""},
+                        {1, BEJ_ENUM, 4, "", (char [3]){0x01, 0x03, 0x00}},
+                            {1, BEJ_STR, 0, "AtMaintenanceWindowStart", ""},
+                            {1, BEJ_STR, 0, "Immediate", ""},
+                            {1, BEJ_STR, 0, "InMaintenanceWindowOnReset", ""},
+                            {1, BEJ_STR, 0, "OnReset", ""},
                 {0, BEJ_STR, 0, "Id", "Resource Offset"},
     };
     pldm_cjson_create_schema_recursion(root, fmt);
@@ -1706,7 +1657,7 @@ static pldm_cjson_t *pldm_cjson_create_ethernetinterfacecollection_schema(u32 re
         {0, BEJ_SET, 1, "", ""},
             {0, BEJ_SET, 3, "EthernetInterfaceCollection", ""},
                 {0, BEJ_STR, 0, "Name", "NetworkDeviceFunctions"},
-                {1, BEJ_INT, 0, "Members@odata.count", (char [2]){MAX_LAN_NUM, 0x00}},
+                {1, BEJ_INT, 0, "@odata.count", (char [2]){MAX_LAN_NUM, 0x00}},
                 {0, BEJ_ARRAY, 2, "Members", ""},
                     {0, BEJ_SET, 1, "", ""},
                         {1, BEJ_STR, 0, "@odata.id", "%I400"},
@@ -1745,9 +1696,8 @@ static pldm_redfish_dictionary_entry_t *pldm_cjson_dict_fill_sf(u8 *dict, pldm_r
     return entry;
 }
 
-static void pldm_cjson_cal_sf_to_root_op(pldm_cjson_t *root, u8 *anno_dict, u8 *dict, pldm_redfish_dictionary_entry_t *entry, u16 entry_cnt, pldm_redfish_dictionary_entry_t *anno_entry, u16 anno_entry_cnt)
+void pldm_cjson_cal_sf_to_root_op(pldm_cjson_t *root, u8 *anno_dict, u8 *dict, pldm_redfish_dictionary_entry_t *entry, u16 entry_cnt, pldm_redfish_dictionary_entry_t *anno_entry, u16 anno_entry_cnt)
 {
-    if (!anno_dict || !dict || !entry || !anno_entry) return;
     pldm_cjson_t *tmp = root;
     while (tmp) {
         u8 fmt = tmp->sflv.fmt >> 4;
@@ -1771,15 +1721,14 @@ static void pldm_cjson_cal_sf_to_root_op(pldm_cjson_t *root, u8 *anno_dict, u8 *
         } else {
             new_entry = pldm_cjson_dict_fill_sf(dict, entry, entry_cnt, tmp, 0);
         }
-        if (fmt == BEJ_SET || fmt == BEJ_ARRAY) {
+        if (fmt == BEJ_SET || fmt == BEJ_ARRAY || fmt == BEJ_ENUM) {
             child_cnt = new_entry->child_cnt;
             new_entry = (pldm_redfish_dictionary_entry_t *)&dict[new_entry->childpoint_off];
 
             if (new_anno_entry->childpoint_off && tmp->sflv.seq & 1) {
-            // LOG("seq : 0x%02x, fmt : 0x%02x", sflv.seq >> 1, sflv.fmt >> 4);
-            anno_child_cnt = new_anno_entry->child_cnt;
-            new_anno_entry = (pldm_redfish_dictionary_entry_t *)&anno_dict[new_anno_entry->childpoint_off];
-        }
+                anno_child_cnt = new_anno_entry->child_cnt;
+                new_anno_entry = (pldm_redfish_dictionary_entry_t *)&anno_dict[new_anno_entry->childpoint_off];
+            }
         }
         pldm_cjson_cal_sf_to_root_op(tmp->child, anno_dict, dict, new_entry, child_cnt, new_anno_entry, anno_child_cnt);
         tmp = tmp->next;
@@ -1848,7 +1797,52 @@ u32 g_resource_id[] = {
 
 extern u8 g_dict_info[PLDM_REDFISH_DICT_INFO_LEN];
 extern u8 g_anno_dict[PLDM_REDFISH_ANNO_DICT_LEN];
-extern u8 g_needed_dict[PLDM_REDFISH_PORT_DICT_LEN];
+extern u8 g_needed_dict[PLDM_REDFISH_NETWORK_ADAPTER_DICT_LEN];
+
+void swap_node(pldm_cjson_t *node1, pldm_cjson_t *node2)
+{
+    pldm_cjson_t tmp;
+    tmp.child = node1->child;
+    // tmp1->next = node1->next;
+    tmp.name = node1->name;
+    tmp.sflv = node1->sflv;
+
+    tmp.sflv.val = node1->sflv.val;
+
+    node1->child = node2->child;
+    // node1->next = node2->next;
+    node1->name = node2->name;
+    node1->sflv = node2->sflv;
+
+    node1->sflv.val = node2->sflv.val;
+
+    node2->child = tmp.child;
+    // node2->next = tmp->next;
+    node2->name = tmp.name;
+    node2->sflv = tmp.sflv;
+
+    node2->sflv.val = tmp.sflv.val;
+}
+
+void pldm_cjson_list_sort(pldm_cjson_t *root)
+{
+    pldm_cjson_t *tmp = root;
+    while (tmp) {
+        if (tmp->child) {
+            pldm_cjson_t *p = tmp->child;
+            pldm_cjson_t *q = p;
+            for (; p; p = p->next) {
+                for (q = p->next; q; q = q->next) {
+                    if ((p->sflv.seq >> 1) > (q->sflv.seq >> 1)) {
+                        swap_node(p, q);
+                    }
+                }
+            }
+        }
+        pldm_cjson_list_sort(tmp->child);
+        tmp = tmp->next;
+    }
+}
 
 static void pldm_cjson_schema_test(void)
 {
@@ -1889,7 +1883,7 @@ static void pldm_cjson_bej_test(void)
     u8 buf[1024];
 
     for (u8 i = 0; i < sizeof(g_resource_id) / sizeof(u32); i++) {
-        // if (g_resource_id[i] != g_resource_id[0]) continue;
+        // if (g_resource_id[i] != g_resource_id[1]) continue;
         // pldm_cjson_pool_init();
         u8 ret = pldm_redfish_get_dict_data(g_resource_id[i], SCHEMACLASS_MAJOR, \
         g_needed_dict, pldm_redfish_get_dict_len(g_resource_id[i]));
@@ -1899,6 +1893,7 @@ static void pldm_cjson_bej_test(void)
         if (root) {
             pldm_cjson_cal_sf_to_root(root, annc_dict, dict);
             pldm_cjson_cal_len_to_root2(root, OTHER_TYPE);
+            // pldm_cjson_list_sort(root);
             // pldm_cjson_printf_root2(root);
             LOG("\nencode cnt : %d", i);
         }
@@ -1916,9 +1911,9 @@ static void pldm_cjson_bej_test(void)
         bej_root = pldm_bej_decode(buf, ptr - buf, annc_dict, dict, bej_root, 1);
         if (bej_root) {
             LOG("decode cnt : %d\n", i);
+            pldm_cjson_cal_sf_to_root(bej_root, annc_dict, dict);
             pldm_cjson_cal_len_to_root2(bej_root, OTHER_TYPE);
             // pldm_cjson_printf_root2(bej_root);
-            pldm_cjson_cal_sf_to_root(bej_root, annc_dict, dict);
         }
         pldm_cjson_pool_init();
     }
@@ -2046,6 +2041,7 @@ static void pldm_cjson_oem_dict_test(void)
     u8 dict[1024];
     u8 anno_dict[1024];
     root = pldm_cjson_create_networkdevicefunctioncollection_schema(resource_id);
+    pldm_cjson_cal_len_to_root1(root, OTHER_TYPE);
     pldm_cjson_printf_root2(root);
     pldm_cjson_create_dict(root, dict, 0);
 }
@@ -2074,7 +2070,7 @@ void pldm_cjson_test(void)
     // pldm_cjson_oem_dict_test();
     end = clock();
     cost = end - start;
-    LOG("time diff %f",cost);   /* uint is ms */
+    LOG("\ntime diff %f",cost);   /* uint is ms */
     // tmp1 = create_event_schema(1234, dict, dict);
 
     // root = pldm_cjson_create_obj();

@@ -3,7 +3,7 @@
 
 u8 g_dict_info[PLDM_REDFISH_DICT_INFO_LEN];
 u8 g_anno_dict[PLDM_REDFISH_ANNO_DICT_LEN];
-u8 g_needed_dict[PLDM_REDFISH_PORT_DICT_LEN];
+u8 g_needed_dict[PLDM_REDFISH_NETWORK_ADAPTER_DICT_LEN];
 
 pldm_redfish_bej_t g_resourse_bej[PLDM_REDFISH_RESOURCE_NUM];
 
@@ -142,7 +142,7 @@ u16 pldm_redfish_get_dict_len(u32 resource_id)
 
 void CM_FLASH_READ(u32 offset, u32 *buf, u32 size)
 {
-    FILE *fp = fopen("./build/pldm_redfish_dicts.bin", "r+b");
+    FILE *fp = fopen("./build/truncated_pldm_redfish_dicts.bin", "r+b");
     if (!fp) {
         LOG("CM_FLASH_READ open file err!");
         return;
@@ -178,11 +178,17 @@ void pldm_redfish_dict_test(void)
     u8 b[9000];
     // 读取二进制文件
     // 文件名："test.bin",  访问方式："rb"
-    pd = fopen("pldm_redfish_dicts.bin", "rb");
+    pd = fopen("./build/truncated_pldm_redfish_dicts.bin", "rb");
     // 数据块首地址: "&b", 元素大小: "sizeof(unsigned __int8)",  元素个数: "10",  文件指针："pd"
     fread(&b, sizeof(u8), 1024, pd);
     fclose(pd);
     pldm_redfish_dict_hdr_t *dicts = (pldm_redfish_dict_hdr_t *)b;
+    // u16 total_len = dicts->total_len;
+    // pd = fopen("new_pldm_redfish_dicts.bin", "rb");
+    // // 数据块首地址: "&b", 元素大小: "sizeof(unsigned __int8)",  元素个数: "10",  文件指针："pd"
+    // fread(&b, sizeof(u8), total_len, pd);
+    // fclose(pd);
+    dicts = (pldm_redfish_dict_hdr_t *)b;
     LOG("total : %d", dicts->total_len);
     LOG("num : %d", dicts->num_of_dict);
     pldm_redfish_dict_fmt_t *dict_fmt = (pldm_redfish_dict_fmt_t *)&b[dicts->dict_info[0].offset];
@@ -192,5 +198,40 @@ void pldm_redfish_dict_test(void)
         LOG("id : %lld", dicts->dict_info[i].resource_id);
         LOG("off : %d", dicts->dict_info[i].offset);
         LOG("schema_class : %#x", dicts->dict_info[i].schema_class);
+        // pldm_redfish_dict_fmt_t *dicr_fmt = (pldm_redfish_dict_fmt_t *)&b[dicts->dict_info[i].offset];
+        // LOG("len : %d, sign : 0x%08x", dicr_fmt->len, dicr_fmt->dict_sign);
     }
+    // for (u16 i = 0; i < dicts->total_len; i++)
+    // {
+    //     printf("0x%02x, ", b[i]);
+    //     if (!((i + 1) % 8)) {
+    //         printf("\n");
+    //     }
+    // }
+}
+
+#include "pldm_bej_resolve.h"
+extern u32 crc32_pldm_section(u32 init_crc, u8 *data, u32 len);
+void pldm_redfsih_dict_signature_test(void)
+{
+    FILE *fp = NULL;
+    u8 tmp_buf[1024];
+    u16 dict_size = 0;
+    u32 signature = 0;
+    u32 remain_len = 0;
+    fp = fopen("Port_v1.bin", "rb+");
+    fread(tmp_buf, sizeof(u8), 1024, fp);
+    pldm_redfish_dictionary_format_t *dict_hdr = (pldm_redfish_dictionary_format_t *)tmp_buf;
+    LOG("dictionary_size : %d, hdr size : %d", dict_hdr->dictionary_size, sizeof(pldm_redfish_dictionary_format_t));
+    remain_len = dict_hdr->dictionary_size;
+    fseek(fp, 0, SEEK_SET);
+    for (u8 i = 0; i < 8; i++) {
+        u16 len = remain_len > 1024 ? 1024 : remain_len % 1024;
+        LOG("%d", len);
+        fread(tmp_buf, sizeof(u8), len, fp);
+        signature = crc32_pldm_section(signature ^ 0xFFFFFFFFUL, tmp_buf, len);
+        remain_len -= len;
+    }
+    LOG("signature : 0x%08x", signature);
+    fclose(fp);
 }

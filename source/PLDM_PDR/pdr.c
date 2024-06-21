@@ -1484,8 +1484,8 @@ void pldm_redfish_pdr_init(void)
     pldm_redfish_add_port_reset_pdr();
 }
 
-{
 void pldm_terminus_locator_pdr_init(void)
+{
     pldm_pdr_record_t *is_exist = pldm_pdr_is_exist(&(g_pldm_monitor_info.pldm_repo), PLDM_TERMINUS_LOCATOR_PDR_HANDLE);
     if (is_exist) return;
 

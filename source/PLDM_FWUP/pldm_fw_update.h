@@ -93,6 +93,25 @@ typedef struct {
     u8 comp_img_info[0];
 } pldm_fwup_comp_img_info_area_t;
 
+typedef struct {
+    u8 comp_img_set_ver_str_type;
+    u8 comp_img_set_ver_str_len;
+    u8 val[0];
+} pldm_comp_img_set_ver_str_type_and_len_t;
+
+typedef struct {
+    u16 comp_classification;
+    u16 comp_identifier;
+    u8 comp_classification_idx;         /* not used */
+    u16 methon;
+    pldm_comp_img_set_ver_str_type_and_len_t info;
+} pldm_fwup_comp_info_t;
+
+typedef struct {
+    u16 active_img_state;
+    pldm_comp_img_set_ver_str_type_and_len_t fw_img_info;
+} pldm_fw_img_info_t;
+
 #pragma pack()
 
 void pldm_fwup_verify_pkt_data_test(void);

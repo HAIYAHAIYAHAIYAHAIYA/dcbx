@@ -188,8 +188,8 @@ u8 *pldm_bej_encode(pldm_cjson_t *root, u8 *bej_buf)
     while (tmp) {
         u8 fmt = tmp->sflv.fmt >> 4;
         buf = pldm_bej_sfl_to_bej(buf, tmp);
-        buf = pldm_bej_encode(tmp->child, buf);
-        if (!(tmp->child) && fmt != BEJ_ARRAY && fmt != BEJ_SET) {
+        if (fmt != BEJ_ENUM) buf = pldm_bej_encode(tmp->child, buf);
+        if (fmt != BEJ_ARRAY && fmt != BEJ_SET) {
             buf = pldm_bej_jsonval_to_bej(buf, tmp);
         }
         tmp = tmp->next;

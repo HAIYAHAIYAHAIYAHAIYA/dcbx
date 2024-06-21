@@ -27,13 +27,14 @@ void pldm_fwup_analyze_pkg(void)
     FILE *pd = NULL;
     u8 b[1024];
     // pd = fopen("upgrade_pldm_fwup_slot.img", "rb");
-    pd = fopen("upgrade_my_img.img", "rb");
+    pd = fopen("upgrade_pldm_fwup_chip.img", "rb");
     fread(&b, sizeof(u8), 1024, pd);
     fclose(pd);
     pldm_fwup_pkt_hdr_t *pkt_hdr = (pldm_fwup_pkt_hdr_t *)b;
     for (u8 i = 0; i < 16; i++) {
-        LOG("%02x", pkt_hdr->uuid[i]);
+        printf("%02x", pkt_hdr->uuid[i]);
     }
+    LOG("");
     LOG("pkt_hdr_fmt_reversion : %d", pkt_hdr->pkt_hdr_fmt_reversion);
     LOG("pkt_hdr_size : %d", pkt_hdr->pkt_hdr_size);
     LOG("year : %d", pkt_hdr->pkt_release_datetime.year);
@@ -49,8 +50,9 @@ void pldm_fwup_analyze_pkg(void)
     LOG("pkt_ver_str_type : %d", pkt_hdr->pkt_ver_str_type);
     LOG("pkt_ver_str_len : %d", pkt_hdr->pkt_ver_str_len);
     for (u8 i = 0; i < pkt_hdr->pkt_ver_str_len; i++) {
-        LOG("%c", pkt_hdr->pkt_ver_str[i]);
+        printf("%c", pkt_hdr->pkt_ver_str[i]);
     }
+    LOG("");
 
     pldm_fwup_fw_dev_indentification_area_t *fw_dev_area = (pldm_fwup_fw_dev_indentification_area_t *)&(pkt_hdr->pkt_ver_str[pkt_hdr->pkt_ver_str_len]);
     LOG("dev_id_record_cnt : %d", fw_dev_area->dev_id_record_cnt);
@@ -69,14 +71,16 @@ void pldm_fwup_analyze_pkg(void)
         LOG("add_type : %d", ptr->add_type);
         LOG("add_len : %d", ptr->add_len);
         for (u8 j = 0; j < ptr->add_len; j++) {
-            LOG("%x", ptr->add_data[j]);
+            printf("%x", ptr->add_data[j]);
         }
+        LOG("");
         ptr = (pldm_add_descriptor_t *)&(ptr->add_data[ptr->add_len]);
     }
     pldm_fwup_fw_dev_id_records_end_part_t *fw_records_end_ptr = (pldm_fwup_fw_dev_id_records_end_part_t *)ptr;
     for (u8 i = 0; i < fw_records_first_ptr->fw_dev_pkt_data_len; i++) {
-        LOG("%#x ", fw_records_end_ptr->fw_dev_pkt_data[i]);
+        printf("%#x ", fw_records_end_ptr->fw_dev_pkt_data[i]);
     }
+    LOG("");
 
     pldm_fwup_comp_img_info_area_t *comp_img_area = (pldm_fwup_comp_img_info_area_t *)&(fw_records_end_ptr->fw_dev_pkt_data[fw_records_first_ptr->fw_dev_pkt_data_len]);
     LOG("comp_img_cnt : %d", comp_img_area->comp_img_cnt);
@@ -92,8 +96,9 @@ void pldm_fwup_analyze_pkg(void)
         LOG("comp_ver_str_type : %d", comp_first_part->comp_ver_str_type);
         LOG("comp_ver_str_len : %d", comp_first_part->comp_ver_str_len);
         for (u8 j = 0; j < comp_first_part->comp_ver_str_len; j++) {
-            LOG("%c", comp_first_part->comp_ver_str[j]);            /* ascii */
+            printf("%c", comp_first_part->comp_ver_str[j]);            /* ascii */
         }
+        LOG("");
         // pldm_fwup_comp_img_info_end_part_t *comp_end_part = (pldm_fwup_comp_img_info_end_part_t *)&(comp_first_part->comp_ver_str[comp_first_part->comp_ver_str_len]);
         // LOG("comp_opaque_data_len : %d", comp_end_part->comp_opaque_data_len);
         comp_first_part = (pldm_fwup_comp_img_info_first_part_t *)&(comp_first_part->comp_ver_str[comp_first_part->comp_ver_str_len]);
@@ -112,6 +117,48 @@ void pldm_fwup_analyze_pkg(void)
     }
 }
 
+void pldm_fwup_analyze_img_info(void)
+{
+    FILE *pd = NULL;
+    u8 b[1024];
+    // pd = fopen("upgrade_pldm_fwup_slot.img", "rb");
+    pd = fopen("pldm_fwup_img_info.bin", "rb+");
+    fread(&b, sizeof(u8), 1024, pd);
+    fclose(pd);
+
+    pldm_fw_img_info_t *fw_img_info = (pldm_fw_img_info_t *)b;
+    LOG("active_img_state : %d", fw_img_info->active_img_state);
+
+    LOG("comp_img_set_ver_str_type : %d", fw_img_info->fw_img_info.comp_img_set_ver_str_type);
+    LOG("comp_img_set_ver_str_len : %d", fw_img_info->fw_img_info.comp_img_set_ver_str_len);
+    for (u8 j = 0; j < fw_img_info->fw_img_info.comp_img_set_ver_str_len; j++) {
+        printf("%c", fw_img_info->fw_img_info.val[j]);
+    }
+    printf("\n");
+
+    pldm_fwup_comp_info_t *comp_info = (pldm_fwup_comp_info_t *)&(fw_img_info->fw_img_info.val[fw_img_info->fw_img_info.comp_img_set_ver_str_len]);
+
+    for (u8 i = 0; i < 3; i++) {
+        LOG("comp_classification : %d", comp_info->comp_classification);
+        LOG("comp_identifier : %d", comp_info->comp_identifier);
+        LOG("comp_classification_idx : %d", comp_info->comp_classification_idx);
+        LOG("methon : %#x", comp_info->methon);
+        LOG("comp_img_set_ver_str_type : %d", comp_info->info.comp_img_set_ver_str_type);
+        LOG("comp_img_set_ver_str_len : %d", comp_info->info.comp_img_set_ver_str_len);
+        for (u8 j = 0; j < comp_info->info.comp_img_set_ver_str_len; j++) {
+            printf("%c", comp_info->info.val[j]);
+        }
+        printf("\n");
+        comp_info = (pldm_fwup_comp_info_t *)&(comp_info->info.val[comp_info->info.comp_img_set_ver_str_len]);
+    }
+
+    // for (int i = 0; i < 116; i++) {
+    //     printf("0x%02x, ", b[i]);
+    //     if (!((i + 1) % 8))
+    //         printf("\n");
+    // }
+}
+
 void pldm_fwup_verify_pkt_data_test(void)
 {
     // u8 *str = "amber_vxx.xx.xx.xx";
@@ -126,4 +173,5 @@ void pldm_fwup_verify_pkt_data_test(void)
     //     LOG("%02x ", ascii[i]);
     // }
     pldm_fwup_analyze_pkg();
+    // pldm_fwup_analyze_img_info();
 }
