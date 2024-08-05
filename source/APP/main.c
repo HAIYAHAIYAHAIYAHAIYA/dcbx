@@ -573,7 +573,8 @@ int main(int argc, char * argv [])
     // LOG("cmd : 0x18, size : %d", sizeof(g_sumbus_pkt0x18));
     // LOG("cmd : 0x19, size : %d", sizeof(g_sumbus_pkt0x19));
     // LOG("cmd : 0x1a, size : %d", sizeof(g_sumbus_pkt0x1a));
-    fclose(g_fp);
+    if (g_fp)
+        fclose(g_fp);
 	return 0;
 }
 
