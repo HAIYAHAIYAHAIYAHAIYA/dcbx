@@ -514,6 +514,7 @@ typedef struct {
 
 int is_temp_sensor(u16 sensor_id);
 u32 sensor_id_convert_to_record_handle(u16 sensor_id);
+void pldm_monitor_update_repo_signature(pldm_pdr_t *repo);
 
 // void pldm_event_send_handle(void);
 // void pldm_temp_monitor_handle(void);

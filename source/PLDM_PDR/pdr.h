@@ -3,12 +3,33 @@
 
 #include "type.h"
 
-#define PDR_MIN_SIZE                    (1)
-#define PDR_POOL_SIZE                   (9 * 512)
+#define PDR_POOL_SIZE                   (MAX_LAN_NUM == 2 ? 3200 : 4608)
 #define NOT_FIELD                       (0xFF)
-#define MY_LIST                         (0)
 
-typedef float real32_t;
+#define LINK_UP                         1
+#define LINK_DOWN                       0
+
+#define CM_MODULE_GET_TEMPERATURE_DATE(port)        0
+#define CM_MODULE_GET_VOLTAGE_DATA(port)            0
+#define CM_MODULE_GET_POWER_DATA(port)              0
+#define CM_MODULE_GET_IDENTIFIER(port)              0
+#define CM_MODULE_GET_WARN_DATA(port)               0
+#define CM_MODULE_GET_CRITICAL_DATA(port)           0
+#define CM_MODULE_GET_FATAL_DATA(port)              0
+#define CM_MODULE_GET_SIGNAL_RATE_DATA(port)        0
+
+/* TBD */
+#define CM_NIC_GET_TEMPERATURE_DATE                 (0)
+#define CM_NIC_GET_WARN_DATA                        (40)
+#define CM_NIC_GET_CRITICAL_DATA                    (70)
+#define CM_NIC_GET_FATAL_DATA                       (100)
+
+/* TBD */
+#define CM_VENDOR_GET_PCI_DEV_ID                    (0)
+#define CM_VENDOR_GET_PCI_VENDOR_ID                 (0)
+#define CM_VENDOR_GET_PCI_SUBSYS_ID                 (0)
+#define CM_VENDOR_GET_PCI_SUBSYS_VENDOR_ID          (0)
+#define CM_VENDOR_GET_PCI_REVISION_ID               (0)
 
 typedef enum {
     TERMINUS_LOCATOR_PDR = 1,
@@ -199,19 +220,6 @@ typedef struct {
     u8 utc_resolution       : 4;
 } pldm_timestamp104_t;
 
-#if MY_LIST
-typedef struct {
-	u32 record_count;
-	u32 size;
-    u32 largest_pdr_size;
-    u32 repo_signature;
-    pldm_timestamp104_t update_time;
-	pldm_pdr_record_t *first;
-	pldm_pdr_record_t *last;
-    pldm_pdr_record_t *is_deleted;              /* all delete pdr is in here */
-} pldm_pdr_t;
-
-#else
 typedef struct {
 	u32 record_count;
 	u32 size;
@@ -219,9 +227,8 @@ typedef struct {
     pldm_timestamp104_t update_time;
     u32 repo_signature;
 	pldm_pdr_record_t *head;
-    pldm_pdr_record_t *is_deleted_head;              /* all delete pdr is in here */
+    pldm_pdr_record_t *is_deleted_head;              /* all deleted pdr is in here */
 } pldm_pdr_t;
-#endif
 
 typedef struct {
     u8 num;
@@ -260,6 +267,15 @@ typedef struct {
     u16 entity_instance_num;
     u16 container_id;
 } pldm_fru_record_set_pdr_t;
+
+typedef union {
+    struct {
+        u32 sign          : 1;          /* [31] – S (sign) bit (1 = negative, 0 = positive) */
+        u32 exponent      : 8;          /* [30:23] – exponent as a binary integer (8 bits) */
+        u32 mantissa      : 23;         /* [22:0] – mantissa as a binary integer (23 bits) */
+    };
+    u32 val;
+} real32_t; /* float_to_u32, https://blog.csdn.net/qq_35904259/article/details/128330739 */
 
 typedef struct {
     u8 hysteresis;
@@ -455,7 +471,7 @@ typedef struct {
     u8 present_state;
     u8 previous_state;
     u8 sensor_data_size;
-    u8 present_reading;
+    u16 present_reading;
 } pldm_temp_sensor_data_struct_t, pldm_link_speed_data_struct_t, pldm_plug_power_data_struct_t, pldm_data_struct_t;
 
 typedef struct {
@@ -476,22 +492,45 @@ typedef struct {
     u16 sensor_id;
 } pldm_temp_sensor_monitor_t;
 
+typedef struct {
+    u16 warning_high;
+	u16 critical_high;
+	u16 fatal_high;
+} pldm_temp_sensor_threshold_data_t;
+
+typedef struct {
+    u32 max_readable;
+    u32 min_readable;
+} pldm_speed_sensor_cap_t;
+
+typedef struct {
+    u32 time_low;
+    u16 time_mid;
+    u16 time_high;
+    u8 clk_seq_hi;
+    u8 clk_seq_low;
+    u8 node[6];
+} get_uuid_rsp_dat;
+
+typedef struct {
+    u8 discovered;
+    u8 dev_eid;
+    get_uuid_rsp_dat uuid;
+} mctp_base_info;
+
 #pragma pack()
 
 typedef void (*pldm_monitor_handle)(u8 port);
 typedef int (*fill_common_sensor_pdr)(void *buf, u16 sensor_id, u16 entity_type, u8 data_size);
 
 void pdrs_pool_init(u32 *addr);
-void pdrs_pool_reinit(void);
 void *pdr_malloc(int size);
-u32 pldm_pdr_get_used(void);
 
 void pldm_pdr_init(pldm_pdr_t *repo);
 pldm_pdr_record_t *pldm_find_insert(pldm_pdr_t *repo, u32 record_handle);
 int pldm_pdr_add(pldm_pdr_t *repo, u8 *pdr_data, u32 pdr_size, u32 record_handle);
 int pldm_pdr_delete(pldm_pdr_t *repo, u32 record_handle);
 pldm_pdr_record_t *pldm_pdr_find(pldm_pdr_t *repo, u32 record_handle);
-pldm_pdr_record_t *pldm_pdr_is_exist(pldm_pdr_t *repo, u32 record_handle);
 
 void pldm_fru_pdr_init(void);
 void pldm_redfish_pdr_init(void);
@@ -501,7 +540,12 @@ void pldm_state_sensor_pdr_init(void);
 void pldm_numeric_sensor_pdr_init(void);
 
 void pldm_link_handle(u8 port, u8 link_state);
+void pldm_module_info_update(u8 port);
 
 void terminus_locator_pdr_chg(void);
+void pldm_modify_state_datastruct(u8 present_state, pldm_state_data_struct_t *datastruct);
+
+u32 pldm_pdr_get_used(void);
+void pdrs_pool_reinit(void);
 
 #endif /* __PDR_H__ */

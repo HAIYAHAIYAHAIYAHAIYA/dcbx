@@ -1,4 +1,7 @@
 #include "pldm_monitor.h"
+#include "pldm_redfish.h"
+#include "pldm_cjson.h"
+#include "pldm_bej_resolve.h"
 #include "pldm_monitor_event_rbuf.h"
 #include "pdr.h"
 #include "sha256.h"
@@ -8,6 +11,9 @@
 
 static u8 gs_pdrs_buf[PDR_POOL_SIZE];
 extern u16 g_event_id;
+extern u8 g_dict_info[PLDM_REDFISH_DICT_INFO_LEN];
+extern u8 g_anno_dict[PLDM_REDFISH_ANNO_DICT_LEN];
+extern u8 g_needed_dict[PLDM_REDFISH_ANNO_DICT_LEN];
 
 pldm_monitor_base_info_t g_pldm_monitor_info;
 
@@ -90,6 +96,11 @@ static void pldm_monitor_base_info_init(pldm_monitor_base_info_t *pldm_monitor_b
     pldm_pdr_init(&(pldm_monitor_base_info->pldm_repo));
 }
 
+void pldm_pool_init(void)
+{
+    pdrs_pool_init((u32 *)gs_pdrs_buf);
+}
+
 void pldm_monitor_printf_repo(pldm_pdr_t *repo)
 {
     LOG("record_count : %d", repo->record_count);
@@ -108,11 +119,11 @@ void pldm_monitor_printf_repo(pldm_pdr_t *repo)
 #else
     pdr = repo->head;
 #endif
+    repo->repo_signature = 0;
     while (pdr) {
         cnt++;
         pldm_pdr_hdr_t *hdr = (pldm_pdr_hdr_t *)(pdr->data);
         LOG("pdr size : %04d, record handle : %04d, type : %d", pdr->size, pdr->record_handle, hdr->type);
-        repo->repo_signature = 0;
         repo->repo_signature = crc32_pldm_1(repo->repo_signature ^ 0xFFFFFFFFUL, pdr->data, pdr->size);
         sum_size += pdr->size;
         pdr = pdr->next;
@@ -200,23 +211,51 @@ void pldm_monitor_printf_repo_chg_event(u8 *data)
     LOG("end %s", __FUNCTION__);
 }
 
+void pldm_monitor_printf_repo_redfish_event(u8 *data)
+{
+    pldm_cjson_t *root = NULL;
+    pldm_redfish_msg_event_data_format_t *event_data = (pldm_redfish_msg_event_data_format_t *)data;
+
+    u8 *anno_dict = &g_anno_dict[DICT_FMT_HDR_LEN];
+    u8 *dict = &g_needed_dict[DICT_FMT_HDR_LEN];
+
+    u8 ret = pldm_redfish_get_dict_data(PLDM_BASE_EVENT_DICT_RESOURCE_ID, SCHEMACLASS_EVENT, g_needed_dict, PLDM_REDFISH_EVENT_DICT_LEN);
+    if (ret == false) return;
+    LOG("bej_len : %d", event_data->event_data_len - sizeof(bejencoding_t));
+    u8 *bej_data = (((u8 *)&(event_data->id_and_severity[1])) + sizeof(bejencoding_t));
+    // for (u16 i = 0; i < event_data->event_data_len - sizeof(bejencoding_t); i++) {
+    //     printf("0x%02x, ", bej_data[i]);
+    //     if (!((i + 1) % 8)) {
+    //         printf("\n");
+    //     }
+    // }
+    root = pldm_bej_decode(bej_data, event_data->event_data_len - sizeof(bejencoding_t), anno_dict, dict, root, 1);
+    // pldm_cjson_printf_root2(root);
+    pldm_cjson_pool_reinit();
+}
+
 void pldm_monitor_printf_event_rbuf(void *p)
 {
     u16 event_cnt = g_event_id;
     u8 event_data_info[sizeof(pldm_event_data_t)] = {0};
-    u8 payload[64];
+    u8 payload[256];
+    u16 sum_size = 0;
     while (!pldm_event_rbuf_is_empty(p)) {
         pldm_event_rbuf_try_read(p, event_data_info, sizeof(pldm_event_data_t), 0);
         pldm_event_data_t *pldm_event_data = (pldm_event_data_t *)event_data_info;                       /* the oldest event */
         // u8 event_cnt = g_event_id - pldm_event_data->event_id;
-        LOG("event id : %d, class : %d, size : %d", pldm_event_data->event_id, pldm_event_data->event_class, pldm_event_data->event_data_size);
-        pldm_event_rbuf_try_read(g_pldm_monitor_info.pldm_event_rbuf, payload, pldm_event_data->event_data_size, sizeof(pldm_event_data_t));
+        LOG("event id : %02d, class : %02d, size : %d", pldm_event_data->event_id, pldm_event_data->event_class, pldm_event_data->event_data_size);
+        pldm_event_rbuf_try_read(p, payload, pldm_event_data->event_data_size, sizeof(pldm_event_data_t));
+        sum_size += pldm_event_data->event_data_size + sizeof(pldm_event_data_t);
         switch (pldm_event_data->event_class) {
             case SENSOR_EVENT:
                 // pldm_monitor_printf_sensor_event(payload);
                 break;
             case PLDM_PDR_REPO_CHG_EVENT:
                 // pldm_monitor_printf_repo_chg_event(payload);
+                break;
+            case REDFISH_MSG_EVENT:
+                // pldm_monitor_printf_repo_redfish_event(payload);
                 break;
             default :
                 LOG("err class : %d", pldm_event_data->event_class);
@@ -225,12 +264,29 @@ void pldm_monitor_printf_event_rbuf(void *p)
         pldm_event_rbuf_read_done(p);
     }
     g_event_id = 1;
-    LOG("event cnt : %d", event_cnt);
+    LOG("event cnt : %d, sum_size : %d", event_cnt, sum_size);
+    sum_size = 0;
+}
+
+void pldm_monitor_update_repo_signature(pldm_pdr_t *repo)
+{
+    if (!repo) return;
+    pldm_pdr_record_t *pdr = NULL;
+    pdr = repo->head;
+    repo->repo_signature = 0;
+    while (pdr) {
+        if (pdr->data)
+            repo->repo_signature = crc32_pldm_1(repo->repo_signature ^ 0xFFFFFFFFUL, pdr->data, pdr->size);
+        pdr = pdr->next;
+    }
 }
 
 void pldm_monitor_init(void)
 {
     pldm_monitor_base_info_init(&g_pldm_monitor_info);
+    pldm_cjson_pool_init();
+    CM_FLASH_READ("./build/truncated_pldm_redfish_dicts.bin", PLDM_REDFISH_DICT_BASE_ADDR, (u32 *)g_dict_info, PLDM_REDFISH_DICT_INFO_LEN / sizeof(u32));
+    pldm_redfish_get_dict_data(PLDM_BASE_ANNOTATION_DICT_RESOURCE_ID, SCHEMACLASS_ANNOTATION, g_anno_dict, sizeof(g_anno_dict));
 }
 
 typedef void (*pdr_init_func)(void);
@@ -292,12 +348,17 @@ void pldm_monitor_test(void)
         pdr_init[i]();
         // pldm_pdr_get_used();
     }
+    for (u8 i = 0; i < MAX_LAN_NUM; i++) {
+        pldm_link_handle(i, 1);
+    }
+
     LOG("\nORI REPO");
     pldm_monitor_printf_repo(&(g_pldm_monitor_info.pldm_repo));
-    LOG("\nRD REPO");
-    pldm_monitor_gen_static_pdr_data(&(g_pldm_monitor_info.pldm_repo));
-    pdrs_pool_reinit();
-    pldm_monitor_create_static_pdr(&(g_pldm_monitor_info.pldm_repo));
+    pldm_pdr_get_used();
+    // LOG("\nRD REPO");
+    // pldm_monitor_gen_static_pdr_data(&(g_pldm_monitor_info.pldm_repo));
+    // pdrs_pool_reinit();
+    // pldm_monitor_create_static_pdr(&(g_pldm_monitor_info.pldm_repo));
 
     // g_pldm_monitor_info.terminus_mode = PLDM_ENABLE_ASYNC;
     // for (u32 j = 0; j < 5; j++) {
@@ -345,7 +406,7 @@ void pldm_monitor_test(void)
     // pldm_monitor_printf_repo(&(g_pldm_monitor_info.pldm_repo));
     // LOG("last : %d", g_pldm_monitor_info.pldm_repo.last->record_handle);
     // LOG("first : %d", g_pldm_monitor_info.pldm_repo.first->record_handle);
-    // pldm_monitor_printf_event_rbuf(g_pldm_monitor_info.pldm_event_rbuf);
+    pldm_monitor_printf_event_rbuf(g_pldm_monitor_info.pldm_event_rbuf);
     // SENSOR_EVENT = 0x00,
     // REDFISH_TASK_EXCUTE_EVENT = 0x02,
     // REDFISH_MSG_EVENT = 0x03,
