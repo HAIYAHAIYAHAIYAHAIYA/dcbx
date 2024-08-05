@@ -108,7 +108,7 @@ typedef struct {
 } pldm_fwup_comp_info_t;
 
 typedef struct {
-    u16 active_img_state;
+    u32 active_img_state;
     pldm_comp_img_set_ver_str_type_and_len_t fw_img_info;
 } pldm_fw_img_info_t;
 
