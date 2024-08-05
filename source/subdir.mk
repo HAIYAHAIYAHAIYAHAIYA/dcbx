@@ -7,3 +7,4 @@ include $(SOURCE_DIR)/PLDM_BEJ/subdir.mk
 include $(SOURCE_DIR)/SHA256/subdir.mk
 include $(SOURCE_DIR)/PLDM_FWUP/subdir.mk
 include $(SOURCE_DIR)/PLDM_PDR/subdir.mk
+include $(SOURCE_DIR)/PLDM_DATA/subdir.mk
