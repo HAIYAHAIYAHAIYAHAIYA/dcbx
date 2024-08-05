@@ -23,6 +23,11 @@ void pldm_cjson_pool_init(void)
     gs_pldm_cjson_wt = 0;
 }
 
+void pldm_cjson_pool_reinit(void)
+{
+    gs_pldm_cjson_wt = 0;
+}
+
 void *pldm_cjson_malloc(u16 size)
 {
     size = ALIGN(size, 1);
@@ -773,11 +778,11 @@ void pldm_cjson_printf_dict(u8 *dictionary)
     LOG("dictionary_size : %d", dict->dictionary_size);
     for (u16 i = 0; i < dict->entry_cnt; i++) {
         printf("child_cnt : %d, seq : %d, fmt : %d name : ", dict->entry[i].child_cnt, dict->entry[i].sequence_num, dict->entry[i].format >> 4);
-        for (u16 j = 0; j < dict->entry[i].name_len; j++) {
+        // for (u16 j = 0; j < dict->entry[i].name_len; j++) {
             u8 *name = &dictionary[dict->entry[i].name_off];
-            printf("%c", name[j]);
-        }
-        printf(" name off : %d, child off : %d, offset : %d" , dict->entry[i].name_off, dict->entry[i].childpoint_off, (u8 *)&(dict->entry[i]) - dictionary);
+            printf("%-38s", name);
+        // }
+        printf(" name off : %03d, child off : %03d, offset : %d" , dict->entry[i].name_off, dict->entry[i].childpoint_off, (u8 *)&(dict->entry[i]) - dictionary);
         printf("\n");
     }
     pldm_redfish_dictionary_copyright_t *copyright;
@@ -930,17 +935,17 @@ void pldm_cjson_update_etag(pldm_cjson_t *root)
     char etag_str[12];
     pldm_cjson_t *tmp = root;
     pldm_cjson_update_etag_op(tmp, &etag);
-    cm_snprintf(etag_str, 12, "%x", etag);
+    cm_snprintf(etag_str, 12, "%08x", etag);
     tmp = root->child;
     while (tmp) {
         if (cm_strcmp(tmp->name, "@odata.etag") == 0) {
             cm_memcpy(tmp->sflv.val, etag_str, 8);
-            LOG("etag : %s", tmp->sflv.val);
+            // LOG("etag : %s", tmp->sflv.val);
             break;
         }
         tmp = tmp->next;
     }
-    LOG("etag : %#x", etag);
+    // LOG("etag : 0x%08x", etag);
 }
 
 static void pldm_cjson_fill_comm_field_in_schema(pldm_cjson_t *root, u8 is_collection, u32 id, char *type, u8 resource_identify)
@@ -1111,8 +1116,10 @@ static void pldm_cjson_create_schema(pldm_cjson_t *obj, pldm_cjson_schema_fmt_t 
 
 pldm_cjson_t *pldm_cjson_create_event_schema(u32 resource_id, u8 link_state)
 {
-    char str[8];
-    cm_snprintf(str, 8, "%d", resource_id);
+    char str[10];
+    str[0] = '%';
+    str[1] = 'I';
+    cm_snprintf(&(str[2]), 8, "%d", resource_id);
     u8 strlen_len = cm_strlen(str);
     str[strlen_len] = '\0';
     pldm_cjson_t *root = pldm_cjson_create_obj();
@@ -1133,7 +1140,7 @@ pldm_cjson_t *pldm_cjson_create_event_schema(u32 resource_id, u8 link_state)
                     {0, BEJ_STR, 0, "MessageId", "NetworkDevice.1.0.1."},
                     {0, BEJ_SET, 1, "OriginOfCondition", ""},
                         {1, BEJ_STR, 0, "@odata.id", str},                     /* Reference to related triggering resource. */
-            {1, BEJ_INT, 0, "Events@odata.count", (char [2]){0x01, 0x00}},
+            {1, BEJ_INT, 0, "@odata.count", (char [2]){0x01, 0x00}},
             {0, BEJ_STR, 0, "Id", "1"},
             {0, BEJ_STR, 0, "Name", "Event"},
     };
@@ -1151,7 +1158,7 @@ pldm_cjson_t *pldm_cjson_create_event_schema(u32 resource_id, u8 link_state)
     root->child = NULL;
     // pldm_cjson_delete_node(root);
     root = NULL;
-    pldm_cjson_fill_comm_field_in_schema(new_root, 0, resource_id, "Event.1_0_2.Event", EVENT);
+    pldm_cjson_fill_comm_field_in_schema(new_root, 1, resource_id, "Event.1_0_2.Event", EVENT);
     // pldm_cjson_cal_sf_to_root(new_root, anno_dict, dict);
     return new_root;
 }
@@ -1855,10 +1862,13 @@ static void pldm_cjson_schema_test(void)
     pldm_cjson_pool_init();
 
     for (u8 i = 0; i < sizeof(g_schemas) / sizeof(schema_create); i++) {
-        // if (g_resource_id[i] != PLDM_BASE_PCIE_FUNC_RESOURCE_ID) continue;
+        // if (g_resource_id[i] != PLDM_BASE_PCIE_DEV_RESOURCE_ID) continue;
         u8 ret = pldm_redfish_get_dict_data(g_resource_id[i], SCHEMACLASS_MAJOR, \
         g_needed_dict, pldm_redfish_get_dict_len(g_resource_id[i]));
-        if (ret == false) return;
+        if (ret == false) {
+            LOG("ERRR : resource id : %d", g_resource_id[i]);
+            return;
+        }
         root = g_schemas[i](g_resource_id[i]);
         if (!root) LOG("ERRR");
         pldm_cjson_cal_sf_to_root(root, anno_dict, dict);
@@ -2046,6 +2056,41 @@ static void pldm_cjson_oem_dict_test(void)
     pldm_cjson_create_dict(root, dict, 0);
 }
 
+static void pldm_cjson_single_bej_test(void)
+{
+    pldm_cjson_t *root = NULL;
+
+    u8 *annc_dict = &g_anno_dict[DICT_FMT_HDR_LEN];
+    u8 *dict = &g_needed_dict[DICT_FMT_HDR_LEN];
+    u8 buf[1024];
+
+    root = pldm_cjson_create_event_schema(0, 1);
+    u8 ret = pldm_redfish_get_dict_data(0xFFFFFFFF, SCHEMACLASS_EVENT, \
+    g_needed_dict, PLDM_REDFISH_EVENT_DICT_LEN);
+
+    pldm_cjson_cal_sf_to_root(root, annc_dict, dict);
+    pldm_cjson_cal_len_to_root2(root, OTHER_TYPE);
+    pldm_cjson_update_etag(root);
+    pldm_cjson_printf_root2(root);
+
+    u8 *ptr = pldm_bej_encode(root, buf);
+    for (u16 i = 0; i < (ptr - buf); i++) {
+        printf("0x%02x, ", buf[i]);
+        if (!((i + 1) % 8)) {
+            printf("\n");
+        }
+    }
+    LOG("encode len : %d", ptr - buf);
+    pldm_cjson_pool_reinit();
+    root = NULL;
+
+    root = pldm_bej_decode(buf, ptr - buf, annc_dict, dict, root, 1);
+    pldm_cjson_printf_root2(root);
+
+    pldm_cjson_pool_reinit();
+    root = NULL;
+} 
+
 #include <time.h>
 void pldm_cjson_test(void)
 {
@@ -2057,7 +2102,7 @@ void pldm_cjson_test(void)
     pldm_cjson_t *obj2 = NULL;
     pldm_cjson_t *obj3 = NULL;
 
-    CM_FLASH_READ(PLDM_REDFISH_DICT_BASE_ADDR, (u32 *)g_dict_info, PLDM_REDFISH_DICT_INFO_LEN / sizeof(u32));
+    CM_FLASH_READ("./build/truncated_pldm_redfish_dicts.bin", PLDM_REDFISH_DICT_BASE_ADDR, (u32 *)g_dict_info, PLDM_REDFISH_DICT_INFO_LEN / sizeof(u32));
 
     pldm_redfish_get_dict_data(PLDM_BASE_ANNOTATION_DICT_RESOURCE_ID, SCHEMACLASS_ANNOTATION, g_anno_dict, sizeof(g_anno_dict));
 
@@ -2065,7 +2110,8 @@ void pldm_cjson_test(void)
     double start,end,cost;
     start = clock();
     // pldm_cjson_redfish_op_test();
-    pldm_cjson_bej_test();
+    // pldm_cjson_bej_test();
+    pldm_cjson_single_bej_test();
     // pldm_cjson_schema_test();
     // pldm_cjson_oem_dict_test();
     end = clock();

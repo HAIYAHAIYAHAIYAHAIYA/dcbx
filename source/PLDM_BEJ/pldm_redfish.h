@@ -60,18 +60,18 @@
 
 #define PLDM_REDFISH_ANNO_DICT_LEN                          (2560)
 #define PLDM_REDFISH_ETH_INTERFACE_COLLECTION_DICT_LEN      (128)
-#define PLDM_REDFISH_ETH_INTERFACE_DICT_LEN                 (492)
+#define PLDM_REDFISH_ETH_INTERFACE_DICT_LEN                 (544)
 #define PLDM_REDFISH_EVENT_DICT_LEN                         (1084)
 #define PLDM_REDFISH_MSG_REGISTER_DICT_LEN                  (276)
-#define PLDM_REDFISH_NETWORK_ADAPTER_DICT_LEN               (1108)
+#define PLDM_REDFISH_NETWORK_ADAPTER_DICT_LEN               (1156)
 #define PLDM_REDFISH_NETWORK_DEV_FUNCS_DICT_LEN             (132)
-#define PLDM_REDFISH_NETWORK_DEV_FUNC_DICT_LEN              (896)
-#define PLDM_REDFISH_NETWORK_INTERFACE_DICT_LEN             (372)
+#define PLDM_REDFISH_NETWORK_DEV_FUNC_DICT_LEN              (944)
+#define PLDM_REDFISH_NETWORK_INTERFACE_DICT_LEN             (420)
 #define PLDM_REDFISH_PCIE_FUNCS_DICT_LEN                    (124)
-#define PLDM_REDFISH_PCIE_DEV_DICT_LEN                      (688)
-#define PLDM_REDFISH_PCIE_FUNC_DICT_LEN                     (492)
+#define PLDM_REDFISH_PCIE_DEV_DICT_LEN                      (740)
+#define PLDM_REDFISH_PCIE_FUNC_DICT_LEN                     (544)
 #define PLDM_REDFISH_PORTS_DICT_LEN                         (116)
-#define PLDM_REDFISH_PORT_DICT_LEN                          (1092)
+#define PLDM_REDFISH_PORT_DICT_LEN                          (1144)
 
 typedef u8                                                  schemaclass;
 
@@ -144,7 +144,7 @@ typedef struct {
     u8 is_etag;
     u16 len;
     u8 etag[8];
-    u8 data[530];           /* max 522 bytes */
+    u8 data[520];           /* max 522 bytes */
 } pldm_redfish_bej_t;
 
 typedef struct {
@@ -156,8 +156,9 @@ typedef struct {
 #pragma pack()
 
 void pldm_redfish_dict_test(void);
-void CM_FLASH_READ(u32 offset, u32 *buf, u32 size);
+void CM_FLASH_READ(char *file_name, u32 offset, u32 *buf, u32 size);
 u8 pldm_redfish_get_dict_data(u32 resource_id, u8 requested_schemaclass, u8 *dict, u16 len);
 u16 pldm_redfish_get_dict_len(u32 resource_id);
+void pldm_redfsih_dict_signature_test(void);
 
 #endif /* __PLDM_REDFISH_H__ */

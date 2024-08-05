@@ -7,8 +7,8 @@
 
 u16 g_event_id = 1;
 extern pldm_monitor_base_info_t g_pldm_monitor_info;
-u8 g_anno_dict[PLDM_REDFISH_ANNO_DICT_LEN];
-u8 g_dict_info[PLDM_REDFISH_DICT_INFO_LEN];
+extern u8 g_anno_dict[PLDM_REDFISH_ANNO_DICT_LEN];
+
 typedef struct {
     u8 buf[PLDM_TERMINUS_MAX_BUFFERSIZE];
     u16 rd;
@@ -30,6 +30,7 @@ void *pldm_event_rbuf_init(void)
 
 int pldm_event_rbuf_read_size(void *p)
 {
+    if (!p) return -1;
     pldm_event_buf_t *pt = (pldm_event_buf_t *)p;
     int rbuf_sz = (pt->wt >= pt->rd) ? (pt->wt - pt->rd) : (pt->wt + PLDM_TERMINUS_MAX_BUFFERSIZE - pt->rd);
     return rbuf_sz;
@@ -37,12 +38,14 @@ int pldm_event_rbuf_read_size(void *p)
 
 int pldm_event_rbuf_is_empty(void *p)
 {
+    if (!p) return -1;
     pldm_event_buf_t *pt = (pldm_event_buf_t *)p;
     return pt->rd == pt->wt;
 }
 
 int pldm_event_rbuf_try_read(void *p, void *dat, int len, int offset)
 {
+    if (!p || !dat) return -1;
     //CHECK(p != NULL, TRUE, return STS_ERR);
     pldm_event_buf_t *pt = (pldm_event_buf_t *)p;
     u32 size = PLDM_TERMINUS_MAX_BUFFERSIZE;
@@ -64,6 +67,7 @@ int pldm_event_rbuf_try_read(void *p, void *dat, int len, int offset)
 
 int pldm_event_rbuf_read_done(void *p)
 {
+    if (!p) return -1;
     //CHECK(p != NULL, TRUE, return STS_ERR);
     pldm_event_buf_t *pt = (pldm_event_buf_t *)p;
     pt->rd = pt->try_rd;
@@ -73,12 +77,13 @@ int pldm_event_rbuf_read_done(void *p)
 
 int pldm_event_rbuf_write(void *p, void *dat, int len)
 {
+    if (!p || !dat) return -1;
     //CHECK(p != NULL, TRUE, return STS_ERR);
     pldm_event_buf_t *pt = (pldm_event_buf_t *)p;
     u32 size = PLDM_TERMINUS_MAX_BUFFERSIZE;
     u32 type = sizeof(u8);
     int valid = size - pldm_event_rbuf_read_size(p) - 1;
-    u16 w_len = ALIGN(len, type);
+    u16 w_len = ALIGN_LEN(type, len);
 
     while (valid < w_len) {                                   /* delete the oldest event */
         u8 event_data_info[sizeof(pldm_event_data_t)] = {0};
@@ -104,7 +109,7 @@ int pldm_event_rbuf_write(void *p, void *dat, int len)
 
 void pldm_sensor_event_generate(void *p, u8 sensor_event_class, u8 event_msg_en, void *data_struct)
 {
-    if (!p || g_pldm_monitor_info.terminus_mode == PLDM_DISABLE) {
+    if (!p || g_pldm_monitor_info.terminus_mode == PLDM_DISABLE || !data_struct) {
         goto L_RET;
     }
 
@@ -125,9 +130,7 @@ void pldm_sensor_event_generate(void *p, u8 sensor_event_class, u8 event_msg_en,
         sensor_event_dat->sensor_id = op_state->sensor_id;
         sensor_event_dat->sensor_event_class = PLDM_SENSOR_OP_STATE;
 
-        pldm_field_per_sensor_op_state_format_t *op_state_field = (pldm_field_per_sensor_op_state_format_t *)(sensor_event_dat->field_per_event_class);
-        op_state_field->present_op_state = op_state->op_state;
-        op_state_field->previous_op_state = op_state->previous_op_state;
+        cm_memcpy((void *)sensor_event_dat->field_per_event_class, (void *)op_state, sizeof(pldm_field_per_sensor_op_state_format_t));
 
         sensor_event->event_data_size += sizeof(pldm_field_per_sensor_op_state_format_t);
     } else if (sensor_event_class == PLDM_STATE_SENSOR_STATE) {                     /* change in the present state */
@@ -135,10 +138,7 @@ void pldm_sensor_event_generate(void *p, u8 sensor_event_class, u8 event_msg_en,
         sensor_event_dat->sensor_id = sensor_state->sensor_id;
         sensor_event_dat->sensor_event_class = PLDM_STATE_SENSOR_STATE;
 
-        pldm_field_per_state_sensor_state_format_t *sensor_state_field = (pldm_field_per_state_sensor_state_format_t *)(sensor_event_dat->field_per_event_class);
-        sensor_state_field->sensor_offset = sensor_state->sensor_offset;
-        sensor_state_field->event_state = sensor_state->present_state;              /* same as presentState(E810) */
-        sensor_state_field->previous_event_state = sensor_state->previous_state;    /* so */
+        cm_memcpy((void *)sensor_event_dat->field_per_event_class, (void *)&(sensor_state->sensor_offset), sizeof(pldm_field_per_state_sensor_state_format_t));
 
         sensor_event->event_data_size += sizeof(pldm_field_per_state_sensor_state_format_t);
     } else if (sensor_event_class == PLDM_NUMERIC_SENSOR_STATE) {                   /* change in the present state */
@@ -146,11 +146,7 @@ void pldm_sensor_event_generate(void *p, u8 sensor_event_class, u8 event_msg_en,
         sensor_event_dat->sensor_id = sensor_numeric->sensor_id;
         sensor_event_dat->sensor_event_class = PLDM_NUMERIC_SENSOR_STATE;
 
-        pldm_field_per_numeric_sensor_state_format_t *sensor_numeric_field = (pldm_field_per_numeric_sensor_state_format_t *)(sensor_event_dat->field_per_event_class);
-        sensor_numeric_field->sensor_datasize = sensor_numeric->sensor_data_size;
-        sensor_numeric_field->event_state = sensor_numeric->present_state;              /* same as presentState(E810) */
-        sensor_numeric_field->previous_event_state = sensor_numeric->previous_state;    /* so */
-        sensor_numeric_field->present_reading = sensor_numeric->present_reading;
+        cm_memcpy((void *)sensor_event_dat->field_per_event_class, (void *)&(sensor_numeric->present_state), sizeof(pldm_field_per_numeric_sensor_state_format_t));
 
         sensor_event->event_data_size += sizeof(pldm_field_per_numeric_sensor_state_format_t);
     } else {
@@ -207,40 +203,49 @@ void pldm_redfish_task_execute_event_generate(void *p, pldm_redfish_task_execute
     pldm_event_rbuf_write(p, task_execute_event, sizeof(pldm_event_data_t) + task_execute_event->event_data_size);
 }
 
-void pldm_redfish_msg_event_generate(void *p, u8 link_state)
+void pldm_redfish_msg_event_generate(void *p, u32 resource_id, u8 link_state)
 {
-    // if (!p || g_pldm_monitor_info.terminus_mode == PLDM_DISABLE) {
-    //     return;
+    if (!p || g_pldm_monitor_info.terminus_mode == PLDM_DISABLE) {
+        return;
+    }
+    u8 event_dict[PLDM_REDFISH_EVENT_DICT_LEN];
+    u8 event_buf[256] = {0};            /* pldm redfish msg event size is 223 bytes */
+
+    u8 ret = pldm_redfish_get_dict_data(PLDM_BASE_EVENT_DICT_RESOURCE_ID, SCHEMACLASS_EVENT, event_dict, PLDM_REDFISH_EVENT_DICT_LEN);
+    if (ret == false) return;
+
+    u8 *anno_dict = &g_anno_dict[DICT_FMT_HDR_LEN];
+    pldm_event_data_t *msg_event = (pldm_event_data_t *)event_buf;
+    pldm_redfish_msg_event_data_format_t *msg_event_data = (pldm_redfish_msg_event_data_format_t *)(msg_event->data);
+    pldm_redfish_dictionary_format_t *event_dict_ptr = (pldm_redfish_dictionary_format_t *)&event_dict[DICT_FMT_HDR_LEN];
+    msg_event->event_id = g_event_id++;
+    msg_event->event_class = REDFISH_MSG_EVENT;
+
+    msg_event_data->event_cnt = 1;
+    msg_event_data->id_and_severity[0].resource_id = PLDM_BASE_EVENT_DICT_RESOURCE_ID;
+    msg_event_data->id_and_severity[0].event_severity = SEVERITY_WARNING;
+    bejencoding_t *ptr = (bejencoding_t *)&(msg_event_data->id_and_severity[1]);
+
+    ptr->ver = event_dict_ptr->schema_version;
+    ptr->schema_class = SCHEMACLASS_EVENT;
+    // PLDM_BASE_NETWORK_DEV_FUNC_RESOURCE_ID + port
+    pldm_cjson_t *root = pldm_cjson_create_event_schema(resource_id, link_state);
+    if (!root) return;
+    pldm_cjson_cal_sf_to_root(root, anno_dict, (u8 *)event_dict_ptr);
+    pldm_cjson_cal_len_to_root2(root, OTHER_TYPE);
+    pldm_cjson_update_etag(root);
+    // pldm_cjson_printf_root2(root);
+    u8 *end_ptr = pldm_bej_encode(root, ((u8 *)ptr + sizeof(bejencoding_t)));
+    msg_event_data->event_data_len = end_ptr - (u8 *)ptr;
+    // for (u16 i = 0; i < msg_event_data->event_data_len - sizeof(bejencoding_t); i++) {
+    //     printf("0x%02x, ", ((u8 *)ptr + sizeof(bejencoding_t))[i]);
+    //     if (!((i + 1) % 8)) {
+    //         printf("\n");
+    //     }
     // }
-    // u8 event_dict[PLDM_REDFISH_EVENT_DICT_LEN];
-    // u8 event_buf[576] = {0};
+    pldm_cjson_pool_reinit();
+    root = NULL;
 
-    // u8 ret = pldm_redfish_get_dict_data(PLDM_BASE_EVENT_DICT_RESOURCE_ID, event_dict, sizeof(event_dict));
-    // if (ret == false) return;
-
-    // u8 *annc_dict = &g_anno_dict[DICT_FMT_HDR_LEN];
-    // pldm_event_data_t *msg_event = (pldm_event_data_t *)event_buf;
-    // pldm_redfish_msg_event_data_format_t *msg_event_data = (pldm_redfish_msg_event_data_format_t *)(msg_event->data);
-    // pldm_redfish_dictionary_format_t *event_dict_ptr = (pldm_redfish_dictionary_format_t *)&event_dict[DICT_FMT_HDR_LEN];
-
-    // msg_event->event_id = g_event_id++;
-    // msg_event->event_class = REDFISH_MSG_EVENT;
-
-    // msg_event_data->event_cnt = 1;
-    // msg_event_data->id_and_severity[0].resource_id = PLDM_BASE_EVENT_DICT_RESOURCE_ID;
-    // msg_event_data->id_and_severity[0].event_severity = SEVERITY_WARNING;
-    // bejencoding_t *ptr = (bejencoding_t *)&(msg_event_data->id_and_severity[1]);
-
-    // ptr->ver = event_dict_ptr->schema_version;
-    // ptr->schema_class = SCHEMACLASS_MAJOR;
-
-    // pldm_cjson_t *root = pldm_cjson_create_event_schema(PLDM_BASE_EVENT_DICT_RESOURCE_ID, (u8 *)event_dict_ptr, annc_dict, link_state);
-    // pldm_cjson_cal_len_to_root(root, OTHER_TYPE);
-    // u8 *end_ptr = pldm_bej_encode(root, ((u8 *)ptr + sizeof(bejencoding_t)));
-    // msg_event_data->event_data_len = end_ptr - (u8 *)ptr;
-    // pldm_cjson_pool_reinit();
-    // root = NULL;
-
-    // msg_event->event_data_size = msg_event_data->event_data_len + sizeof(pldm_redfish_msg_event_data_format_t) + sizeof(pldm_redfish_id_and_severity_t);
-    // pldm_event_rbuf_write(p, msg_event, sizeof(pldm_event_data_t) + msg_event->event_data_size);
+    msg_event->event_data_size = msg_event_data->event_data_len + sizeof(pldm_redfish_msg_event_data_format_t) + sizeof(pldm_redfish_id_and_severity_t);
+    pldm_event_rbuf_write(p, msg_event, sizeof(pldm_event_data_t) + msg_event->event_data_size);
 }

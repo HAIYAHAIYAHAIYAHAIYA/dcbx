@@ -7,15 +7,6 @@
 
 #define ALIGN(dat, align)    (((dat) + (align) - 1) & (~((align) - 1)))
 
-#define cm_memcpy           memcpy
-#define cm_memset           memset
-#define cm_memcmp           memcmp
-#define cm_strncpy          strncpy
-#define cm_strlen           strlen
-#define cm_strcmp           strcmp
-#define cm_sprintf          sprintf
-#define cm_snprintf         snprintf
-
 #define MAX_LAN_NUM         4
 
 /* resource id */
@@ -79,6 +70,7 @@ void pldm_cjson_test(void);
 pldm_cjson_t *pldm_cjson_create_obj(void);
 void pldm_cjson_delete_node(pldm_cjson_t *node);
 u16 pldm_cjson_cal_len_to_root1(pldm_cjson_t *root, u8 op_type);
+u16 pldm_cjson_cal_len_to_root2(pldm_cjson_t *root, u8 op_type);
 
 void pldm_cjson_printf_dict(u8 *dictionary);
 
@@ -86,5 +78,11 @@ pldm_cjson_t *pldm_cjson_add_item_to_obj(pldm_cjson_t *obj, pldm_bej_sflv_dat_t 
 void pldm_cjson_add_enum_to_obj(pldm_cjson_t *obj, u8 *dictionary, pldm_bej_sflv_dat_t *sflv, char *enum_name, char *enum_val);
 
 void pldm_cjson_printf_root2(pldm_cjson_t *root);
+
+pldm_cjson_t *pldm_cjson_create_event_schema(u32 resource_id, u8 link_state);
+void pldm_cjson_pool_init(void);
+void pldm_cjson_pool_reinit(void);
+void pldm_cjson_cal_sf_to_root(pldm_cjson_t *root, u8 *anno_dict, u8 *dict);
+void pldm_cjson_update_etag(pldm_cjson_t *root);
 
 #endif /* __PLDM_CJSON_H__ */

@@ -138,7 +138,6 @@ static pldm_redfish_dictionary_entry_t *pldm_bej_dict_search(pldm_bej_sflv_t *sf
         tmp += 1;
     }
     if (!is_find) {
-        LOG("need 0x%x, 0x%x, 0x%02x", sflv->fmt >> 4, sflv->seq >> 1, sflv->len);
         LOG("dict_search fmt err");
         gs_key.len = cm_strlen("fmt_err");
         gs_key.val = "fmt_err";
@@ -149,7 +148,7 @@ static pldm_redfish_dictionary_entry_t *pldm_bej_dict_search(pldm_bej_sflv_t *sf
 
 void pldm_bej_init(void)
 {
-    // pldm_cjson_pool_init();
+    pldm_cjson_pool_init();
 }
 
 static void pldm_bej_val_search(u8 *dictionary, pldm_bej_sflv_t *sflv, pldm_cjson_t *ptr)
@@ -188,8 +187,8 @@ u8 *pldm_bej_encode(pldm_cjson_t *root, u8 *bej_buf)
     while (tmp) {
         u8 fmt = tmp->sflv.fmt >> 4;
         buf = pldm_bej_sfl_to_bej(buf, tmp);
-        if (fmt != BEJ_ENUM) buf = pldm_bej_encode(tmp->child, buf);
-        if (fmt != BEJ_ARRAY && fmt != BEJ_SET) {
+        buf = pldm_bej_encode(tmp->child, buf);
+        if (!(tmp->child) && fmt != BEJ_ARRAY && fmt != BEJ_SET) {
             buf = pldm_bej_jsonval_to_bej(buf, tmp);
         }
         tmp = tmp->next;
@@ -263,7 +262,6 @@ pldm_cjson_t *pldm_bej_decode(u8 *buf, u16 buf_len, u8 *anno_dict, u8 *dict, pld
     while (total_len < buf_len) {
         total_len += pldm_bej_decode_op(&buf[total_len], anno_dict, dict, &(dictionary->entry[0]), dictionary->entry_cnt, &(anno_dictionary->entry[0]), anno_dictionary->entry_cnt, root, is_full_schema);
     }
-    LOG("decode len : %d", total_len);
     pldm_cjson_t *new_root = NULL;
     new_root = root->child;
     root->child = NULL;
@@ -313,8 +311,9 @@ void pldm_bej_full_match(pldm_cjson_t *schema_node, pldm_cjson_t *bej_root)
 
 void pldm_bej_fill_name(pldm_cjson_t *schema_root, pldm_cjson_t *bej_root)
 {
-    pldm_cjson_t *schema_ptr = schema_root;
     gs_match_node = NULL;
+    if (!bej_root) return;
+    pldm_cjson_t *schema_ptr = schema_root;
     while (schema_ptr) {
         for (pldm_cjson_t *tmp = bej_root; tmp; tmp = tmp->next) {
             u8 schema_seq = schema_ptr->sflv.seq;
@@ -327,11 +326,14 @@ void pldm_bej_fill_name(pldm_cjson_t *schema_root, pldm_cjson_t *bej_root)
                 if (gs_is_match) {
                     gs_finded = 1;
                     gs_match_node = schema_ptr;
-                    LOG("match name : %s", schema_ptr->name);
+                    // LOG("match name : %s", schema_ptr->name);
                 }
             }
         }
-        if (gs_finded) break;
+        if (gs_finded) {
+            gs_finded = 0;
+            break;
+        }
         pldm_bej_fill_name(schema_ptr->child, bej_root);
         schema_ptr = schema_ptr->next;
     }
