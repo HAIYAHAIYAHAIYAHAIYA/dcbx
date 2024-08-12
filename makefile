@@ -25,7 +25,7 @@ ALL = cleanall excute clean
 $(TARGET) : $(OBJS)
 	@echo -e '\033[36mGen file: all file -> $@ \033[0m'
 	$(CC) $(OBJS) $' -o $@
-	@python3 ${PLDM_REDFISH_DICT_GEN} 2>/dev/null || python ${PLDM_REDFISH_DICT_GEN}
+# @python3 ${PLDM_REDFISH_DICT_GEN} 2>/dev/null || python ${PLDM_REDFISH_DICT_GEN}
 	@python3 ${PLDM_FWUP_IMG_GEN} 2>/dev/null || python ${PLDM_FWUP_IMG_GEN}
 	@python3 ${PLDM_FWUP_IMG_INFO_GEN} 2>/dev/null || python ${PLDM_FWUP_IMG_INFO_GEN}
 
