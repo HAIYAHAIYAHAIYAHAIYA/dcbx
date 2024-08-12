@@ -7,6 +7,9 @@
 
 #define PLDM_MONITOR_CMD                          (0x15 + 1)
 
+#define __TO_STR(__str)     (#__str)
+#define TO_STR(str)         __TO_STR(str)
+
 #define PLDM_TERMINUS_MAX_BUFFERSIZE              (2 * 1024)
 #define PLDM_TERMINUS_DEFAULT_BUFFERSIZE          (256)
 #define PLDM_EVENT_RECEIVER_MIN_BUFFERSIZE        (14)

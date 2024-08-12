@@ -101,6 +101,148 @@ void pldm_pool_init(void)
     pdrs_pool_init((u32 *)gs_pdrs_buf);
 }
 
+void pldm_monitor_printf_pdr_hdr(pldm_pdr_hdr_t *hdr)
+{
+    LOG("record_handle : %d", hdr->record_handle);
+    LOG("version : %d", hdr->version);
+    LOG("type : %d", hdr->type);
+    LOG("record_change_num : %d", hdr->record_change_num);
+    LOG("length : %d", hdr->length);
+}
+
+void pldm_monitor_printf_terminus_locator_pdr_detail(u8 *data)
+{
+    pldm_terminus_locator_pdr_t *ctx = (pldm_terminus_locator_pdr_t *)data;
+    pldm_monitor_printf_pdr_hdr(&(ctx->hdr));
+    LOG("terminus_handle : %d", ctx->terminus_handle);
+    LOG("validity : %d", ctx->validity);
+    LOG("tid : %#x", ctx->tid);
+    LOG("container_id : %d", ctx->container_id);
+    LOG("terminus_locator_type : %d", ctx->terminus_locator_type);
+    LOG("terminus_locator_value_size : %d", ctx->terminus_locator_value_size);
+    LOG("eid : %#x", ctx->eid);
+}
+
+void pldm_monitor_printf_fru_pdr_detail(u8 *data)
+{
+    pldm_fru_record_set_pdr_t *ctx = (pldm_fru_record_set_pdr_t *)data;
+    pldm_monitor_printf_pdr_hdr(&(ctx->hdr));
+    LOG("pldm_terminus_handle : %d", ctx->pldm_terminus_handle);
+    LOG("fru_record_terminus_identifier : %d", ctx->fru_record_terminus_identifier);
+    LOG("entity_type : %#x", ctx->entity_type);
+    LOG("entity_instance_num : %d", ctx->entity_instance_num);
+    LOG("container_id : %d", ctx->container_id);
+}
+
+void pldm_monitor_printf_numeric_pdr_comm_hdr(pldm_numeric_sensor_pdr_comm_part_t *comm_part)
+{
+    pldm_monitor_printf_pdr_hdr(&(comm_part->hdr));
+    LOG("terminus_handle : %d", comm_part->terminus_handle);
+    LOG("sensor_id : %d", comm_part->sensor_id);
+    LOG("entity_type : %d", comm_part->container.entity_type);
+    LOG("entity_instance_num : %d", comm_part->container.entity_instance_num);
+    LOG("entity_container_id : %d", comm_part->container.entity_container_id);
+    LOG("sensor_init : %d", comm_part->sensor_init);
+    LOG("sensor_auxiliary_names_pdr : %d", comm_part->sensor_auxiliary_names_pdr);
+    LOG("base_unit : %d", comm_part->base_unit);
+    LOG("unit_modifier : %d", comm_part->unit_modifier);
+    LOG("rate_unit : %d", comm_part->rate_unit);
+    LOG("base_oem_unit_handle : %d", comm_part->base_oem_unit_handle);
+    LOG("aux_unit : %d", comm_part->aux_unit);
+    LOG("aux_unit_modifier : %d", comm_part->aux_unit_modifier);
+    LOG("aux_rate_unit : %d", comm_part->aux_rate_unit);
+    LOG("rel : %d", comm_part->rel);
+    LOG("aux_oem_unit_handle : %d", comm_part->aux_oem_unit_handle);
+    LOG("record_his_linearandle : %d", comm_part->is_linear);
+    LOG("sensor_data_size : %d", comm_part->sensor_data_size);
+    LOG("resolution : %#x", comm_part->resolution);
+    LOG("offset : %#x", comm_part->offset);
+    LOG("accuracy : %#x", comm_part->accuracy);
+    LOG("plus_tolerace : %#x", comm_part->plus_tolerace);
+    LOG("minus_tolerance : %#x", comm_part->minus_tolerance);
+}
+
+void pldm_monitor_printf_numeric_pdr_detail(u8 *data)
+{
+    pldm_numeric_sensor_pdr_t *ctx = (pldm_numeric_sensor_pdr_t *)data;
+    pldm_monitor_printf_numeric_pdr_comm_hdr(&(ctx->numeric_pdr_comm_part));
+    // switch () {
+    //     case :
+    //     break;
+    // }
+
+}
+
+void pldm_monitor_printf_state_pdr_detail(u8 *data)
+{
+    pldm_composite_state_sensor_pdr_t *ctx = (pldm_composite_state_sensor_pdr_t *)data;
+    pldm_monitor_printf_pdr_hdr(&(ctx->hdr));
+    LOG("terminus_handle : %d", ctx->terminus_handle);
+    LOG("sensor_id : %d", ctx->sensor_id);
+    LOG("entity_type : %d", ctx->container.entity_type);
+    LOG("entity_instance_num : %d", ctx->container.entity_instance_num);
+    LOG("entity_container_id : %d", ctx->container.entity_container_id);
+    LOG("sensor_init : %d", ctx->sensor_init);
+    LOG("sensor_auxi_names_pdr : %d", ctx->sensor_auxi_names_pdr);
+    LOG("composite_sensor_cnt : %d", ctx->composite_sensor_cnt);
+
+    for (u8 i = 0; i < ctx->composite_sensor_cnt; i++) {
+        LOG("state_setid : %d", ctx->sensors[i].state_setid);
+        LOG("possible_states_size : %d", ctx->sensors[i].possible_states_size);
+        LOG("possible_states : %d", ctx->sensors[i].possible_states);
+    }
+}
+
+void pldm_monitor_printf_assoc_pdr_detail(u8 *data)
+{
+    pldm_pdr_entity_assoc_t *ctx = (pldm_pdr_entity_assoc_t *)data;
+    pldm_monitor_printf_pdr_hdr(&(ctx->hdr));
+    LOG("container_id : %d", ctx->container_id);
+    LOG("assoc_type : %d", ctx->assoc_type);
+    LOG("entity_type : %d", ctx->container.entity_type);
+    LOG("entity_instance_num : %d", ctx->container.entity_instance_num);
+    LOG("entity_container_id : %d", ctx->container.entity_container_id);
+    LOG("contained_entity_cnt : %d", ctx->contained_entity_cnt);
+
+    for (u8 i = 0; i < ctx->contained_entity_cnt; i++) {
+        LOG("d entity_type : %d", ctx->contained[i].entity_type);
+        LOG("d entity_instance_num : %d", ctx->contained[i].entity_instance_num);
+        LOG("d entity_container_id : %d", ctx->contained[i].entity_container_id);
+    }
+}
+
+void pldm_monitor_printf_pdr(pldm_pdr_record_t *pdr)
+{
+    pldm_pdr_hdr_t *hdr = (pldm_pdr_hdr_t *)(pdr->data);
+    switch (hdr->type) {
+        case TERMINUS_LOCATOR_PDR:
+            LOG("%s", TO_STR(TERMINUS_LOCATOR_PDR));
+            // pldm_monitor_printf_terminus_locator_pdr_detail(pdr->data);
+            break;
+        case NUMERIC_SENSOR_PDR:
+            LOG("%s", TO_STR(NUMERIC_SENSOR_PDR));
+            break;
+        case STATE_SENSOR_PDR:
+            LOG("%s", TO_STR(STATE_SENSOR_PDR));
+            // pldm_monitor_printf_state_pdr_detail(pdr->data);
+            break;
+        case ENTITY_ASSOC_PDR:
+            LOG("%s", TO_STR(ENTITY_ASSOC_PDR));
+            // pldm_monitor_printf_assoc_pdr_detail(pdr->data);
+            break;
+        case FRU_RECORD_SET_PDR:
+            LOG("%s", TO_STR(FRU_RECORD_SET_PDR));
+            // pldm_monitor_printf_fru_pdr_detail(pdr->data);
+            break;
+        case REDFISH_RESOURCE_PDR:
+            LOG("%s", TO_STR(REDFISH_RESOURCE_PDR));
+            break;
+        case REDFISH_ACTION_PDR:
+            LOG("%s", TO_STR(REDFISH_ACTION_PDR));
+            break;
+    }
+}
+
 void pldm_monitor_printf_repo(pldm_pdr_t *repo)
 {
     LOG("record_count : %d", repo->record_count);
@@ -124,6 +266,7 @@ void pldm_monitor_printf_repo(pldm_pdr_t *repo)
         cnt++;
         pldm_pdr_hdr_t *hdr = (pldm_pdr_hdr_t *)(pdr->data);
         LOG("pdr size : %04d, record handle : %04d, type : %d", pdr->size, pdr->record_handle, hdr->type);
+        pldm_monitor_printf_pdr(pdr);
         repo->repo_signature = crc32_pldm_1(repo->repo_signature ^ 0xFFFFFFFFUL, pdr->data, pdr->size);
         sum_size += pdr->size;
         pdr = pdr->next;
@@ -140,9 +283,6 @@ void pldm_monitor_printf_repo(pldm_pdr_t *repo)
         delete_pdr = delete_pdr->next;
     }
 }
-
-#define __TO_STR(__str)     (#__str)
-#define TO_STR(str)         __TO_STR(str)
 
 void pldm_monitor_printf_sensor_detail(u8 *ev_data)
 {
@@ -348,7 +488,7 @@ void pldm_monitor_test(void)
         pdr_init[i]();
         // pldm_pdr_get_used();
     }
-    for (u8 i = 0; i < MAX_LAN_NUM; i++) {
+    for (u8 i = 0; i < 2; i++) {
         pldm_link_handle(i, 1);
     }
 
@@ -406,7 +546,7 @@ void pldm_monitor_test(void)
     // pldm_monitor_printf_repo(&(g_pldm_monitor_info.pldm_repo));
     // LOG("last : %d", g_pldm_monitor_info.pldm_repo.last->record_handle);
     // LOG("first : %d", g_pldm_monitor_info.pldm_repo.first->record_handle);
-    pldm_monitor_printf_event_rbuf(g_pldm_monitor_info.pldm_event_rbuf);
+    // pldm_monitor_printf_event_rbuf(g_pldm_monitor_info.pldm_event_rbuf);
     // SENSOR_EVENT = 0x00,
     // REDFISH_TASK_EXCUTE_EVENT = 0x02,
     // REDFISH_MSG_EVENT = 0x03,
