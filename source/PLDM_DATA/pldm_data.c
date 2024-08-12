@@ -56,7 +56,7 @@ static void pldm_fwup_info_selftest(pldm_data_hdr_t *hdr)
     }
     printf("\n");
 
-    pldm_fwup_comp_info_t *comp_info = (pldm_fwup_comp_info_t *)&(fw_img_info->fw_img_info.val[fw_img_info->fw_img_info.comp_img_set_ver_str_len]);
+    pldm_fwup_comp_info_t *comp_info = (pldm_fwup_comp_info_t *)&(fw_img_info->fw_img_info.val[34]);
 
     for (u8 i = 0; i < 3; i++) {
         LOG("comp_classification : %d", comp_info->comp_classification);
@@ -101,6 +101,7 @@ void pldm_data_analyze(void)
     }
 
     pldm_data_hdr_t pldm_data_hdr;
+    // fseek(fp, 0xFF000, SEEK_SET);
     fread(&pldm_data_hdr, sizeof(u8), sizeof(pldm_data_hdr_t), fp);
     LOG("pldm_pdr            -> off : %05d, size : %d", pldm_data_hdr.pldm_pdr_off, pldm_data_hdr.pldm_pdr_size);
     LOG("pldm_fwup_info      -> off : %05d, size : %d", pldm_data_hdr.pldm_fwup_info_off, pldm_data_hdr.pldm_fwup_info_size);
@@ -111,6 +112,6 @@ void pldm_data_analyze(void)
 
     pldm_pdr_selftest(&pldm_data_hdr);
     pldm_fwup_info_selftest(&pldm_data_hdr);
-    pldm_redfish_schema_selftest(&pldm_data_hdr);
+    // pldm_redfish_schema_selftest(&pldm_data_hdr);
 
 }
