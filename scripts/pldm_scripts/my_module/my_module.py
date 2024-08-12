@@ -4,7 +4,7 @@ import sys
 import subprocess
 
 def install_module(module_name):
-    subprocess.check_call(["pip", "install", module_name])
+    subprocess.check_call(["pip3", "install", module_name])
     # print(f"{module_name}模块已安装")
 
 def check_and_install_module(module_name):

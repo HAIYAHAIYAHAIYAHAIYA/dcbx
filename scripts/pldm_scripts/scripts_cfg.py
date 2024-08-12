@@ -23,14 +23,16 @@ if AMBER:
     pldm_fwup_img_info_file = cur_file_dir() + "/../../../build/" + "pldm_fwup_img_info.bin"
 
 elif AMLITE:
-    pldm_redfish_output_path = cur_file_dir() + "/"
+    pldm_redfish_output_path = cur_file_dir() + "/../../../build/"
 
     pldm_fwup_jsonfile_path = cur_file_dir()
     pldm_fwup_output_path = "./"
     pldm_fwup_img_path = "./"
     pldm_fwup_img_json_file = pldm_fwup_jsonfile_path + "/amlite_pldm_fwup.json"
-    pldm_fwup_img_info_file = cur_file_dir() + "/../../../../../../build/" + "pldm_fwup_img_info.bin"
+    pldm_fwup_img_info_file = cur_file_dir() + "/../../../build/" + "pldm_fwup_img_info.bin"
     pldm_fwup_image_files = {
+        0x0000: [pldm_fwup_img_path + "upgrade_slot.img",    0x01],
     }
     pldm_fwup_output_files = {
+        0x0000: [pldm_fwup_output_path + "amlite_upgrade_pldm_fwup_slot.img",    0x01],
     }

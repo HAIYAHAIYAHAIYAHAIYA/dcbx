@@ -291,7 +291,7 @@ def prepare_record_descriptors(descriptors):
     descriptor_count = 0
 
     for descriptor in descriptors:
-        descriptor_type = descriptor["DescriptorType"]
+        descriptor_type = get_config_val(descriptor["DescriptorType"])
         if descriptor_count == 0:
             if (
                 initial_descriptor_type_name_length.get(descriptor_type)
@@ -332,7 +332,7 @@ def prepare_record_descriptors(descriptors):
             record_descriptors.extend(bytearray.fromhex(vendor_desc_data))
             descriptor_count += 1
         else:
-            descriptor_type = descriptor["DescriptorType"]
+            descriptor_type = get_config_val(descriptor["DescriptorType"])
             descriptor_data = descriptor["DescriptorData"]
             descriptor_length = len(bytearray.fromhex(descriptor_data))
             if (
