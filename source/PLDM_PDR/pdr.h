@@ -9,14 +9,14 @@
 #define LINK_UP                         1
 #define LINK_DOWN                       0
 
-#define CM_MODULE_GET_TEMPERATURE_DATE(port)        0
+#define CM_MODULE_GET_TEMPERATURE_DATE(port)        20 << 8
 #define CM_MODULE_GET_VOLTAGE_DATA(port)            0
 #define CM_MODULE_GET_POWER_DATA(port)              0
-#define CM_MODULE_GET_IDENTIFIER(port)              0
-#define CM_MODULE_GET_WARN_DATA(port)               0
-#define CM_MODULE_GET_CRITICAL_DATA(port)           0
-#define CM_MODULE_GET_FATAL_DATA(port)              0
-#define CM_MODULE_GET_SIGNAL_RATE_DATA(port)        0
+#define CM_MODULE_GET_IDENTIFIER(port)              0x11
+#define CM_MODULE_GET_WARN_DATA(port)               40 << 8
+#define CM_MODULE_GET_CRITICAL_DATA(port)           45 << 8
+#define CM_MODULE_GET_FATAL_DATA(port)              50 << 8
+#define CM_MODULE_GET_SIGNAL_RATE_DATA(port)        40
 
 /* TBD */
 #define CM_NIC_GET_TEMPERATURE_DATE                 (0)
@@ -471,7 +471,7 @@ typedef struct {
     u8 present_state;
     u8 previous_state;
     u8 sensor_data_size;
-    u16 present_reading;
+    u32 present_reading;
 } pldm_temp_sensor_data_struct_t, pldm_link_speed_data_struct_t, pldm_plug_power_data_struct_t, pldm_data_struct_t;
 
 typedef struct {

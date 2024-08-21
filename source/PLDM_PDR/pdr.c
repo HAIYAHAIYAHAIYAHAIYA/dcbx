@@ -307,7 +307,7 @@ static int fill_common_thermal_sensor_pdr(void *buf, u16 sensor_id, u16 entity_t
     } else if (entity_type == CONTROLLER_SENSOR) {
         thermal_pdr->numeric_pdr_comm_part.container.entity_instance_num = sensor_id - PLDM_BASE_NC_TEMP_SENSOR_ID + 1;
         thermal_pdr->numeric_pdr_comm_part.container.entity_container_id = PLDM_BASE_NC_CONTAINER_ID;
-        sensor_type = CONTROLLER_SENSOR;
+        sensor_type = NC_TEMP_SENSOR;
     } else {    /* For Plug Sensor: */
         thermal_pdr->numeric_pdr_comm_part.container.entity_instance_num = sensor_id - PLDM_BASE_PLUG_TEMP_SENSOR_ID + 1;
         thermal_pdr->numeric_pdr_comm_part.container.entity_container_id = PLDM_BASE_PLUG_CONTAINER_ID + thermal_pdr->numeric_pdr_comm_part.container.entity_instance_num - 1;
@@ -746,7 +746,7 @@ static void pldm_delete_assoc_pdr(u32 assoc_record_handle)
 
 void pldm_modify_state_datastruct(u8 present_state, pldm_state_data_struct_t *datastruct)
 {
-    if (!datastruct) return;
+    if (!datastruct || datastruct->op_state != PLDM_OP_ENABLE) return;
     datastruct->previous_state = datastruct->present_state;
     datastruct->present_state = present_state;
     if (datastruct->previous_state != present_state) {
@@ -805,6 +805,13 @@ static u8 *pldm_redfish_resource_pdr_fill_middle1_part(u8 *middle1_part_pdr, u16
         ptr->add_suburi_byte_len = resource_info[i].add_suburi_byte_len;
         cm_memcpy(ptr->add_suburi, suburi_ptr, ptr->add_suburi_byte_len);
         suburi_ptr += ptr->add_suburi_byte_len;
+        /* find next str. */
+        for (u8 j = 0; j < 0xFF; j++) {
+            if (suburi_ptr[j] != '\0') {
+                suburi_ptr += j;
+                break;
+            }
+        }
         offset += (sizeof(pldm_redfish_add_info_t) + ptr->add_suburi_byte_len);
         ptr = (pldm_redfish_add_resource_info_t *)&(ptr->add_suburi[ptr->add_suburi_byte_len]);
     }
@@ -980,8 +987,8 @@ static void pldm_redfish_add_network_dev_func_pdr(void)
 static void pldm_redfish_add_pcie_funcs_pdr(void)
 {
     proposed_containing_resource_name = "";
-    sub_uri = "NetworkDeviceFunctions";
-    major_schema_name = "NetworkDeviceFunctionCollection.NetworkDeviceFunctionCollection";
+    sub_uri = "PCIeFunctions";
+    major_schema_name = "PCIeFunctionCollection.PCIeFunctionCollection";
     pldm_redfish_pdr_add(PLDM_PCIE_FUNCS_PDR_HANDLE, PLDM_BASE_PCIE_FUNCS_RESOURCE_ID, CBIT(2), PLDM_BASE_NETWORK_ADAPTER_RESOURCE_ID);
 }
 
@@ -1034,7 +1041,7 @@ static void pldm_redfish_add_eth_interface_pdr(void)
     pldm_redfish_add_info_t add_info[2 * MAX_LAN_NUM] = {0};
     char add_suburi[2 * MAX_LAN_NUM][11];
 
-    u8 malloc_len = pldm_redfish_pdr_malloc_size_get();
+    u8 malloc_len = pldm_redfish_pdr_malloc_size_get() + sizeof(add_suburi) + sizeof(add_info);
     u8 *buf = (u8 *)pdr_malloc(malloc_len);
     if (!buf) {
         return;
@@ -1436,13 +1443,18 @@ static void pldm_delete_comm_chan_assoc_pdr(u8 port)
 
 void terminus_locator_pdr_chg(void)
 {
-    pldm_terminus_locator_pdr_t *terminus_locator_pdr = (pldm_terminus_locator_pdr_t *)pldm_pdr_is_exist(&(g_pldm_monitor_info.pldm_repo), PLDM_TERMINUS_LOCATOR_PDR_HANDLE);
+    pldm_pdr_record_t *is_find = (pldm_pdr_record_t *)pldm_pdr_find(&(g_pldm_monitor_info.pldm_repo), PLDM_TERMINUS_LOCATOR_PDR_HANDLE);
+    if (!is_find)
+        return;
+    pldm_terminus_locator_pdr_t *terminus_locator_pdr = (pldm_terminus_locator_pdr_t *)(is_find->data);
     if ((g_pldm_monitor_info.tid != terminus_locator_pdr->tid) || (g_mctp_ctrl_info[1].dev_eid != terminus_locator_pdr->eid)) {
         g_pldm_monitor_info.repo_state = PLDM_REPO_UPDATE_IN_PROGRESS;
+        terminus_locator_pdr->hdr.record_change_num++;
         terminus_locator_pdr->tid = g_pldm_monitor_info.tid;
         terminus_locator_pdr->eid = g_mctp_ctrl_info[1].dev_eid;      /* 待定 */
         pldm_pdr_chg_event_generate(g_pldm_monitor_info.pldm_event_rbuf, PLDM_REPO_CHG_FORMAT_ID_PDR_HANDLE, PLDM_REPO_CHG_RECORDS_MODIFIED, PLDM_TERMINUS_LOCATOR_PDR_HANDLE);
         g_pldm_monitor_info.repo_state = PLDM_REPO_AVAILABLE;
+        pldm_monitor_update_repo_signature(&(g_pldm_monitor_info.pldm_repo));
     }
 }
 
@@ -1485,6 +1497,26 @@ void pldm_link_handle(u8 port, u8 link_state)
     pldm_monitor_update_repo_signature(&(g_pldm_monitor_info.pldm_repo));
 }
 
+/* 初始化更新pdr */
+void pldm_thermal_sensor_pdr_update(u16 sensor_id, u8 sensor_type, u8 port)
+{
+    pldm_temp_sensor_threshold_data_t temp_data;
+    pldm_pdr_record_t *is_find = NULL;
+    u32 record_hanle = sensor_id_convert_to_record_handle(sensor_id);
+
+    is_find = pldm_pdr_find(&(g_pldm_monitor_info.pldm_repo), record_hanle);
+    if (!is_find) {
+        LOG("[pldm_thermal_sensor_pdr_update], err record handle : %d", record_hanle);
+        return;
+    }
+    pldm_get_temp_sensor_threshold(&temp_data, sensor_type, port);
+
+    pldm_numeric_sensor_pdr_t *thermal_pdr = (pldm_numeric_sensor_pdr_t *)(is_find->data);
+    thermal_pdr->thermal_pdr.warning_high = temp_data.warning_high;
+    thermal_pdr->thermal_pdr.critical_high = temp_data.critical_high;
+    thermal_pdr->thermal_pdr.fatal_high = temp_data.fatal_high;
+}
+
 /* refer to SFF-8024 Rev 4.6, https://www.gigalight.com/downloads/standards/sff-8024.pdf */
 static void pldm_identifier_update(u8 port)
 {
@@ -1513,9 +1545,13 @@ void pldm_get_temp_sensor_threshold(pldm_temp_sensor_threshold_data_t *temp_data
     if (!temp_data || port >= MAX_LAN_NUM) return;
     switch(sensor_type) {
         case PLUG_TEMP_SENSOR:
+            /* 保留整数 (0 ~ 127) */
             temp_data->warning_high = CM_MODULE_GET_WARN_DATA(port);
             temp_data->critical_high = CM_MODULE_GET_CRITICAL_DATA(port);
             temp_data->fatal_high = CM_MODULE_GET_FATAL_DATA(port);
+            temp_data->warning_high >>= 8;
+            temp_data->critical_high >>= 8;
+            temp_data->fatal_high >>= 8;
             break;
         case NIC_TEMP_SENSOR:
         case NC_TEMP_SENSOR:
@@ -1529,7 +1565,7 @@ void pldm_get_temp_sensor_threshold(pldm_temp_sensor_threshold_data_t *temp_data
 void pldm_get_link_spd_cap(pldm_speed_sensor_cap_t *speed_data, u8 port)
 {
     if (!speed_data || port >= MAX_LAN_NUM) return;
-    speed_data->max_readable = CM_MODULE_GET_SIGNAL_RATE_DATA(port);
+    speed_data->max_readable = CM_MODULE_GET_SIGNAL_RATE_DATA(port) * 1000;
     speed_data->min_readable = 0;
 }
 
@@ -1538,10 +1574,11 @@ void pldm_module_info_update(u8 port)
 {
     if (port >= MAX_LAN_NUM) return;
     pldm_identifier_update(port);
-    /* 摄氏度 */
-    temp_sensors[PLUG_TEMP_SENSOR][port].present_reading = CM_MODULE_GET_TEMPERATURE_DATE(port);
+    /* 摄氏度, 保留整数 (0 ~ 127) */
+    u16 raw_val = CM_MODULE_GET_TEMPERATURE_DATE(port);
+    temp_sensors[PLUG_TEMP_SENSOR][port].present_reading = raw_val & CBIT(15) ? 0 : raw_val >> 8;
     /* 0.1微瓦 */
     plug_power_sensors[port].present_reading = CM_MODULE_GET_POWER_DATA(port);
     /* MBd */
-    link_speed_sensors[port].present_reading = CM_MODULE_GET_SIGNAL_RATE_DATA(port);
+    link_speed_sensors[port].present_reading = CM_MODULE_GET_SIGNAL_RATE_DATA(port) * 1000;
 }

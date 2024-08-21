@@ -1,7 +1,7 @@
 #ifndef __PLDM_MONITOR_EVENT_RBUF_H__
 #define __PLDM_MONITOR_EVENT_RBUF_H__
 
-#include "type.h"
+#include "main.h"
 
 #define ALIGN_LEN(type, len)                      (((len) + (type) - 1) / (type))
 
@@ -32,7 +32,7 @@ typedef struct {
     u8 event_state;
     u8 previous_event_state;
     u8 sensor_datasize;
-    u8 present_reading;
+    u8 present_reading[0];
 } pldm_field_per_numeric_sensor_state_format_t;
 
 typedef struct {
