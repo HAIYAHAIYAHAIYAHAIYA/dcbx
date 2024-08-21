@@ -31,6 +31,22 @@ int is_temp_sensor(u16 sensor_id)
     return -1;
 }
 
+u8 is_link_speed_sensor(u16 sensor_id)
+{
+    if (sensor_id >= PLDM_BASE_LINK_SPEED_SENSOR_ID && sensor_id <= PLDM_MAX_LINK_SPEED_SENSOR_ID) {
+        return TRUE;
+    }
+    return FALSE;
+}
+
+u8 is_plug_power_comsumption_sensor(u16 sensor_id)
+{
+    if (sensor_id >= PLDM_BASE_PLUG_POWER_SENSOR_ID && sensor_id <= PLDM_MAX_PLUG_POWER_SENSOR_ID) {
+        return TRUE;
+    }
+    return FALSE;
+}
+
 u32 sensor_id_convert_to_record_handle(u16 sensor_id)
 {
     u32 record_handle = PLDM_ERR_RECORD_HANDLE;
@@ -153,7 +169,7 @@ void pldm_monitor_printf_numeric_pdr_comm_hdr(pldm_numeric_sensor_pdr_comm_part_
     LOG("aux_rate_unit : %d", comm_part->aux_rate_unit);
     LOG("rel : %d", comm_part->rel);
     LOG("aux_oem_unit_handle : %d", comm_part->aux_oem_unit_handle);
-    LOG("record_his_linearandle : %d", comm_part->is_linear);
+    LOG("is_linear : %d", comm_part->is_linear);
     LOG("sensor_data_size : %d", comm_part->sensor_data_size);
     LOG("resolution : %#x", comm_part->resolution);
     LOG("offset : %#x", comm_part->offset);
@@ -162,14 +178,84 @@ void pldm_monitor_printf_numeric_pdr_comm_hdr(pldm_numeric_sensor_pdr_comm_part_
     LOG("minus_tolerance : %#x", comm_part->minus_tolerance);
 }
 
+void pldm_monitor_printf_link_data(u8 *data)
+{
+    pldm_link_speed_sensor_pdr_t *link_pdr = (pldm_link_speed_sensor_pdr_t *)data;
+    LOG("hysteresis : %d", link_pdr->hysteresis);
+    LOG("supported_thresholds : %d", link_pdr->supported_thresholds);
+    LOG("threshold_and_hysteresis_volatility : 0x%x", link_pdr->threshold_and_hysteresis_volatility);
+    LOG("state_transition_interval : 0x%x", link_pdr->state_transition_interval.val);
+    LOG("update_interval : 0x%x", link_pdr->update_interval.val);
+    LOG("max_readable : %d", link_pdr->max_readable);
+    LOG("min_readable : %d", link_pdr->min_readable);
+    LOG("range_field_format : %d", link_pdr->range_field_format);
+    LOG("range_field_support : 0x%x", link_pdr->range_field_support);
+    LOG("nominal_value : %d", link_pdr->nominal_value);
+    LOG("normal_max : %d", link_pdr->normal_max);
+    LOG("normal_min : %d", link_pdr->normal_min);
+}
+
+void pldm_monitor_printf_plug_data(u8 *data)
+{
+    pldm_pluggable_module_power_sensor_pdr_t *plug_pdr = (pldm_pluggable_module_power_sensor_pdr_t *)(data + sizeof(pldm_numeric_sensor_pdr_comm_part_t));
+    LOG("hysteresis : %d", plug_pdr->hysteresis);
+    LOG("supported_thresholds : %d", plug_pdr->supported_thresholds);
+    LOG("threshold_and_hysteresis_volatility : 0x%x", plug_pdr->threshold_and_hysteresis_volatility);
+    LOG("state_transition_interval : 0x%x", plug_pdr->state_transition_interval.val);
+    LOG("update_interval : 0x%x", plug_pdr->update_interval.val);
+    LOG("max_readable : %d", plug_pdr->max_readable);
+    LOG("min_readable : %d", plug_pdr->min_readable);
+    LOG("range_field_format : %d", plug_pdr->range_field_format);
+    LOG("range_field_support : 0x%x", plug_pdr->range_field_support);
+    LOG("nominal_value : %d", plug_pdr->nominal_value);
+    LOG("normal_max : %d", plug_pdr->normal_max);
+    LOG("normal_min : %d", plug_pdr->normal_min);
+    LOG("warning_high : %d", plug_pdr->warning_high);
+    LOG("warning_low : %d", plug_pdr->warning_low);
+    LOG("critical_high : %d", plug_pdr->critical_high);
+    LOG("critical_low : %d", plug_pdr->critical_low);
+    LOG("fatal_high : %d", plug_pdr->fatal_high);
+    LOG("fatal_low : %d", plug_pdr->fatal_low);
+}
+
+void pldm_monitor_printf_temp_data(u8 *data)
+{
+    pldm_thermal_sensor_pdr_t *temp_pdr = (pldm_thermal_sensor_pdr_t *)(data + sizeof(pldm_numeric_sensor_pdr_comm_part_t));
+    LOG("hysteresis : %d", temp_pdr->hysteresis);
+    LOG("supported_thresholds : %d", temp_pdr->supported_thresholds);
+    LOG("threshold_and_hysteresis_volatility : 0x%x", temp_pdr->threshold_and_hysteresis_volatility);
+    LOG("state_transition_interval : 0x%x", temp_pdr->state_transition_interval.val);
+    LOG("update_interval : 0x%x", temp_pdr->update_interval.val);
+    LOG("max_readable : %d", temp_pdr->max_readable);
+    LOG("min_readable : %d", temp_pdr->min_readable);
+    LOG("range_field_format : %d", temp_pdr->range_field_format);
+    LOG("range_field_support : 0x%x", temp_pdr->range_field_support);
+    LOG("nominal_value : %d", temp_pdr->nominal_value);
+    LOG("normal_max : %d", temp_pdr->normal_max);
+    LOG("normal_min : %d", temp_pdr->normal_min);
+    LOG("warning_high : %d", temp_pdr->warning_high);
+    LOG("warning_low : %d", temp_pdr->warning_low);
+    LOG("critical_high : %d", temp_pdr->critical_high);
+    LOG("critical_low : %d", temp_pdr->critical_low);
+    LOG("fatal_high : %d", temp_pdr->fatal_high);
+    LOG("fatal_low : %d", temp_pdr->fatal_low);
+}
+
 void pldm_monitor_printf_numeric_pdr_detail(u8 *data)
 {
-    pldm_numeric_sensor_pdr_t *ctx = (pldm_numeric_sensor_pdr_t *)data;
-    pldm_monitor_printf_numeric_pdr_comm_hdr(&(ctx->numeric_pdr_comm_part));
-    // switch () {
-    //     case :
-    //     break;
-    // }
+    pldm_numeric_sensor_pdr_comm_part_t *ctx = (pldm_numeric_sensor_pdr_comm_part_t *)data;
+    pldm_monitor_printf_numeric_pdr_comm_hdr(ctx);
+    u16 sensor_id = ctx->sensor_id;
+    if (is_link_speed_sensor(sensor_id)) {
+        pldm_monitor_printf_link_data(data);
+        LOG("IS_LINK_SPEED_SENSOR");
+    } else if (is_plug_power_comsumption_sensor(sensor_id)) {
+        pldm_monitor_printf_plug_data(data);
+        LOG("IS_PLUG_POWER_COMSUMPTION_SENSOR");
+    } else {
+        pldm_monitor_printf_temp_data(data);
+        LOG("IS_TEMP_SENSOR");
+    }
 
 }
 
@@ -211,8 +297,80 @@ void pldm_monitor_printf_assoc_pdr_detail(u8 *data)
     }
 }
 
+u8 *pldm_monitor_printf_redfish_resource_pdr_first_part(u8 *data)
+{
+    if (!data) return NULL;
+    pldm_redfish_resource_pdr_first_part_t *first_part = (pldm_redfish_resource_pdr_first_part_t *)data;
+    pldm_monitor_printf_pdr_hdr(&(first_part->hdr));
+    LOG("resource_id : %d", first_part->resource_id);
+    LOG("resource_flg : %d", first_part->resource_flg);
+    LOG("containing_resource_id : %d", first_part->containing_resource_id);
+    LOG("proposed_containing_resource_byte_len : %d", first_part->proposed_containing_resource_byte_len);
+    // for (u16 i = 0; i < first_part->proposed_containing_resource_byte_len; i++) {
+    //     printf("%c", first_part->proposed_containing_resource_name[i]);
+    // }
+    // LOG("");
+    LOG("%s", first_part->proposed_containing_resource_name);
+    return &(first_part->proposed_containing_resource_name[first_part->proposed_containing_resource_byte_len]);
+}
+
+u8 *pldm_monitor_printf_redfish_resource_pdr_middle0_part(u8 *data)
+{
+    if (!data) return NULL;
+    pldm_redfish_resource_pdr_middle0_part_t *middle0_part = (pldm_redfish_resource_pdr_middle0_part_t *)data;
+    LOG("suburi_byte_len : %d", middle0_part->suburi_byte_len);
+
+    LOG("%s", middle0_part->suburi);
+    return (u8 *)&(middle0_part->suburi[middle0_part->suburi_byte_len]);
+}
+
+u8 *pldm_monitor_printf_redfish_resource_pdr_middle1_part(u8 *data)
+{
+    if (!data) return NULL;
+    pldm_redfish_resource_pdr_middle1_part_t *middle1_part = (pldm_redfish_resource_pdr_middle1_part_t *)data;
+    LOG("add_resource_id_cnt : %d", middle1_part->add_resource_id_cnt);
+    pldm_redfish_add_resource_info_t *resource_info = (pldm_redfish_add_resource_info_t *)(middle1_part->add_resource_info);
+
+    for (u16 i = 0; i < middle1_part->add_resource_id_cnt; i++) {
+        LOG("add_resource_id : %d", resource_info->add_resource_id);
+        LOG("add_suburi_byte_len : %d", resource_info->add_suburi_byte_len);
+        LOG("add_suburi : %s", resource_info->add_suburi);
+        resource_info = (pldm_redfish_add_resource_info_t *)&(resource_info->add_suburi[resource_info->add_suburi_byte_len]);
+    }
+    return (u8 *)resource_info;
+}
+
+u8 *pldm_monitor_printf_redfish_resource_pdr_middle2_part(u8 *data)
+{
+    if (!data) return NULL;
+    pldm_redfish_resource_pdr_middle2_part_t *middle2 = (pldm_redfish_resource_pdr_middle2_part_t *)data;
+    LOG("major_schema_ver : 0x%x", middle2->major_schema_ver);
+    LOG("major_schema_dict_byte_len : %d", middle2->major_schema_dict_byte_len);
+    LOG("major_schema_dict_sign : 0x%x", middle2->major_schema_dict_sign);
+    LOG("major_schema_name_len : %d", middle2->major_schema_name_len);
+    LOG("major_schema_name : %s", middle2->major_schema_name);
+    return &(middle2->major_schema_name[middle2->major_schema_name_len]);
+}
+
+u8 *pldm_monitor_printf_redfish_resource_pdr_end_part(u8 *data)
+{
+    if (!data) return NULL;
+    pldm_redfish_resource_pdr_end_part_t *end_part = (pldm_redfish_resource_pdr_end_part_t *)data;
+    LOG("oem_cnt : %d", end_part->oem_cnt);
+}
+
+void pldm_monitor_printf_redfish_resource_pdr_detail(u8 *data)
+{
+    u8 *next_part = pldm_monitor_printf_redfish_resource_pdr_first_part(data);
+    next_part = pldm_monitor_printf_redfish_resource_pdr_middle0_part(next_part);
+    next_part = pldm_monitor_printf_redfish_resource_pdr_middle1_part(next_part);
+    next_part = pldm_monitor_printf_redfish_resource_pdr_middle2_part(next_part);
+    next_part = pldm_monitor_printf_redfish_resource_pdr_end_part(next_part);
+}
+
 void pldm_monitor_printf_pdr(pldm_pdr_record_t *pdr)
 {
+    if (!pdr || !pdr->data) return;
     pldm_pdr_hdr_t *hdr = (pldm_pdr_hdr_t *)(pdr->data);
     switch (hdr->type) {
         case TERMINUS_LOCATOR_PDR:
@@ -221,6 +379,7 @@ void pldm_monitor_printf_pdr(pldm_pdr_record_t *pdr)
             break;
         case NUMERIC_SENSOR_PDR:
             LOG("%s", TO_STR(NUMERIC_SENSOR_PDR));
+            // pldm_monitor_printf_numeric_pdr_detail(pdr->data);
             break;
         case STATE_SENSOR_PDR:
             LOG("%s", TO_STR(STATE_SENSOR_PDR));
@@ -236,6 +395,7 @@ void pldm_monitor_printf_pdr(pldm_pdr_record_t *pdr)
             break;
         case REDFISH_RESOURCE_PDR:
             LOG("%s", TO_STR(REDFISH_RESOURCE_PDR));
+            // pldm_monitor_printf_redfish_resource_pdr_detail(pdr->data);
             break;
         case REDFISH_ACTION_PDR:
             LOG("%s", TO_STR(REDFISH_ACTION_PDR));
@@ -252,7 +412,7 @@ void pldm_monitor_printf_repo(pldm_pdr_t *repo)
     LOG("largest pdr size : %d", repo->largest_pdr_size);
     LOG("time : %s", __TIME__);
     LOG("update_time : %s", &(repo->update_time));
-    LOG("repo_signature : %d", repo->repo_signature);
+    LOG("repo_signature : 0x%x", repo->repo_signature);
     u16 sum_size = 0;
     u8 cnt = 0;
     pldm_pdr_record_t *pdr = NULL;
@@ -312,7 +472,10 @@ void pldm_monitor_printf_numeric_sensor_detail(u8 *ev_data)
     pldm_field_per_numeric_sensor_state_format_t *sensor_dat = (pldm_field_per_numeric_sensor_state_format_t *)ev_data;
     LOG("event_state : %d", sensor_dat->event_state);
     LOG("previous_event_state : %d", sensor_dat->previous_event_state);
-    LOG("present_reading : %d", sensor_dat->present_reading);
+    u8 len = sensor_dat->sensor_datasize == PLDM_DATASIZE_UINT8 ? 1 : 4;
+    u32 read_data = 0;
+    cm_memcpy(&read_data, sensor_dat->present_reading, len);
+    LOG("present_reading : 0x%x", read_data);
     LOG("sensor_datasize : %d", sensor_dat->sensor_datasize);
     LOG("end %s", __FUNCTION__);
 }
@@ -513,9 +676,9 @@ void pldm_monitor_test(void)
     //     }
     //     // LOG("g_event_id : %d", g_event_id);
     // }
-    // end = clock();
-    // cost = end - start;
-    // LOG("time diff %f",cost);   /* uint is ms */
+    end = clock();
+    cost = end - start;
+    LOG("time diff %f",cost);   /* uint is ms */
 
     // pldm_monitor_printf_repo(&(g_pldm_monitor_info.pldm_repo));
 
