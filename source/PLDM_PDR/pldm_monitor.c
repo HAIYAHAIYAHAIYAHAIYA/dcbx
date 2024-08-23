@@ -2,6 +2,7 @@
 #include "pldm_redfish.h"
 #include "pldm_cjson.h"
 #include "pldm_bej_resolve.h"
+#include "pldm_data.h"
 #include "pldm_monitor_event_rbuf.h"
 #include "pdr.h"
 #include "sha256.h"
@@ -502,7 +503,6 @@ void pldm_monitor_printf_sensor_event(u8 *data)
 
 void pldm_monitor_printf_repo_chg_event(u8 *data)
 {
-    LOG("\nstart %s", __FUNCTION__);
     pldm_pdr_repo_chg_event_data_format_t *pdr_chg_dat = (pldm_pdr_repo_chg_event_data_format_t *)data;
     LOG("event_data_format %d", pdr_chg_dat->event_data_format);
     LOG("num_of_chg_records %d", pdr_chg_dat->num_of_chg_records);
@@ -511,7 +511,6 @@ void pldm_monitor_printf_repo_chg_event(u8 *data)
         LOG("event_data_op %d", pdr_chg_dat->chg_record[i].event_data_op);
         LOG("num_of_chg_entries %d", pdr_chg_dat->chg_record[i].num_of_chg_entries);
     }
-    LOG("end %s", __FUNCTION__);
 }
 
 void pldm_monitor_printf_repo_redfish_event(u8 *data)
@@ -552,12 +551,15 @@ void pldm_monitor_printf_event_rbuf(void *p)
         sum_size += pldm_event_data->event_data_size + sizeof(pldm_event_data_t);
         switch (pldm_event_data->event_class) {
             case SENSOR_EVENT:
+                LOG("%s", TO_STR(SENSOR_EVENT));
                 // pldm_monitor_printf_sensor_event(payload);
                 break;
             case PLDM_PDR_REPO_CHG_EVENT:
+                LOG("%s", TO_STR(PLDM_PDR_REPO_CHG_EVENT));
                 // pldm_monitor_printf_repo_chg_event(payload);
                 break;
             case REDFISH_MSG_EVENT:
+                LOG("%s", TO_STR(REDFISH_MSG_EVENT));
                 // pldm_monitor_printf_repo_redfish_event(payload);
                 break;
             default :
@@ -633,11 +635,8 @@ void pldm_monitor_create_static_pdr(pldm_pdr_t *repo)
     fclose(fp);
 }
 
-void pldm_monitor_test(void)
+void pldm_monitor_pdr_from_local(void)
 {
-    pldm_monitor_init();
-    double start,end,cost;
-
     pdr_init_func pdr_init[] = {
         pldm_terminus_locator_pdr_init,
         pldm_assoc_pdr_init,
@@ -646,12 +645,47 @@ void pldm_monitor_test(void)
         pldm_redfish_pdr_init,
         pldm_fru_pdr_init,
     };
-    start = clock();
     for (u8 i = 0; i < sizeof(pdr_init) / sizeof(pdr_init_func); i++) {
         pdr_init[i]();
         // pldm_pdr_get_used();
     }
-    for (u8 i = 0; i < 2; i++) {
+}
+
+void pldm_monitor_pdr_from_static_data(pldm_pdr_t *repo)
+{
+    pldm_data_hdr_t pldm_data_hdr = {0};
+    pldm_pdr_data_hdr_t pdr_data_hdr;
+    CM_FLASH_READ("pldm_data.bin", 0, (void *)&pldm_data_hdr, (sizeof(pldm_data_hdr_t) / sizeof(u32)));
+    u32 data_start_addr = 0 + pldm_data_hdr.pldm_pdr_off;
+    u8 pdr_hdr_len = sizeof(pldm_pdr_data_hdr_t);
+
+    u8 *pdr_data = pdr_malloc(pldm_data_hdr.pldm_pdr_size - pdr_hdr_len);
+    if (!pdr_data) return;
+
+    CM_FLASH_READ("pldm_data.bin", data_start_addr, (void *)&pdr_data_hdr, (pdr_hdr_len / sizeof(u32)));
+    // LOG("pdr init from nvm, total len : %d, cnt : %d", pdr_data_hdr.total_size, pdr_data_hdr.cnt);
+    CM_FLASH_READ("pldm_data.bin", (data_start_addr + pdr_hdr_len), (void *)pdr_data, ((pldm_data_hdr.pldm_pdr_size - pdr_hdr_len) / sizeof(u32)));
+
+    u8 *ptr = pdr_data;
+
+    for (u8 i = 0; i < pdr_data_hdr.cnt; i++) {
+        pldm_pdr_hdr_t *pdr_hdr = (pldm_pdr_hdr_t *)ptr;
+        u16 pdr_size = pdr_hdr->length + sizeof(pldm_pdr_hdr_t);
+        pldm_pdr_add(repo, ptr, pdr_size, pdr_hdr->record_handle);
+        ptr += pdr_size;
+    }
+}
+
+void pldm_monitor_test(void)
+{
+    pldm_monitor_init();
+    double start,end,cost;
+
+    start = clock();
+    pldm_monitor_pdr_from_local();
+    // pldm_monitor_pdr_from_static_data(&(g_pldm_monitor_info.pldm_repo));
+
+    for (u8 i = 0; i < MAX_LAN_NUM; i++) {
         pldm_link_handle(i, 1);
     }
 
@@ -709,7 +743,7 @@ void pldm_monitor_test(void)
     // pldm_monitor_printf_repo(&(g_pldm_monitor_info.pldm_repo));
     // LOG("last : %d", g_pldm_monitor_info.pldm_repo.last->record_handle);
     // LOG("first : %d", g_pldm_monitor_info.pldm_repo.first->record_handle);
-    // pldm_monitor_printf_event_rbuf(g_pldm_monitor_info.pldm_event_rbuf);
+    pldm_monitor_printf_event_rbuf(g_pldm_monitor_info.pldm_event_rbuf);
     // SENSOR_EVENT = 0x00,
     // REDFISH_TASK_EXCUTE_EVENT = 0x02,
     // REDFISH_MSG_EVENT = 0x03,
