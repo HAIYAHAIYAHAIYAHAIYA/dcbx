@@ -22,7 +22,7 @@ u8 *pldm_fru_fill_general_part(u8 *buf)
         "",
         "Amber xx xx xx xx",
         "",
-        "for WXKJ use"
+        "for WXKJ use",
     };
     pldm_fru_tlv_fmt_t *tlv = (pldm_fru_tlv_fmt_t *)buf;
     for (u8 i = 0; i < sizeof(vals) / sizeof(char *); i++) {
